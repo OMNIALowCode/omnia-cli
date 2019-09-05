@@ -328,3 +328,8 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Build related
+tools/**
+!tools/packages.config
+!tools/Modules/packages.config

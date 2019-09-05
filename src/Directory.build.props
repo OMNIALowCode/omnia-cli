@@ -1,0 +1,9 @@
+﻿<Project>
+  <!-- General package metadata -->
+  <PropertyGroup>
+    <Copyright>Copyright 2019 NumbersBelieve</Copyright>
+    <Company>NumbersBelieve</Company>
+    <Version>1.0.5</Version>
+    <AssemblyTitle>OMNIA - CLI</AssemblyTitle>
+  </PropertyGroup>
+</Project>  

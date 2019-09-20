@@ -1,25 +1,44 @@
-﻿using Omnia.CLI.Extensions;
-using Omnia.CLI.Infrastructure;
+﻿using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Omnia.CLI.Infrastructure;
+using System.Linq;
+using System.IO.Compression;
+using Omnia.CLI.Extensions;
+using System.Collections.Generic;
 
- namespace Omnia.CLI.CommandHandlers
+namespace Omnia.CLI.Commands.Model
 {
-    public static class ExportCommandHandler
+    [Command(Name = "export", Description = "")]
+    [HelpOption("-h|--help")]
+    public class ExportCommand
     {
-        public static async Task Run(AppSettings settings, string subscription, string tenantCode, string environmentCode)
+        private readonly AppSettings _settings;
+        public ExportCommand(IOptions<AppSettings> options)
         {
-            var sourceSettings = settings.Subscriptions.FirstOrDefault(s => s.Name.Equals(subscription));
-            if (sourceSettings == null)
-                throw new InvalidOperationException($"Can't find subscription {subscription}");
+            _settings = options.Value;
+        }
 
-            
+        [Option("--subscription", CommandOptionType.SingleValue, Description = "")]
+        public string Subscription { get; set; }
+        [Option("--tenant", CommandOptionType.SingleValue, Description = "")]
+        public string Tenant { get; set; }
+        [Option("--environment", CommandOptionType.SingleValue, Description = "")]
+        public string Environment { get; set; }
+        
+
+        public async Task<int> OnExecute(CommandLineApplication cmd)
+        {
+            var sourceSettings = _settings.Subscriptions.FirstOrDefault(s => s.Name.Equals(Subscription));
+            if (sourceSettings == null)
+                throw new InvalidOperationException($"Can't find subscription {Subscription}");
+
+
             var path = Directory.GetCurrentDirectory();
 
             var authentication = new Authentication(sourceSettings.IdentityServerUrl,
@@ -35,13 +54,14 @@ using System.Threading.Tasks;
                 DefaultRequestHeaders = { Authorization = authValue }
             };
 
-            await DownloadTemplate(httpClient, tenantCode, environmentCode, Path.Combine(path, "model"));
+            await DownloadTemplate(httpClient, Tenant, Environment, Path.Combine(path, "model"));
 
-            var currentBuildVersion = await CurrentBuildNumber(httpClient, tenantCode, environmentCode);
+            var currentBuildVersion = await CurrentBuildNumber(httpClient, Tenant, Environment);
 
-            await DownloadBuild(httpClient, tenantCode, environmentCode, currentBuildVersion, Path.Combine(path, "src"));
+            await DownloadBuild(httpClient, Tenant, Environment, currentBuildVersion, Path.Combine(path, "src"));
+
+            return 0;
         }
-
 
         private static async Task DownloadTemplate(HttpClient httpClient, string tenantCode, string environmentCode, string path)
         {
@@ -80,12 +100,13 @@ using System.Threading.Tasks;
             }
 
         }
-        
+
         internal class BuildData
         {
             public string BuildVersion { get; set; }
             public string State { get; set; }
 
         }
+
     }
 }

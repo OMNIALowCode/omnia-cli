@@ -17,21 +17,56 @@ using System;
                 Name = "OMNIA CLI"
             };
 
-            app.Command("export", (command) =>
+            app.Command("tenants", (command) =>
             {
-                var subscriptionOption = command.Option("--subscription <subscription>", "Subscription.", CommandOptionType.SingleValue);
-                var tenantOption = command.Option("--tenant <tenant>", "", CommandOptionType.SingleValue);
-                var environmentOption = command.Option("--environment <environment>", "", CommandOptionType.SingleValue);
-
-                command.OnExecute(() =>
+                command.Command("model", (modelCommand) =>
                 {
-                    CommandHandlers.ExportCommandHandler.Run(settings, subscriptionOption.Value(),
-                        tenantOption.Value(),
-                        environmentOption.HasValue() ? environmentOption.Value() : "PRD")
-                        .GetAwaiter().GetResult();
-                    return 0;
+                    modelCommand.Command("export", (exportCommand) =>
+                    {
+                        var subscriptionOption = exportCommand.Option("--subscription <subscription>", "Subscription.",
+                            CommandOptionType.SingleValue);
+                        var tenantOption = exportCommand.Option("--tenant <tenant>", "", CommandOptionType.SingleValue);
+                        var environmentOption = exportCommand.Option("--environment <environment>", "",
+                            CommandOptionType.SingleValue);
+
+                        exportCommand.OnExecute(() =>
+                        {
+                            CommandHandlers.ExportCommandHandler.Run(settings, subscriptionOption.Value(),
+                                    tenantOption.Value(),
+                                    environmentOption.HasValue() ? environmentOption.Value() : "PRD")
+                                .GetAwaiter().GetResult();
+                            return 0;
+                        });
+                    });
                 });
+
+                command.Command("security", (securityCommand) =>
+                    {
+                        securityCommand.Command("users", (usersCommand) =>
+                            {
+                                usersCommand.Command("import", (usersImportCommand) =>
+                                {
+                                    var subscriptionOption = usersImportCommand.Option("--subscription <subscription>", "Subscription.",
+                                        CommandOptionType.SingleValue);
+                                    var tenantOption = usersImportCommand.Option("--tenant <tenant>", "", CommandOptionType.SingleValue);
+                                    var environmentOption = usersImportCommand.Option("--environment <environment>", "",
+                                        CommandOptionType.SingleValue);
+                                    var fileOption = usersImportCommand.Option("--file <file>", "csv file to import", CommandOptionType.SingleValue);
+
+                                    usersImportCommand.OnExecute(() =>
+                                    {
+                                        CommandHandlers.UsersCommandHandler.Import(settings, subscriptionOption.Value(),
+                                            tenantOption.Value(),
+                                            environmentOption.HasValue() ? environmentOption.Value() : "PRD",
+                                            fileOption.Value())
+                                            .GetAwaiter().GetResult();
+                                        return 0;
+                                    });
+                                });
+                            });
+                    });
             });
+
 
             app.Command("subscriptions", (command) =>
             {
@@ -44,10 +79,21 @@ using System;
 
                     subCommand.OnExecute(() =>
                     {
-                        CommandHandlers.SourcesCommandHandler.Run(settings, nameOption.Value(),
+                        CommandHandlers.SourcesCommandHandler.Add(settings, nameOption.Value(),
                             endpointOption.Value(),
                             clientIdOption.Value(),
                             clientSecretOption.Value());
+                        return 0;
+                    });
+                });
+
+                command.Command("remove", (subCommand) =>
+                {
+                    var nameOption = subCommand.Option("--name <name>", "Subscription.", CommandOptionType.SingleValue);
+
+                    subCommand.OnExecute(() =>
+                    {
+                        CommandHandlers.SourcesCommandHandler.Remove(settings, nameOption.Value());
                         return 0;
                     });
                 });

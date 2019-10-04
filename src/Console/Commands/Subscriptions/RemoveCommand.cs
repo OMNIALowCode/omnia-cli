@@ -24,7 +24,7 @@ namespace Omnia.CLI.Commands.Subscriptions
 
         public Task<int> OnExecute(CommandLineApplication cmd)
         {
-            var subscription = _settings.Subscriptions.FirstOrDefault(s => s.Name.Equals(Name));
+            var subscription = _settings.GetSubscription(Name);
             _settings.Subscriptions.Remove(subscription);
 
             using (var file = File.CreateText(Path.Combine(AppContext.BaseDirectory, "appsettings.json")))

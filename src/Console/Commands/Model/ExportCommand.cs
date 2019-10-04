@@ -34,11 +34,8 @@ namespace Omnia.CLI.Commands.Model
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
-            var sourceSettings = _settings.Subscriptions.FirstOrDefault(s => s.Name.Equals(Subscription));
-            if (sourceSettings == null)
-                throw new InvalidOperationException($"Can't find subscription {Subscription}");
-
-
+            var sourceSettings = _settings.GetSubscription(Subscription);
+            
             var path = Directory.GetCurrentDirectory();
 
             var authentication = new Authentication(sourceSettings.IdentityServerUrl,

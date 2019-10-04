@@ -1,11 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
- namespace Omnia.CLI
+namespace Omnia.CLI
 {
     public class AppSettings
     {
         public IList<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+
+        internal Subscription GetSubscription(string name)
+        {
+            var sourceSettings = Subscriptions.FirstOrDefault(s => s.Name.Equals(name));
+            if (sourceSettings == null)
+                throw new InvalidOperationException($"Can't find subscription {name}");
+            return sourceSettings;
+        }
 
         public class Subscription
         {

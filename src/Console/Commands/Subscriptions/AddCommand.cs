@@ -40,7 +40,12 @@ namespace Omnia.CLI.Commands.Subscriptions
                 }
             });
 
-            using (var file = File.CreateText(Path.Combine(AppContext.BaseDirectory, "appsettings.json")))
+            var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OMNIA", "CLI");
+            
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+
+            using (var file = File.CreateText(Path.Combine(directory, "appsettings.json")))
             {
                 var serializer = new JsonSerializer();
                 serializer.Serialize(file, _settings);

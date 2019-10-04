@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.IO;
 
 namespace Omnia.CLI
 {
@@ -26,7 +27,8 @@ namespace Omnia.CLI
         private static IConfigurationRoot CreateConfigurationRoot()
             => new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json")
+                .AddJsonFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "OMNIA", "CLI", "appsettings.json"), true)
                 .Build();
     }
 }

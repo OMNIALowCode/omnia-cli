@@ -1,16 +1,12 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Omnia.CLI.Infrastructure;
-using System.Linq;
-using System.IO.Compression;
 using Omnia.CLI.Extensions;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model
 {
@@ -19,9 +15,11 @@ namespace Omnia.CLI.Commands.Model
     public class ExportCommand
     {
         private readonly AppSettings _settings;
-        public ExportCommand(IOptions<AppSettings> options)
+        private readonly HttpClient _httpClient;
+        public ExportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
             _settings = options.Value;
+            _httpClient = httpClientFactory.CreateClient();
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "")]
@@ -38,24 +36,13 @@ namespace Omnia.CLI.Commands.Model
             
             var path = Directory.GetCurrentDirectory();
 
-            var authentication = new Authentication(sourceSettings.IdentityServerUrl,
-                sourceSettings.Client.Id,
-                sourceSettings.Client.Secret);
+            await _httpClient.WithSubscription(sourceSettings);
 
-            var accessToken = authentication.AuthenticateAsync().Result;
-            var authValue = new AuthenticationHeaderValue("Bearer", accessToken);
+            await DownloadTemplate(_httpClient, Tenant, Environment, Path.Combine(path, "model"));
 
-            var httpClient = new HttpClient()
-            {
-                BaseAddress = sourceSettings.ApiUrl,
-                DefaultRequestHeaders = { Authorization = authValue }
-            };
+            var currentBuildVersion = await CurrentBuildNumber(_httpClient, Tenant, Environment);
 
-            await DownloadTemplate(httpClient, Tenant, Environment, Path.Combine(path, "model"));
-
-            var currentBuildVersion = await CurrentBuildNumber(httpClient, Tenant, Environment);
-
-            await DownloadBuild(httpClient, Tenant, Environment, currentBuildVersion, Path.Combine(path, "src"));
+            await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, Path.Combine(path, "src"));
 
             return 0;
         }

@@ -15,6 +15,7 @@ namespace Omnia.CLI
             var services = new ServiceCollection()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
                 .Configure<AppSettings>(configuration)
+                .AddHttpClient()
                 .BuildServiceProvider();
 
             var app = new CommandLineApplication<App>();

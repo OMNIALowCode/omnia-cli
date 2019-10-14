@@ -3,14 +3,12 @@ using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
-using Omnia.CLI.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Security
@@ -20,9 +18,11 @@ namespace Omnia.CLI.Commands.Security
     public class UsersImportCommand
     {
         private readonly AppSettings _settings;
-        public UsersImportCommand(IOptions<AppSettings> options)
+        private readonly HttpClient _httpClient;
+        public UsersImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
             _settings = options.Value;
+            _httpClient = httpClientFactory.CreateClient();
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "")]
@@ -41,24 +41,13 @@ namespace Omnia.CLI.Commands.Security
 
             //TODO: Move to a different class
             var sourceSettings = _settings.GetSubscription(Subscription);
-            
-            var authentication = new Authentication(sourceSettings.IdentityServerUrl,
-                sourceSettings.Client.Id,
-                sourceSettings.Client.Secret);
 
-            var accessToken = authentication.AuthenticateAsync().Result;
-            var authValue = new AuthenticationHeaderValue("Bearer", accessToken);
+            await _httpClient.WithSubscription(sourceSettings);
 
-            var httpClient = new HttpClient()
-            {
-                BaseAddress = sourceSettings.ApiUrl,
-                DefaultRequestHeaders = { Authorization = authValue }
-            };
-            
             var tasks = entries
                 .GroupBy(r => r.Role, StringComparer.InvariantCultureIgnoreCase)
                 .Select(role => 
-                    UpdateRole(httpClient, role.Key, role.Select(c => c.Username).ToList())
+                    UpdateRole(_httpClient, role.Key, role.Select(c => c.Username).ToList())
                     );
 
             await Task.WhenAll(tasks);

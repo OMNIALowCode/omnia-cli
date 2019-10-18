@@ -26,7 +26,6 @@ namespace Omnia.CLI.Commands.Model
         public string Subscription { get; set; }
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
         public string Tenant { get; set; }
-
         [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
         

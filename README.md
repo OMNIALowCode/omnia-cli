@@ -7,7 +7,7 @@ A command-line client for OMNIA Low-code Platform.
 Download and install the [.NET Core 2.1 SDK](https://www.microsoft.com/net/download) or newer. Once installed, run the following command:
 
 ```bash
-dotnet tool install --global omnia-cli
+dotnet tool install --global omnia.cli
 ```
 
 

@@ -20,9 +20,20 @@ namespace Omnia.CLI.Commands.Subscriptions
         [Option("--name", CommandOptionType.SingleValue, Description = "Name of the subscription to remove.")]
         public string Name { get; set; }
 
-
         public Task<int> OnExecute(CommandLineApplication cmd)
         {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                Console.WriteLine($"{nameof(Name)} is required");
+                return Task.FromResult((int)StatusCodes.InvalidArgument);
+            }
+
+            if (!_settings.Exists(Name))
+            {
+                Console.WriteLine($"Subscription {Name} can't be found.");
+                return Task.FromResult((int)StatusCodes.InvalidOperation);
+            }
+
             var subscription = _settings.GetSubscription(Name);
             _settings.Subscriptions.Remove(subscription);
 

@@ -29,6 +29,36 @@ namespace Omnia.CLI.Commands.Subscriptions
 
         public Task<int> OnExecute(CommandLineApplication cmd)
         {
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                Console.WriteLine($"{nameof(Name)} is required");
+                return Task.FromResult((int)StatusCodes.InvalidArgument);
+            }
+
+            if (Endpoint == null)
+            {
+                Console.WriteLine($"{nameof(Endpoint)} is required");
+                return Task.FromResult((int)StatusCodes.InvalidArgument);
+            }
+
+            if (string.IsNullOrWhiteSpace(ClientId))
+            {
+                Console.WriteLine($"{nameof(ClientId)} is required");
+                return Task.FromResult((int)StatusCodes.InvalidArgument);
+            }
+
+            if (string.IsNullOrWhiteSpace(ClientSecret))
+            {
+                Console.WriteLine($"{nameof(ClientSecret)} is required");
+                return Task.FromResult((int)StatusCodes.InvalidArgument);
+            }
+            
+            if (_settings.Exists(Name))
+            {
+                Console.WriteLine($"Subscription {Name} already exists.");
+                return Task.FromResult((int)StatusCodes.InvalidOperation);
+            }
+
             _settings.Subscriptions.Add(new AppSettings.Subscription()
             {
                 Name = Name,
@@ -41,7 +71,7 @@ namespace Omnia.CLI.Commands.Subscriptions
             });
 
             var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OMNIA", "CLI");
-            
+
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 

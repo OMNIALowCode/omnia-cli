@@ -45,6 +45,30 @@ namespace Omnia.CLI.Commands.Security.Users
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
+            if (string.IsNullOrWhiteSpace(Subscription))
+            {
+                Console.WriteLine($"{nameof(Subscription)} is required");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
+            if (string.IsNullOrWhiteSpace(Tenant))
+            {
+                Console.WriteLine($"{nameof(Tenant)} is required");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
+            if (string.IsNullOrWhiteSpace(Environment))
+            {
+                Console.WriteLine($"{nameof(Environment)} is required");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
+            if (!_settings.Exists(Subscription))
+            {
+                Console.WriteLine($"Subscription {Subscription} can't be found.");
+                return (int)StatusCodes.InvalidOperation;
+            }
+
             var entries = ParseFile(Path);
 
             var sourceSettings = _settings.GetSubscription(Subscription);

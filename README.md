@@ -33,7 +33,7 @@ Options:
 
 
 ## Contributing and Feedback
-Everyone is free to contribute their developed scripts to the repository. It’s really appreciated.
+Everyone is free to contribute to the repository. It’s really appreciated.
 
 Any bugs detected can be reported in the Issues section of this repository.
 

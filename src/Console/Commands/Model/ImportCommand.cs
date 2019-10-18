@@ -38,7 +38,7 @@ namespace Omnia.CLI.Commands.Model
         {
             if (string.IsNullOrEmpty(Path))
             {
-                Console.WriteLine("The --path parameter must have a value, representing the .zip file to import.");
+                Console.WriteLine($"{nameof(Path)} is required");
                 return (int)StatusCodes.InvalidArgument;
             }
 

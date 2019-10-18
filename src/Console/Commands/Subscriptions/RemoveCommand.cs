@@ -37,7 +37,9 @@ namespace Omnia.CLI.Commands.Subscriptions
             var subscription = _settings.GetSubscription(Name);
             _settings.Subscriptions.Remove(subscription);
 
-            using (var file = File.CreateText(Path.Combine(AppContext.BaseDirectory, "appsettings.json")))
+            var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OMNIA", "CLI");
+
+            using (var file = File.CreateText(Path.Combine(directory, "appsettings.json")))
             {
                 var serializer = new JsonSerializer();
                 serializer.Serialize(file, _settings);

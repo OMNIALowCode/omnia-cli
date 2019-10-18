@@ -38,7 +38,7 @@ namespace Omnia.CLI.Commands.Model
 
             await _httpClient.WithSubscription(sourceSettings);
 
-            await DownloadTemplate(_httpClient, Tenant, Environment, Path.Combine(path, "model"));
+            await DownloadModel(_httpClient, Tenant, Environment, Path.Combine(path, "model"));
 
             var currentBuildVersion = await CurrentBuildNumber(_httpClient, Tenant, Environment);
 
@@ -47,7 +47,7 @@ namespace Omnia.CLI.Commands.Model
             return 0;
         }
 
-        private static async Task DownloadTemplate(HttpClient httpClient, string tenantCode, string environmentCode, string path)
+        private static async Task DownloadModel(HttpClient httpClient, string tenantCode, string environmentCode, string path)
         {
             var response = await httpClient.GetAsync($"/api/v1/{tenantCode}/{environmentCode}/model/export");
             response.EnsureSuccessStatusCode();

@@ -15,18 +15,18 @@ namespace Omnia.CLI
                 throw new InvalidOperationException($"Can't find subscription {name}");
             return sourceSettings;
         }
+        internal bool Exists(string name)
+            => Subscriptions.Any(s => s.Name.Equals(name));
 
         public class Subscription
         {
             public string Name { get; set; }
             public Uri Endpoint { get; set; }
-
             public Uri ApiUrl => new Uri(Endpoint, "/api/v1/");
             public Uri IdentityServerUrl => new Uri(Endpoint, "/identity/");
-
             public Client Client { get; set; } = new Client();
-
         }
+
         public class Client
         {
             public string Id { get; set; }

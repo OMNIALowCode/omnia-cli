@@ -11,35 +11,42 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Omnia.CLI.Commands.Security
+namespace Omnia.CLI.Commands.Security.Users
 {
-    [Command(Name = "users-import", Description = "")]
+    [Command(Name = "import", 
+        Description = @"Import a CSV to assign users to a given tenant role. CSV example:
+
+---
+        username,role
+        username@domain.com,Manager
+        admin@domain.com,Administration
+---
+")]
     [HelpOption("-h|--help")]
-    public class UsersImportCommand
+    public class ImportCommand
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        public UsersImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "")]
+        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "")]
+        [Option("--tenant", CommandOptionType.SingleValue, Description = "Import CSV data to the Tenant.")]
         public string Tenant { get; set; }
-        [Option("--environment", CommandOptionType.SingleValue, Description = "")]
-        public string Environment { get; set; }
+        [Option("--environment", CommandOptionType.SingleValue, Description = "Tenant Environment.")]
+        public string Environment { get; set; } = Constants.DefaultEnvironment;
 
-        [Option("--path", CommandOptionType.SingleValue, Description = "")]
+        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the CSV file.")]
         public string Path { get; set; }
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
             var entries = ParseFile(Path);
 
-            //TODO: Move to a different class
             var sourceSettings = _settings.GetSubscription(Subscription);
 
             await _httpClient.WithSubscription(sourceSettings);
@@ -51,7 +58,7 @@ namespace Omnia.CLI.Commands.Security
                     );
 
             await Task.WhenAll(tasks);
-            return 0;
+            return (int)StatusCodes.Success;
         }
 
         private async Task UpdateRole(HttpClient httpClient, string role, IEnumerable<string> usernames)
@@ -77,7 +84,6 @@ namespace Omnia.CLI.Commands.Security
                 return csv.GetRecords<CsvEntry>().ToList();
             }   
         }
-
 
         private class CsvEntry
         {

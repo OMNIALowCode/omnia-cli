@@ -1,10 +1,10 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 
-namespace Omnia.CLI.Commands.Security
+namespace Omnia.CLI.Commands.Security.Users
 {
-    [Command(Name = "security", Description = "")]
+    [Command(Name = "users", Description = "")]
     [HelpOption("-h|--help")]
-    [Subcommand(typeof(Omnia.CLI.Commands.Security.Users.BaseCommand))]
+    [Subcommand(typeof(ImportCommand))]
     public class BaseCommand
     {
         public void OnExecute(CommandLineApplication app)

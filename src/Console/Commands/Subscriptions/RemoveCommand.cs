@@ -4,11 +4,10 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
-    [Command(Name = "remove", Description = "")]
+    [Command(Name = "remove", Description = "Remove a given subscription configuration.")]
     [HelpOption("-h|--help")]
     public class RemoveCommand
     {
@@ -18,7 +17,7 @@ namespace Omnia.CLI.Commands.Subscriptions
             _settings = options.Value;
         }
 
-        [Option("--name", CommandOptionType.SingleValue, Description = "Name")]
+        [Option("--name", CommandOptionType.SingleValue, Description = "Name of the subscription to remove.")]
         public string Name { get; set; }
 
 
@@ -33,7 +32,7 @@ namespace Omnia.CLI.Commands.Subscriptions
                 serializer.Serialize(file, _settings);
             }
 
-            return Task.FromResult(0);
+            return Task.FromResult((int)StatusCodes.Success);
         }
 
     }

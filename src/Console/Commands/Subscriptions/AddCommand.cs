@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
-    [Command(Name = "add", Description = "")]
+    [Command(Name = "add", Description = "Add the configuration to a given subscription.")]
     [HelpOption("-h|--help")]
     public class AddCommand
     {
@@ -17,13 +17,13 @@ namespace Omnia.CLI.Commands.Subscriptions
             _settings = options.Value;
         }
 
-        [Option("--name", CommandOptionType.SingleValue, Description = "Name")]
+        [Option("--name", CommandOptionType.SingleValue, Description = "Name to reference this subscription configuration when using the CLI.")]
         public string Name { get; set; }
-        [Option("--endpoint", CommandOptionType.SingleValue, Description = "")]
+        [Option("--endpoint", CommandOptionType.SingleValue, Description = "Subscription endpoint. Example: https://platform.omnialowcode.com")]
         public Uri Endpoint { get; set; }
-        [Option("--client-id", CommandOptionType.SingleValue, Description = "")]
+        [Option("--client-id", CommandOptionType.SingleValue, Description = "API Client - Id.")]
         public string ClientId { get; set; }
-        [Option("--client-secret", CommandOptionType.SingleValue, Description = "")]
+        [Option("--client-secret", CommandOptionType.SingleValue, Description = "API Client - Secret.")]
         public string ClientSecret { get; set; }
 
 
@@ -51,7 +51,7 @@ namespace Omnia.CLI.Commands.Subscriptions
                 serializer.Serialize(file, _settings);
             }
 
-            return Task.FromResult(0);
+            return Task.FromResult((int)StatusCodes.Success);
         }
 
     }

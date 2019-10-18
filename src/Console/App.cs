@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using McMaster.Extensions.CommandLineUtils;
+﻿using McMaster.Extensions.CommandLineUtils;
 
 namespace Omnia.CLI
 {
-    [Command(Name = "omnia-cli", Description = "")]
+    [Command(Name = "omnia-cli", Description = "OMNIA Platform CLI")]
     [HelpOption("-h|--help")]
     [Subcommand(typeof(Omnia.CLI.Commands.Subscriptions.BaseCommand))]
     [Subcommand(typeof(Omnia.CLI.Commands.Model.BaseCommand))]

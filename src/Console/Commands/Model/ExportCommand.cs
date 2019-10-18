@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model
 {
-    [Command(Name = "export", Description = "")]
+    [Command(Name = "export", Description = "Export Tenant model and last build to the current folder.")]
     [HelpOption("-h|--help")]
     public class ExportCommand
     {
@@ -22,12 +22,13 @@ namespace Omnia.CLI.Commands.Model
             _httpClient = httpClientFactory.CreateClient();
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "")]
+        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "")]
+        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
         public string Tenant { get; set; }
-        [Option("--environment", CommandOptionType.SingleValue, Description = "")]
-        public string Environment { get; set; }
+
+        [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
+        public string Environment { get; set; } = Constants.DefaultEnvironment;
         
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
@@ -44,7 +45,7 @@ namespace Omnia.CLI.Commands.Model
 
             await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, Path.Combine(path, "src"));
 
-            return 0;
+            return (int) StatusCodes.Success;
         }
 
         private static async Task DownloadModel(HttpClient httpClient, string tenantCode, string environmentCode, string path)
@@ -59,7 +60,6 @@ namespace Omnia.CLI.Commands.Model
                     archive.ExtractToDirectory(path, true);
                 }
             }
-
         }
 
         private static async Task<string> CurrentBuildNumber(HttpClient httpClient, string tenantCode, string environmentCode)
@@ -82,7 +82,6 @@ namespace Omnia.CLI.Commands.Model
                     archive.ExtractToDirectory(path, true);
                 }
             }
-
         }
 
         internal class BuildData

@@ -2,7 +2,7 @@
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
-    [Command(Name = "subscriptions", Description = "")]
+    [Command(Name = "subscriptions", Description = "Commands to configure subscriptions.")]
     [HelpOption("-h|--help")]
     [Subcommand(typeof(AddCommand))]
     [Subcommand(typeof(RemoveCommand))]

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Copyright>Copyright 2019 NumbersBelieve</Copyright>
     <Company>NumbersBelieve</Company>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <AssemblyTitle>OMNIA Low-code Platform - CLI</AssemblyTitle>
   </PropertyGroup>
 </Project>  

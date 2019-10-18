@@ -24,10 +24,8 @@ Task("Version")
     var propsFile = "./src/Directory.build.props";
     var readedVersion = XmlPeek(propsFile, "//Version");
 	var currentVersion = new Version(readedVersion);
-	Information($"Obtained {currentVersion.ToString()} from file.");
 	var semVersion = new Version(currentVersion.Major, currentVersion.Minor, currentVersion.Build + 1);
 	var version = semVersion.ToString();
-	Information($"Generating manual build with version {version}");
     XmlPoke(propsFile, "//Version", version);    
 });
 

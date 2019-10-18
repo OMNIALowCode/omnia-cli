@@ -1,4 +1,5 @@
-﻿using McMaster.Extensions.CommandLineUtils;
+﻿using System.Reflection;
+using McMaster.Extensions.CommandLineUtils;
 
 namespace Omnia.CLI
 {
@@ -7,6 +8,7 @@ namespace Omnia.CLI
     [Subcommand(typeof(Omnia.CLI.Commands.Subscriptions.BaseCommand))]
     [Subcommand(typeof(Omnia.CLI.Commands.Model.BaseCommand))]
     [Subcommand(typeof(Omnia.CLI.Commands.Security.BaseCommand))]
+    [VersionOptionFromMember(MemberName = nameof(GetVersion))]
 
     public class App
     {
@@ -14,5 +16,10 @@ namespace Omnia.CLI
         {
 
         }
+
+        private static string GetVersion() => typeof(Program)
+            .Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            .InformationalVersion;
     }
 }

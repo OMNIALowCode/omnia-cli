@@ -1,3 +1,5 @@
+#tool "nuget:?package=GitVersion.CommandLine&version=5.0.1"
+
 ///////////////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 ///////////////////////////////////////////////////////////////////////////////
@@ -19,15 +21,30 @@ Task("Clean")
 });
 
 Task("Version")
-.IsDependentOn("Clean")
-.Does(() => {
-    var propsFile = "./src/Directory.build.props";
-    var readedVersion = XmlPeek(propsFile, "//Version");
-	var currentVersion = new Version(readedVersion);
-	var semVersion = new Version(currentVersion.Major, currentVersion.Minor, currentVersion.Build + 1);
-	var version = semVersion.ToString();
-    XmlPoke(propsFile, "//Version", version);    
+    .IsDependentOn("Clean")
+    .WithCriteria(() => BuildSystem.IsRunningOnAzurePipelinesHosted)
+    .Does(() => {
+		var propsFile = "./src/Directory.build.props";
+        var readedVersion = XmlPeek(propsFile, "//Version");
+
+        GitVersion(new GitVersionSettings {
+		    UpdateAssemblyInfo = true,
+			OutputType = GitVersionOutput.BuildServer,
+        });
+
+        var gitVersionSettings = new GitVersionSettings {
+            OutputType = GitVersionOutput.Json
+        };
+
+        var gitVersion = GitVersion(gitVersionSettings);
+
+        var version = gitVersion.SemVer;
+        
+        Information($"Updating Azure DevOps Pipeline version to version {version}");
+                
+		XmlPoke(propsFile, "//Version", version);
 });
+
 
 Task("Build")
 .IsDependentOn("Version")

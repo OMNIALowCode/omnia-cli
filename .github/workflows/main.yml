@@ -15,5 +15,5 @@ jobs:
           dotnet-version: 2.2.108
           
       - name: Build
-        run: ./build.sh
+        run: sh ./build.sh
       

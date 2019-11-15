@@ -10,4 +10,6 @@ jobs:
     steps:
       - name: Build
         uses: ecampidoglio/cake-action@v1.1.0
+        with:
+          cake-version: 0.34.1
 

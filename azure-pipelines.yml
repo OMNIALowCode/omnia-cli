@@ -7,11 +7,14 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: cake-build.cake.cake-build-task.Cake@0
-  displayName: 'Cake '
+- task: Cake@0
+  inputs:
+    script: 'build.cake'
+    target: 'Default'
+    verbosity: 'Minimal'

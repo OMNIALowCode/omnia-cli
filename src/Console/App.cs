@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using McMaster.Extensions.CommandLineUtils;
 
 namespace Omnia.CLI
@@ -14,7 +15,7 @@ namespace Omnia.CLI
     {
         public void OnExecute(CommandLineApplication app)
         {
-
+            Console.WriteLine("Use -h or --help to know how to use it");
         }
 
         private static string GetVersion() => typeof(Program)

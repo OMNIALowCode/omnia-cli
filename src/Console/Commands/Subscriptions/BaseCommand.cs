@@ -1,4 +1,5 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using System;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
@@ -10,7 +11,7 @@ namespace Omnia.CLI.Commands.Subscriptions
     {
         public void OnExecute(CommandLineApplication app)
         {
-
+            Console.WriteLine("Use -h or --help to know how to use it");
         }
     }
 }

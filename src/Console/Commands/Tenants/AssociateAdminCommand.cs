@@ -2,9 +2,11 @@
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
-using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Text;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace Omnia.CLI.Commands.Tenants
 {
@@ -22,8 +24,8 @@ namespace Omnia.CLI.Commands.Tenants
     
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant where the user will be associated.")]
-        public string Tenant { get; set; }
+        [Option("--tenant-code", CommandOptionType.SingleValue, Description = "Tenant where the user will be associated.")]
+        public string TenantCode { get; set; }
         [Option("--username", CommandOptionType.SingleValue, Description = "Username of administrator.")]
         public string Username { get; set; }
         
@@ -36,9 +38,9 @@ namespace Omnia.CLI.Commands.Tenants
                 return (int)StatusCodes.InvalidArgument;
             }
 
-            if (string.IsNullOrWhiteSpace(Tenant))
+            if (string.IsNullOrWhiteSpace(TenantCode))
             {
-                Console.WriteLine($"{nameof(Tenant)} is required");
+                Console.WriteLine($"{nameof(TenantCode)} is required");
                 return (int)StatusCodes.InvalidArgument;
             }
 
@@ -56,11 +58,36 @@ namespace Omnia.CLI.Commands.Tenants
 
             var sourceSettings = _settings.GetSubscription(Subscription);
             
-            var path = Directory.GetCurrentDirectory();
-
             await _httpClient.WithSubscription(sourceSettings);
-           
+
+            await AddUserToRole(_httpClient, TenantCode, Username);
+
             return (int) StatusCodes.Success;
+        }
+
+        private static async Task<int> AddUserToRole(HttpClient httpClient, string tenantCode, string _username)
+        {
+            var patch = new JsonPatchDocument().Add("/subjects/-", new { username = _username });
+
+            var response = await httpClient.PatchAsJsonAsync($"/api/v1/management/Security/AuthorizationRole/Administration{tenantCode}", patch);
+
+            if (response.IsSuccessStatusCode)
+                return (int)StatusCodes.Success;
+
+            var apiError = await GetErrorFromApiResponse(response);
+
+            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
+
+            return (int)StatusCodes.InvalidOperation;
+        }
+
+        private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
+            => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
+
+        private class ApiError
+        {
+            public string Code { get; set; }
+            public string Message { get; set; }
         }
     }
 }

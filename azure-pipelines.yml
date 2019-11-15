@@ -18,3 +18,10 @@ steps:
     script: 'build.cake'
     target: 'Default'
     verbosity: 'Minimal'
+
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(System.DefaultWorkingDirectory)/publish'
+    ArtifactName: 'publish'
+    publishLocation: 'Container'

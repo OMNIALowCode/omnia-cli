@@ -1,4 +1,5 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using System;
 
 namespace Omnia.CLI.Commands.Security
 {
@@ -9,7 +10,7 @@ namespace Omnia.CLI.Commands.Security
     {
         public void OnExecute(CommandLineApplication app)
         {
-
+            Console.WriteLine("Use -h or --help to know how to use it");
         }
     }
 }

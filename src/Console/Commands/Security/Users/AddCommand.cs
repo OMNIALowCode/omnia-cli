@@ -8,15 +8,15 @@ using Newtonsoft.Json;
 using System.Text;
 using Microsoft.AspNetCore.JsonPatch;
 
-namespace Omnia.CLI.Commands.Tenants
+namespace Omnia.CLI.Commands.Security.Users
 {
-    [Command(Name = "associate-admin", Description = "Associate admin user to Tenant.")]
+    [Command(Name = "add", Description = "Associate user to Tenant's role.")]
     [HelpOption("-h|--help")]
-    public class AssociateAdminCommand
+    public class AddCommand
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        public AssociateAdminCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
@@ -24,11 +24,13 @@ namespace Omnia.CLI.Commands.Tenants
     
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
-        [Option("--tenant-code", CommandOptionType.SingleValue, Description = "Tenant where the user will be associated.")]
+        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant code where the user will be associated.")]
         public string TenantCode { get; set; }
-        [Option("--username", CommandOptionType.SingleValue, Description = "Username of administrator.")]
+        [Option("--username", CommandOptionType.SingleValue, Description = "User's name.")]
         public string Username { get; set; }
-        
+        [Option("--role", CommandOptionType.SingleValue, Description = "Tenant's role to which the user will be associated with.")]
+        public string Role { get; set; }
+
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
@@ -50,6 +52,12 @@ namespace Omnia.CLI.Commands.Tenants
                 return (int)StatusCodes.InvalidArgument;
             }
 
+            if (string.IsNullOrWhiteSpace(Role))
+            {
+                Console.WriteLine($"{nameof(Role)} is required");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
             if (!_settings.Exists(Subscription))
             {
                 Console.WriteLine($"Subscription {Subscription} can't be found.");
@@ -60,16 +68,16 @@ namespace Omnia.CLI.Commands.Tenants
             
             await _httpClient.WithSubscription(sourceSettings);
 
-            await AddUserToRole(_httpClient, TenantCode, Username);
+            await AddUserToRole(_httpClient, TenantCode, Username, Role);
 
             return (int) StatusCodes.Success;
         }
 
-        private static async Task<int> AddUserToRole(HttpClient httpClient, string tenantCode, string _username)
+        private static async Task<int> AddUserToRole(HttpClient httpClient, string tenantCode, string _username, string role)
         {
             var patch = new JsonPatchDocument().Add("/subjects/-", new { username = _username });
 
-            var response = await httpClient.PatchAsJsonAsync($"/api/v1/management/Security/AuthorizationRole/Administration{tenantCode}", patch);
+            var response = await httpClient.PatchAsJsonAsync($"/api/v1/management/Security/AuthorizationRole/{role}{tenantCode}", patch);
 
             if (response.IsSuccessStatusCode)
                 return (int)StatusCodes.Success;

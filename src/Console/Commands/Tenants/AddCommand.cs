@@ -44,10 +44,7 @@ namespace Omnia.CLI.Commands.Tenants
             }
 
             if (string.IsNullOrWhiteSpace(Name))
-            {
-                Console.WriteLine($"{nameof(Name)} is required");
-                return (int)StatusCodes.InvalidArgument;
-            }
+                Name = Code;
 
             if (!_settings.Exists(Subscription))
             {
@@ -66,10 +63,7 @@ namespace Omnia.CLI.Commands.Tenants
 
         private static async Task<int> CreateTenant(HttpClient httpClient, string tenantCode, string tenantName)
         {
-
-            var requestContent = new StringContent(JsonConvert.SerializeObject(new { Code = tenantCode, Name = tenantName }), Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync($"/api/v1/management/tenants", requestContent);
+            var response = await httpClient.PostAsJsonAsync($"/api/v1/management/tenants", new { Code = tenantCode, Name = tenantName });
             if (response.IsSuccessStatusCode)
                 return (int)StatusCodes.Success;
 

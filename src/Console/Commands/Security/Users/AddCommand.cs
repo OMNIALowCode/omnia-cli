@@ -26,7 +26,7 @@ namespace Omnia.CLI.Commands.Security.Users
         public string Subscription { get; set; }
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant code where the user will be associated.")]
         public string TenantCode { get; set; }
-        [Option("--username", CommandOptionType.SingleValue, Description = "User's name.")]
+        [Option("--username", CommandOptionType.SingleValue, Description = "Username.")]
         public string Username { get; set; }
         [Option("--role", CommandOptionType.SingleValue, Description = "Tenant's role to which the user will be associated with.")]
         public string Role { get; set; }

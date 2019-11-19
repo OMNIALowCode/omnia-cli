@@ -56,9 +56,7 @@ namespace Omnia.CLI.Commands.Tenants
 
             await _httpClient.WithSubscription(sourceSettings);
 
-            await CreateTenant(_httpClient, Code, Name);
-
-            return (int) StatusCodes.Success;
+            return await CreateTenant(_httpClient, Code, Name);
         }
 
         private static async Task<int> CreateTenant(HttpClient httpClient, string tenantCode, string tenantName)

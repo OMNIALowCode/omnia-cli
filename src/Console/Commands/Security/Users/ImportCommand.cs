@@ -65,7 +65,7 @@ namespace Omnia.CLI.Commands.Security.Users
 
             if (!_settings.Exists(Subscription))
             {
-                Console.WriteLine($"Subscription {Subscription} can't be found.");
+                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
                 return (int)StatusCodes.InvalidOperation;
             }
 
@@ -82,6 +82,8 @@ namespace Omnia.CLI.Commands.Security.Users
                     );
 
             await Task.WhenAll(tasks);
+
+            Console.WriteLine($"Users imported to tenant \"{Tenant}\" successfully.");
             return (int)StatusCodes.Success;
         }
 

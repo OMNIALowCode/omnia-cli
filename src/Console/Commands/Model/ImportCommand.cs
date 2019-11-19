@@ -59,6 +59,7 @@ namespace Omnia.CLI.Commands.Model
                 return await BuildModel(_httpClient, Tenant, Environment);
             }
 
+            Console.WriteLine($"Successfully imported model to tenant \"{Tenant}\".");
             return (int)StatusCodes.Success;
         }
 
@@ -82,7 +83,10 @@ namespace Omnia.CLI.Commands.Model
 
             var response = await httpClient.PostAsync($"/api/v1/{tenantCode}/{environmentCode}/model/builds", requestContent);
             if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Successfully imported and built model to tenant \"{tenantCode}\".");
                 return (int)StatusCodes.Success;
+            }
 
             var apiError = await GetErrorFromApiResponse(response);
 

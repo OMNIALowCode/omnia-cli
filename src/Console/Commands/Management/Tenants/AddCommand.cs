@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
 
-namespace Omnia.CLI.Commands.Tenants
+namespace Omnia.CLI.Commands.Management.Tenants
 {
     [Command(Name = "add", Description = "Create a new Tenant.")]
     [HelpOption("-h|--help")]
@@ -48,7 +48,7 @@ namespace Omnia.CLI.Commands.Tenants
 
             if (!_settings.Exists(Subscription))
             {
-                Console.WriteLine($"Subscription {Subscription} can't be found.");
+                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
                 return (int)StatusCodes.InvalidOperation;
             }
 
@@ -56,16 +56,17 @@ namespace Omnia.CLI.Commands.Tenants
 
             await _httpClient.WithSubscription(sourceSettings);
 
-            await CreateTenant(_httpClient, Code, Name);
-
-            return (int) StatusCodes.Success;
+            return await CreateTenant(_httpClient, Code, Name);
         }
 
         private static async Task<int> CreateTenant(HttpClient httpClient, string tenantCode, string tenantName)
         {
             var response = await httpClient.PostAsJsonAsync($"/api/v1/management/tenants", new { Code = tenantCode, Name = tenantName });
             if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Tenant \"{tenantName}\" ({tenantCode}) created successfully.");
                 return (int)StatusCodes.Success;
+            }
 
             var apiError = await GetErrorFromApiResponse(response);
 

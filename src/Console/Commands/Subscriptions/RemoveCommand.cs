@@ -30,7 +30,7 @@ namespace Omnia.CLI.Commands.Subscriptions
 
             if (!_settings.Exists(Name))
             {
-                Console.WriteLine($"Subscription {Name} can't be found.");
+                Console.WriteLine($"Subscription \"{Name}\" can't be found.");
                 return Task.FromResult((int)StatusCodes.InvalidOperation);
             }
 
@@ -45,6 +45,7 @@ namespace Omnia.CLI.Commands.Subscriptions
                 serializer.Serialize(file, _settings);
             }
 
+            Console.WriteLine($"Subscription \"{Name}\" configuration removed successfully.");
             return Task.FromResult((int)StatusCodes.Success);
         }
 

@@ -25,11 +25,13 @@ namespace Omnia.CLI.Commands.Security.Users
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant code where the user will be associated.")]
-        public string TenantCode { get; set; }
+        public string Tenant { get; set; }
         [Option("--username", CommandOptionType.SingleValue, Description = "Username.")]
         public string Username { get; set; }
         [Option("--role", CommandOptionType.SingleValue, Description = "Tenant's role to which the user will be associated with.")]
         public string Role { get; set; }
+        [Option("--environment", CommandOptionType.SingleValue, Description = "Tenant's environment.")]
+        public string Environment { get; set; } = Constants.DefaultEnvironment;
 
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
@@ -40,9 +42,9 @@ namespace Omnia.CLI.Commands.Security.Users
                 return (int)StatusCodes.InvalidArgument;
             }
 
-            if (string.IsNullOrWhiteSpace(TenantCode))
+            if (string.IsNullOrWhiteSpace(Tenant))
             {
-                Console.WriteLine($"{nameof(TenantCode)} is required");
+                Console.WriteLine($"{nameof(Tenant)} is required");
                 return (int)StatusCodes.InvalidArgument;
             }
 
@@ -58,9 +60,15 @@ namespace Omnia.CLI.Commands.Security.Users
                 return (int)StatusCodes.InvalidArgument;
             }
 
+            if (string.IsNullOrWhiteSpace(Environment))
+            {
+                Console.WriteLine($"{nameof(Environment)} is required");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
             if (!_settings.Exists(Subscription))
             {
-                Console.WriteLine($"Subscription {Subscription} can't be found.");
+                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
                 return (int)StatusCodes.InvalidOperation;
             }
 
@@ -68,19 +76,20 @@ namespace Omnia.CLI.Commands.Security.Users
             
             await _httpClient.WithSubscription(sourceSettings);
 
-            await AddUserToRole(_httpClient, TenantCode, Username, Role);
-
-            return (int) StatusCodes.Success;
+            return await AddUserToRole(_httpClient, Tenant, Username, Role, Environment);
         }
 
-        private static async Task<int> AddUserToRole(HttpClient httpClient, string tenantCode, string _username, string role)
+        private static async Task<int> AddUserToRole(HttpClient httpClient, string tenantCode, string _username, string role, string environment)
         {
             var patch = new JsonPatchDocument().Add("/subjects/-", new { username = _username });
 
-            var response = await httpClient.PatchAsJsonAsync($"/api/v1/management/Security/AuthorizationRole/{role}{tenantCode}", patch);
+            var response = await httpClient.PatchAsJsonAsync($"/api/v1/{tenantCode}/{environment}/security/AuthorizationRole/{role}", patch);
 
             if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"User \"{_username}\" associated to {tenantCode} {role} role successfully.");
                 return (int)StatusCodes.Success;
+            }
 
             var apiError = await GetErrorFromApiResponse(response);
 
@@ -99,3 +108,4 @@ namespace Omnia.CLI.Commands.Security.Users
         }
     }
 }
+ 

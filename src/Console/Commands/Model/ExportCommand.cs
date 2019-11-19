@@ -53,7 +53,7 @@ namespace Omnia.CLI.Commands.Model
 
             if (!_settings.Exists(Subscription))
             {
-                Console.WriteLine($"Subscription {Subscription} can't be found.");
+                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
                 return (int)StatusCodes.InvalidOperation;
             }
 
@@ -70,6 +70,7 @@ namespace Omnia.CLI.Commands.Model
 
             await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, Path.Combine(path, "src"));
 
+            Console.WriteLine($"Tenant \"{Tenant}\" model and last build exported successfully.");
             return (int) StatusCodes.Success;
         }
 

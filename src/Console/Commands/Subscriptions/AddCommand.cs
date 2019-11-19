@@ -55,7 +55,7 @@ namespace Omnia.CLI.Commands.Subscriptions
             
             if (_settings.Exists(Name))
             {
-                Console.WriteLine($"Subscription {Name} already exists.");
+                Console.WriteLine($"Subscription \"{Name}\" already exists.");
                 return Task.FromResult((int)StatusCodes.InvalidOperation);
             }
 
@@ -81,6 +81,7 @@ namespace Omnia.CLI.Commands.Subscriptions
                 serializer.Serialize(file, _settings);
             }
 
+            Console.WriteLine($"Configuration successfully added to subscription \"{Name}\".");
             return Task.FromResult((int)StatusCodes.Success);
         }
 

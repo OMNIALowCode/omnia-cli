@@ -1,6 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 
-namespace Omnia.CLI.Commands.Tenants
+namespace Omnia.CLI.Commands.Management.Tenants
 {
     [Command(Name = "tenants", Description = "Commands related to Tenants Management.")]
     [HelpOption("-h|--help")]

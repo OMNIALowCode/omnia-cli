@@ -32,10 +32,9 @@ Options:
 ```
 
 
-## Contributing and Feedback
-Everyone is free to contribute to the repository. It’s really appreciated.
+## Contributing
 
-Any bugs detected can be reported in the Issues section of this repository.
+See contribution Guidelines [here](CONTRIBUTING.md).
 
 ## License
 

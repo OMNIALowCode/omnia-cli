@@ -23,7 +23,8 @@ namespace Omnia.CLI.Commands.Application
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
         private List<string> headers = new List<string>();
-        private List<Dictionary<String, object>> lines = new List<Dictionary<string, object>>();
+        private List<IDictionary<String, object>> lines = new List<IDictionary<string, object>>();
+        private List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
 
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
@@ -71,21 +72,20 @@ namespace Omnia.CLI.Commands.Application
                     Call API
             */
 
+            ReadExcelAsync(this.Path);
 
-            var data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
-            data.Add(("Customer", "Default", new List<IDictionary<string, object>> {
-                new Dictionary<string, object>()
+            //var data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
 
-            { {"_code", "A" } }
-                }));
+            //{ {"_code", "A" } }
+            //    }));
 
-            await ProcessDefinitions(data);
+            await ProcessDefinitions(this.data);
 
             Console.WriteLine($"Successfully imported data to tenant \"{Tenant}\".");
             return (int)StatusCodes.Success;
         }
 
-        private void ReadExcel(string path)
+        private async void ReadExcelAsync(string path)
         {
             var workbook = new XSSFWorkbook(path);
 
@@ -114,11 +114,10 @@ namespace Omnia.CLI.Commands.Application
                         GetLines(row);
                     }
                 }
+
+                this.data.Add((entityName, "default", new List<IDictionary<string, object>>(lines)));
+                lines.Clear();
             }
-
-            string json = JsonConvert.SerializeObject(lines);
-
-            Console.WriteLine("Json:{0}", json);
         }
 
         private void GetLines(IRow row)
@@ -138,9 +137,9 @@ namespace Omnia.CLI.Commands.Application
                 headers.Add(item.StringCellValue);
             }
         }
+
         private async Task ProcessDefinitions(List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data)
         {
-
             using (var progressBar = new ProgressBar(data.Count, "Processing file..."))
             {
                 foreach (var (Definition, DataSource, Data) in data)
@@ -148,7 +147,6 @@ namespace Omnia.CLI.Commands.Application
                     await CreateEntities(progressBar, _httpClient, Tenant, Environment, Definition, DataSource, Data);
                     progressBar.Tick();
                 }
-
             }
         }
 
@@ -159,15 +157,12 @@ namespace Omnia.CLI.Commands.Application
             string dataSource,
             IList<IDictionary<string, object>> data)
         {
-
             using (var child = progressBar.Spawn(data.Count, "Processing entity..."))
             {
                 foreach (var entity in data)
                     _ = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity);
                 child.Tick();
             }
-
-
         }
 
         private static async Task<int> CreateEntity(HttpClient httpClient,
@@ -177,22 +172,27 @@ namespace Omnia.CLI.Commands.Application
             string dataSource,
             IDictionary<string, object> data)
         {
-            var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return (int)StatusCodes.Success;
+                var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
+                if (response.IsSuccessStatusCode)
+                {
+                    return (int)StatusCodes.Success;
+                }
+
+                var apiError = await GetErrorFromApiResponse(response);
+
+                Console.WriteLine($"{apiError.Code}: {apiError.Message}");
+
+                return (int)StatusCodes.InvalidOperation;
             }
-
-            var apiError = await GetErrorFromApiResponse(response);
-
-            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
-
-            return (int)StatusCodes.InvalidOperation;
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         private static Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
             => response.Content.ReadAsJsonAsync<ApiError>();
-
-
     }
 }

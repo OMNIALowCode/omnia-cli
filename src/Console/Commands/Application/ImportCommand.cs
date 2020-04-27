@@ -5,6 +5,7 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using Omnia.CLI.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -19,6 +20,8 @@ namespace Omnia.CLI.Commands.Application
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
+        private List<string> headers = new List<string>();
+        private List<Dictionary<String, object>> lines = new List<Dictionary<string, object>>();
 
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
@@ -69,7 +72,7 @@ namespace Omnia.CLI.Commands.Application
             return (int)StatusCodes.Success;
         }
 
-        private static void ReadExcel(string path)
+        private void ReadExcel(string path)
         {
             var workbook = new XSSFWorkbook(path);
 
@@ -89,11 +92,37 @@ namespace Omnia.CLI.Commands.Application
                 {
                     var row = sheet.GetRow(rownum);
 
-                    foreach (var cell in row.Cells)
+                    if (rownum == 0)
                     {
-                        Console.WriteLine("Cell:{0}", cell.StringCellValue);
+                        GetHeaders(row);
+                    }
+                    else
+                    {
+                        GetLines(row);
                     }
                 }
+            }
+
+            string json = JsonConvert.SerializeObject(lines);
+
+            Console.WriteLine("Json:{0}", json);
+        }
+
+        private void GetLines(IRow row)
+        {
+            Dictionary<string, object> line = new Dictionary<string, object>();
+            for (int cellnum = 0; cellnum < row.Cells.Count; cellnum++)
+            {
+                line.Add(headers[cellnum], row.Cells[cellnum].ToString());
+            }
+            lines.Add(line);
+        }
+
+        private void GetHeaders(IRow row)
+        {
+            foreach (var item in row)
+            {
+                headers.Add(item.StringCellValue);
             }
         }
 

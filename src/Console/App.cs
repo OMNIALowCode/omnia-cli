@@ -10,6 +10,7 @@ namespace Omnia.CLI
     [Subcommand(typeof(Omnia.CLI.Commands.Model.BaseCommand))]
     [Subcommand(typeof(Omnia.CLI.Commands.Security.BaseCommand))]
     [Subcommand(typeof(Omnia.CLI.Commands.Management.BaseCommand))]
+    [Subcommand(typeof(Omnia.CLI.Commands.Application.BaseCommand))]
     [VersionOptionFromMember(MemberName = nameof(GetVersion))]
 
     public class App

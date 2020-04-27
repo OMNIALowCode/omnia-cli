@@ -70,6 +70,17 @@ namespace Omnia.CLI.Commands.Application
                     Compose Json
                     Call API
             */
+
+
+            var data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
+            data.Add(("Customer", "Default", new List<IDictionary<string, object>> {
+                new Dictionary<string, object>()
+
+            { {"_code", "A" } }
+                }));
+
+            await ProcessDefinitions(data);
+
             Console.WriteLine($"Successfully imported data to tenant \"{Tenant}\".");
             return (int)StatusCodes.Success;
         }
@@ -127,25 +138,17 @@ namespace Omnia.CLI.Commands.Application
                 headers.Add(item.StringCellValue);
             }
         }
-        private async Task ProcessFile()
+        private async Task ProcessDefinitions(List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data)
         {
 
-            int numberOfSheets = 10;
-            using (var progressBar = new ProgressBar(numberOfSheets, "main progressbar"))
+            using (var progressBar = new ProgressBar(data.Count, "Processing file..."))
             {
-
-
-                var definition = "Customer";
-                var dataSource = "Default"; //TODO : How to know the DS?
-
-
-                await CreateEntities(progressBar, _httpClient, Tenant, Environment, definition, dataSource, new List<IDictionary<string, object>>()
+                foreach (var (Definition, DataSource, Data) in data)
                 {
-                  new Dictionary<string,object>
-                  {
-                      {"_code", "C1" }
-                  }
-                });
+                    await CreateEntities(progressBar, _httpClient, Tenant, Environment, Definition, DataSource, Data);
+                    progressBar.Tick();
+                }
+
             }
         }
 
@@ -157,9 +160,8 @@ namespace Omnia.CLI.Commands.Application
             IList<IDictionary<string, object>> data)
         {
 
-            using (var child = progressBar.Spawn(data.Count, "child actions"))
+            using (var child = progressBar.Spawn(data.Count, "Processing entity..."))
             {
-
                 foreach (var entity in data)
                     _ = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity);
                 child.Tick();

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Omnia.CLI.Extensions;
+using Omnia.CLI.Infrastructure;
 using System;
 using System.Globalization;
 using System.IO;
@@ -103,11 +104,5 @@ namespace Omnia.CLI.Commands.Model
 
         private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
             => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
-
-        private class ApiError
-        {
-            public string Code { get; set; }
-            public string Message { get; set; }
-        }
     }
 }

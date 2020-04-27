@@ -2,7 +2,10 @@
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Omnia.CLI.Extensions;
+using Omnia.CLI.Infrastructure;
+using ShellProgressBar;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -56,11 +59,70 @@ namespace Omnia.CLI.Commands.Application
             return (int)StatusCodes.Success;
         }
 
-
-        private class ApiError
+        private async Task ProcessFile()
         {
-            public string Code { get; set; }
-            public string Message { get; set; }
+
+            int numberOfSheets = 10;
+            using (var progressBar = new ProgressBar(numberOfSheets, "main progressbar"))
+            {
+
+
+                var definition = "Customer";
+                var dataSource = "Default"; //TODO : How to know the DS?
+
+
+                await CreateEntities(progressBar, _httpClient, Tenant, Environment, definition, dataSource, new List<IDictionary<string, object>>()
+                {
+                  new Dictionary<string,object>
+                  {
+                      {"_code", "C1" }
+                  }
+                });
+            }
         }
+
+        private static async Task CreateEntities(ProgressBar progressBar, HttpClient httpClient,
+            string tenantCode,
+            string environmentCode,
+            string definition,
+            string dataSource,
+            IList<IDictionary<string, object>> data)
+        {
+
+            using (var child = progressBar.Spawn(data.Count, "child actions"))
+            {
+
+                foreach (var entity in data)
+                    _ = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity);
+                child.Tick();
+            }
+
+
+        }
+
+        private static async Task<int> CreateEntity(HttpClient httpClient,
+            string tenantCode,
+            string environmentCode,
+            string definition,
+            string dataSource,
+            IDictionary<string, object> data)
+        {
+            var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
+            if (response.IsSuccessStatusCode)
+            {
+                return (int)StatusCodes.Success;
+            }
+
+            var apiError = await GetErrorFromApiResponse(response);
+
+            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
+
+            return (int)StatusCodes.InvalidOperation;
+        }
+
+        private static Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
+            => response.Content.ReadAsJsonAsync<ApiError>();
+
+
     }
 }

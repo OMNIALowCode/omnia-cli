@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,8 +24,8 @@ namespace Omnia.CLI.Commands.Application
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
         private List<string> headers = new List<string>();
-        private List<IDictionary<String, object>> lines = new List<IDictionary<string, object>>();
-        private List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
+        private readonly List<IDictionary<String, object>> _lines = new List<IDictionary<string, object>>();
+        private readonly List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> _data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
 
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
@@ -74,18 +75,16 @@ namespace Omnia.CLI.Commands.Application
 
             ReadExcelAsync(this.Path);
 
-            //var data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
 
-            //{ {"_code", "A" } }
-            //    }));
+            var success = await ProcessDefinitions(this._data);
 
-            await ProcessDefinitions(this.data);
+            if (!success) return (int)StatusCodes.UnknownError;
 
             Console.WriteLine($"Successfully imported data to tenant \"{Tenant}\".");
             return (int)StatusCodes.Success;
         }
 
-        private async void ReadExcelAsync(string path)
+        private void ReadExcelAsync(string path)
         {
             var workbook = new XSSFWorkbook(path);
 
@@ -95,7 +94,9 @@ namespace Omnia.CLI.Commands.Application
             {
                 var sheet = workbook.GetSheetAt(s);
 
-                string entityName = sheet.SheetName;
+                var namingParts = GetSheetNameWithoutNamingKey(sheet.SheetName).Split('.');
+                var entityName = namingParts[0];
+                var dataSource = namingParts.Length > 1 ? namingParts[1] : "default";
 
                 Console.WriteLine("entityName:{0}", entityName);
 
@@ -115,9 +116,12 @@ namespace Omnia.CLI.Commands.Application
                     }
                 }
 
-                this.data.Add((entityName, "default", new List<IDictionary<string, object>>(lines)));
-                lines.Clear();
+                this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(_lines)));
+                _lines.Clear();
             }
+
+            string GetSheetNameWithoutNamingKey(string sheetName)
+                => sheetName.Split('-')[0];
         }
 
         private void GetLines(IRow row)
@@ -127,7 +131,7 @@ namespace Omnia.CLI.Commands.Application
             {
                 line.Add(headers[cellnum], row.Cells[cellnum].ToString());
             }
-            lines.Add(line);
+            _lines.Add(line);
         }
 
         private void GetHeaders(IRow row)
@@ -138,31 +142,62 @@ namespace Omnia.CLI.Commands.Application
             }
         }
 
-        private async Task ProcessDefinitions(List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data)
+        private async Task<bool> ProcessDefinitions(List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data)
         {
-            using (var progressBar = new ProgressBar(data.Count, "Processing file..."))
+            var failed = new List<string>();
+            var options = new ProgressBarOptions
+            {
+                ForegroundColor = ConsoleColor.Cyan,
+                ProgressCharacter = '─',
+                ProgressBarOnBottom = true
+            };
+
+            using (var progressBar = new ProgressBar(data.Count, "Processing file...", options))
             {
                 foreach (var (Definition, DataSource, Data) in data)
                 {
-                    await CreateEntities(progressBar, _httpClient, Tenant, Environment, Definition, DataSource, Data);
+                    var (Success, Messages) = await CreateEntities(progressBar, _httpClient, Tenant, Environment, Definition, DataSource, Data);
                     progressBar.Tick();
+
+                    if (Success)
+                        continue;
+
+                    failed.AddRange(Messages);
                 }
             }
+
+            Console.WriteLine($"----- Failed: {failed.Count()} -----");
+            foreach (var message in failed)
+                Console.WriteLine(message);
+
+            return !failed.Any();
         }
 
-        private static async Task CreateEntities(ProgressBar progressBar, HttpClient httpClient,
+        private static async Task<(bool Success, string[] Messages)> CreateEntities(ProgressBar progressBar, HttpClient httpClient,
             string tenantCode,
             string environmentCode,
             string definition,
             string dataSource,
             IList<IDictionary<string, object>> data)
         {
+            var failedEntities = new List<string>();
+
             using (var child = progressBar.Spawn(data.Count, "Processing entity..."))
             {
                 foreach (var entity in data)
-                    _ = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity);
-                child.Tick();
+                {
+                    var result = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity);
+
+                    child.Tick(message: result == (int)StatusCodes.Success ? null : $"Error creating entity for {dataSource} {definition}");
+                    if (result != (int)StatusCodes.Success)
+                    {
+                        child.ForegroundColor = ConsoleColor.DarkRed;
+                        failedEntities.Add($"{dataSource}.{definition}: {string.Join(";", entity.Select(c => c.Value))}");
+                    }
+                }
             }
+
+            return (!failedEntities.Any(), failedEntities.ToArray());
         }
 
         private static async Task<int> CreateEntity(HttpClient httpClient,
@@ -172,24 +207,19 @@ namespace Omnia.CLI.Commands.Application
             string dataSource,
             IDictionary<string, object> data)
         {
-            try
+
+            var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
+            if (response.IsSuccessStatusCode)
             {
-                var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
-                if (response.IsSuccessStatusCode)
-                {
-                    return (int)StatusCodes.Success;
-                }
-
-                var apiError = await GetErrorFromApiResponse(response);
-
-                Console.WriteLine($"{apiError.Code}: {apiError.Message}");
-
-                return (int)StatusCodes.InvalidOperation;
+                return (int)StatusCodes.Success;
             }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+
+            var apiError = await GetErrorFromApiResponse(response);
+
+            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
+
+            return (int)StatusCodes.InvalidOperation;
+
         }
 
         private static Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)

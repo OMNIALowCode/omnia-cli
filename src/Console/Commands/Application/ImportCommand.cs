@@ -26,6 +26,10 @@ namespace Omnia.CLI.Commands.Application
         private List<string> headers = new List<string>();
         private readonly List<IDictionary<String, object>> _lines = new List<IDictionary<string, object>>();
         private readonly List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> _data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
+        private readonly List<string> _sheets = new List<string>();
+        private readonly List<string> _sheetsprocessed = new List<string>();
+
+        private readonly Dictionary<String, List<ImportCollection>> dictionaryCollections = new Dictionary<string, List<ImportCollection>>();
 
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
@@ -75,7 +79,6 @@ namespace Omnia.CLI.Commands.Application
 
             ReadExcelAsync(this.Path);
 
-
             var success = await ProcessDefinitions(this._data);
 
             if (!success) return (int)StatusCodes.UnknownError;
@@ -90,38 +93,137 @@ namespace Omnia.CLI.Commands.Application
 
             Console.WriteLine("NumberOfSheets:{0}", workbook.NumberOfSheets);
 
-            for (int s = 0; s < workbook.NumberOfSheets; s++)
+            for (int i = 0; i < workbook.NumberOfSheets; i++)
             {
-                var sheet = workbook.GetSheetAt(s);
+                this._sheets.Add(workbook.GetSheetAt(i).SheetName);
+            }
+            foreach (var sheet in this._sheets)
+            {
+                if (this._sheetsprocessed.Contains(sheet))
+                {
+                    continue;
+                }
 
-                var namingParts = GetSheetNameWithoutNamingKey(sheet.SheetName).Split('.');
+                var sheetstoProcess = new List<String>(this._sheets.Where(s => s.StartsWith(sheet)));
+
+                var worksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
+
+                var namingParts = GetSheetNameWithoutNamingKey(worksheet.SheetName).Split('.');
                 var entityName = namingParts[0];
                 var dataSource = namingParts.Length > 1 ? namingParts[1] : "default";
 
                 Console.WriteLine("entityName:{0}", entityName);
 
-                Console.WriteLine("PhysicalNumberOfRows:{0}", sheet.PhysicalNumberOfRows);
+                Console.WriteLine("PhysicalNumberOfRows:{0}", worksheet.PhysicalNumberOfRows);
 
-                for (int rownum = 0; rownum < sheet.PhysicalNumberOfRows; rownum++)
+                if (sheetstoProcess.Count() == 1)
                 {
-                    var row = sheet.GetRow(rownum);
+                    for (int rownum = 0; rownum < worksheet.PhysicalNumberOfRows; rownum++)
+                    {
+                        var row = worksheet.GetRow(rownum);
 
-                    if (rownum == 0)
-                    {
-                        GetHeaders(row);
+                        if (rownum == 0)
+                        {
+                            GetHeaders(row);
+                        }
+                        else
+                        {
+                            GetLines(row);
+                        }
                     }
-                    else
-                    {
-                        GetLines(row);
-                    }
+
+                    this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(_lines)));
+                    _lines.Clear();
                 }
+                else
+                {
+                    foreach (var item in sheetstoProcess)
+                    {
+                        var collections = new List<ImportCollection>();
 
-                this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(_lines)));
-                _lines.Clear();
+                        var multipleworksheet = workbook.GetSheetAt(workbook.GetSheetIndex(item));
+
+                        for (int rownum = 0; rownum < multipleworksheet.PhysicalNumberOfRows; rownum++)
+                        {
+                            var row = multipleworksheet.GetRow(rownum);
+
+                            if (rownum == 0)
+                            {
+                                GetHeaders(row);
+                            }
+                            else
+                            {
+                                var importCollection = new ImportCollection();
+                                GetLinesCollection(row, importCollection);
+                                collections.Add(importCollection);
+                            }
+                        }
+                        dictionaryCollections.Add(item, collections);
+                        headers.Clear();
+                        this._sheetsprocessed.Add(item);
+                    }
+
+                    ImportData(this.dictionaryCollections.Keys.Last());
+
+                    List<IDictionary<string, object>> collection = new List<IDictionary<string, object>>();
+                    foreach (var item in this.dictionaryCollections.FirstOrDefault().Value)
+                    {
+                        collection.Add(item.Data);
+                    }
+
+                    this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(collection)));
+                }
             }
 
             string GetSheetNameWithoutNamingKey(string sheetName)
                 => sheetName.Split('-')[0];
+        }
+
+        private void ImportData(string entity)
+        {
+            int level = entity.Count(c => c.Equals('.'));
+            if (level != 0)
+            {
+                var importdata = this.dictionaryCollections[entity];
+
+                var importCollection = this.dictionaryCollections.Where(s => s.Key.Equals(entity.Substring(0, entity.LastIndexOf('.')))).FirstOrDefault().Value;
+                foreach (var parent in importCollection)
+                {
+                    var childData = importdata.Where(i => i.ParentId == parent.Id);
+                    var field = entity.Split(".")[level];
+                    parent.Data.Add(field, childData.Select(s => s.Data));
+                }
+                dictionaryCollections.Remove(entity);
+                ImportData(this.dictionaryCollections.Keys.Last());
+            }
+
+            //foreach (var dictionary in this.dictionaryCollections)
+            //{
+            //    var importdata = this.dictionaryCollections.Where(s => s.Key.StartsWith(dictionary.Key) && s.Key != dictionary.Key && s.Key.Count(c => c.Equals('.')) == level).FirstOrDefault();
+            //    var importCollection = dictionary.Value;
+            //    foreach (var item in importCollection)
+            //    {
+            //        var childData = importdata.Value.Where(i => i.ParentId == item.Id);
+            //        var field = importdata.Key.Split(".")[1];
+            //        item.Data.Add(field, childData);
+            //    }
+            //}
+        }
+
+        private void GetLinesCollection(IRow row, ImportCollection collection)
+        {
+            Dictionary<string, object> line = new Dictionary<string, object>();
+            collection.Data = new Dictionary<string, object>();
+            for (int cellnum = 0; cellnum < row.Cells.Count; cellnum++)
+            {
+                if (headers[cellnum].Equals("#ID"))
+                    collection.Id = row.Cells[cellnum].ToString();
+
+                if (headers[cellnum].Equals("ParentID"))
+                    collection.ParentId = row.Cells[cellnum].ToString();
+
+                collection.Data.Add(headers[cellnum], row.Cells[cellnum].ToString());
+            }
         }
 
         private void GetLines(IRow row)
@@ -207,7 +309,6 @@ namespace Omnia.CLI.Commands.Application
             string dataSource,
             IDictionary<string, object> data)
         {
-
             var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
             if (response.IsSuccessStatusCode)
             {
@@ -219,7 +320,6 @@ namespace Omnia.CLI.Commands.Application
             Console.WriteLine($"{apiError.Code}: {apiError.Message}");
 
             return (int)StatusCodes.InvalidOperation;
-
         }
 
         private static Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)

@@ -189,6 +189,7 @@ namespace Omnia.CLI.Commands.Application
         {
             _lines.Clear();
             headers.Clear();
+            this.dictionaryCollections.Clear();
         }
 
         private void LoadSheets(XSSFWorkbook workbook)

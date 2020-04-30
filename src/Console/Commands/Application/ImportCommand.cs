@@ -107,6 +107,31 @@ namespace Omnia.CLI.Commands.Application
                 => sheetName.Split('-')[0];
         }
 
+        private void ProcessSimpleEntity(ISheet activeWorksheet, string entityName, string dataSource)
+        {
+            for (int rownum = 0; rownum < activeWorksheet.PhysicalNumberOfRows; rownum++)
+            {
+                var row = activeWorksheet.GetRow(rownum);
+
+                if (row != null)
+                {
+                    if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+
+                    if (rownum == 0)
+                    {
+                        GetHeaders(row);
+                    }
+                    else
+                    {
+                        GetLines(row);
+                    }
+                }
+            }
+
+            this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(_lines)));
+            ResetData();
+        }
+
         private void ProcessEntitywithCollections(XSSFWorkbook workbook, string sheet, string entityName, string dataSource)
         {
             foreach (var item in new List<string>(this._sheets.Where(s => s.StartsWith(sheet))))
@@ -118,8 +143,11 @@ namespace Omnia.CLI.Commands.Application
                 for (int rownum = 0; rownum < activeworksheet.PhysicalNumberOfRows; rownum++)
                 {
                     var row = activeworksheet.GetRow(rownum);
+
                     if (row != null)
                     {
+                        if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+
                         if (rownum == 0)
                         {
                             GetHeaders(row);
@@ -155,28 +183,6 @@ namespace Omnia.CLI.Commands.Application
             }
 
             return collection;
-        }
-
-        private void ProcessSimpleEntity(ISheet activeWorksheet, string entityName, string dataSource)
-        {
-            for (int rownum = 0; rownum < activeWorksheet.PhysicalNumberOfRows; rownum++)
-            {
-                var row = activeWorksheet.GetRow(rownum);
-                if (row != null)
-                {
-                    if (rownum == 0)
-                    {
-                        GetHeaders(row);
-                    }
-                    else
-                    {
-                        GetLines(row);
-                    }
-                }
-            }
-
-            this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(_lines)));
-            ResetData();
         }
 
         private void ResetData()
@@ -236,91 +242,97 @@ namespace Omnia.CLI.Commands.Application
                 collection.ParentId = cell.ToString();
             else if (String.IsNullOrEmpty(header))
                 return;
-
-            switch (cell.CellType)
+            else
             {
-                case CellType.String:
-                    collection.Data.Add(header, cell.StringCellValue);
-                    break;
+                switch (cell.CellType)
+                {
+                    case CellType.String:
+                        collection.Data.Add(header, cell.StringCellValue);
+                        break;
 
-                case CellType.Numeric:
-                    if (DateUtil.IsCellDateFormatted(cell))
-                    {
-                        DateTime date = cell.DateCellValue;
-                        collection.Data.Add(header, cell.DateCellValue);
-                    }
-                    else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue) && cell.DateCellValue != null)
-                        collection.Data.Add(header, cell.DateCellValue);
-                    else
-                        collection.Data.Add(header, cell.NumericCellValue);
-                    break;
+                    case CellType.Numeric:
+                        if (DateUtil.IsCellDateFormatted(cell))
+                        {
+                            DateTime date = cell.DateCellValue;
+                            collection.Data.Add(header, cell.DateCellValue);
+                        }
+                        else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue) && cell.DateCellValue != null)
+                            collection.Data.Add(header, cell.DateCellValue);
+                        else
+                            collection.Data.Add(header, cell.NumericCellValue);
+                        break;
 
-                case CellType.Boolean:
-                    collection.Data.Add(header, cell.BooleanCellValue);
-                    break;
+                    case CellType.Boolean:
+                        collection.Data.Add(header, cell.BooleanCellValue);
+                        break;
 
-                case CellType.Formula:
-                    collection.Data.Add(header, cell.CellFormula);
-                    break;
+                    case CellType.Formula:
+                        collection.Data.Add(header, cell.CellFormula);
+                        break;
 
-                case CellType.Error:
-                    collection.Data.Add(header, FormulaError.ForInt(cell.ErrorCellValue).String);
-                    break;
+                    case CellType.Error:
+                        collection.Data.Add(header, FormulaError.ForInt(cell.ErrorCellValue).String);
+                        break;
 
-                case CellType.Blank:
-                    collection.Data.Add(header, String.Empty);
-                    break;
+                    case CellType.Blank:
+                        collection.Data.Add(header, String.Empty);
+                        break;
 
-                case CellType.Unknown:
+                    case CellType.Unknown:
 
-                default:
-                    break;
+                    default:
+                        break;
+                }
             }
         }
 
         private void LoadDataToLine(IRow row, Dictionary<string, object> line, int cellnum)
         {
             var cell = row.GetCell(cellnum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            var header = headers[cellnum];
-
-            switch (cell.CellType)
+            var header = headers.Count() > cellnum ? headers[cellnum] : String.Empty;
+            if (String.IsNullOrEmpty(header))
+                return;
+            else
             {
-                case CellType.String:
-                    line.Add(header, cell.StringCellValue);
-                    break;
+                switch (cell.CellType)
+                {
+                    case CellType.String:
+                        line.Add(header, cell.StringCellValue);
+                        break;
 
-                case CellType.Numeric:
-                    if (DateUtil.IsCellDateFormatted(cell))
-                    {
-                        DateTime date = cell.DateCellValue;
-                        line.Add(header, cell.DateCellValue);
-                    }
-                    else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue) && cell.DateCellValue != null)
-                        line.Add(header, cell.DateCellValue);
-                    else
-                        line.Add(header, cell.NumericCellValue);
-                    break;
+                    case CellType.Numeric:
+                        if (DateUtil.IsCellDateFormatted(cell))
+                        {
+                            DateTime date = cell.DateCellValue;
+                            line.Add(header, cell.DateCellValue);
+                        }
+                        else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue) && cell.DateCellValue != null)
+                            line.Add(header, cell.DateCellValue);
+                        else
+                            line.Add(header, cell.NumericCellValue);
+                        break;
 
-                case CellType.Boolean:
-                    line.Add(headers[cellnum], cell.BooleanCellValue);
-                    break;
+                    case CellType.Boolean:
+                        line.Add(headers[cellnum], cell.BooleanCellValue);
+                        break;
 
-                case CellType.Formula:
-                    line.Add(headers[cellnum], cell.CellFormula);
-                    break;
+                    case CellType.Formula:
+                        line.Add(headers[cellnum], cell.CellFormula);
+                        break;
 
-                case CellType.Error:
-                    line.Add(headers[cellnum], FormulaError.ForInt(cell.ErrorCellValue).String);
-                    break;
+                    case CellType.Error:
+                        line.Add(headers[cellnum], FormulaError.ForInt(cell.ErrorCellValue).String);
+                        break;
 
-                case CellType.Blank:
-                    line.Add(headers[cellnum], String.Empty);
-                    break;
+                    case CellType.Blank:
+                        line.Add(headers[cellnum], String.Empty);
+                        break;
 
-                case CellType.Unknown:
+                    case CellType.Unknown:
 
-                default:
-                    break;
+                    default:
+                        break;
+                }
             }
         }
 

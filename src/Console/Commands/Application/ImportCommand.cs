@@ -93,18 +93,18 @@ namespace Omnia.CLI.Commands.Application
                 var entityName = namingParts[0];
                 var dataSource = namingParts.Length > 1 ? namingParts[1] : "default";
 
-                if (new List<string>(this._sheets.Where(s => s.StartsWith(sheet))).Count() == 1)
+                if (new List<string>(this._sheets.Where(s => s.StartsWith(String.Format("{0}.", sheet)))).Count() >= 1)
                 {
-                    ProcessSimpleEntity(activeWorksheet, entityName, dataSource);
+                    ProcessEntitywithCollections(workbook, sheet, entityName, dataSource);
                 }
                 else
                 {
-                    ProcessEntitywithCollections(workbook, sheet, entityName, dataSource);
+                    ProcessSimpleEntity(activeWorksheet, entityName, dataSource);
                 }
             }
 
             string GetSheetNameWithoutNamingKey(string sheetName)
-                => sheetName.Split('-')[0];
+               => sheetName.Split('-')[0];
         }
 
         private void ProcessSimpleEntity(ISheet activeWorksheet, string entityName, string dataSource)

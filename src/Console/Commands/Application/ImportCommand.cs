@@ -20,13 +20,13 @@ namespace Omnia.CLI.Commands.Application
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        private List<string> headers = new List<string>();
-        private readonly List<IDictionary<String, object>> _lines = new List<IDictionary<string, object>>();
+        private readonly List<string> _headers = new List<string>();
+        private readonly List<IDictionary<string, object>> _lines = new List<IDictionary<string, object>>();
         private readonly List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> _data = new List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)>();
         private readonly List<string> _sheets = new List<string>();
-        private readonly List<string> _sheetsprocessed = new List<string>();
+        private readonly List<string> _sheetsProcessed = new List<string>();
 
-        private readonly Dictionary<String, List<ImportCollection>> dictionaryCollections = new Dictionary<string, List<ImportCollection>>();
+        private readonly Dictionary<string, List<ImportCollection>> _dictionaryCollections = new Dictionary<string, List<ImportCollection>>();
 
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
@@ -82,7 +82,7 @@ namespace Omnia.CLI.Commands.Application
 
             foreach (var sheet in this._sheets)
             {
-                if (this._sheetsprocessed.Contains(sheet))
+                if (this._sheetsProcessed.Contains(sheet))
                 {
                     continue;
                 }
@@ -93,9 +93,9 @@ namespace Omnia.CLI.Commands.Application
                 var entityName = namingParts[0];
                 var dataSource = namingParts.Length > 1 ? namingParts[1] : "default";
 
-                if (new List<string>(this._sheets.Where(s => s.StartsWith(String.Format("{0}.", sheet)))).Count() >= 1)
+                if (_sheets.Any(s => s.StartsWith($"{sheet}.")))
                 {
-                    ProcessEntitywithCollections(workbook, sheet, entityName, dataSource);
+                    ProcessEntityWithCollections(workbook, sheet, entityName, dataSource);
                 }
                 else
                 {
@@ -109,22 +109,21 @@ namespace Omnia.CLI.Commands.Application
 
         private void ProcessSimpleEntity(ISheet activeWorksheet, string entityName, string dataSource)
         {
-            for (int rownum = 0; rownum < activeWorksheet.PhysicalNumberOfRows; rownum++)
+            for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
             {
-                var row = activeWorksheet.GetRow(rownum);
+                var row = activeWorksheet.GetRow(rowNum);
 
-                if (row != null)
+                if (row == null) continue;
+                
+                if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+
+                if (rowNum == 0)
                 {
-                    if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
-
-                    if (rownum == 0)
-                    {
-                        GetHeaders(row);
-                    }
-                    else
-                    {
-                        GetLines(row);
-                    }
+                    GetHeaders(row);
+                }
+                else
+                {
+                    GetLines(row);
                 }
             }
 
@@ -132,41 +131,40 @@ namespace Omnia.CLI.Commands.Application
             ResetData();
         }
 
-        private void ProcessEntitywithCollections(XSSFWorkbook workbook, string sheet, string entityName, string dataSource)
+        private void ProcessEntityWithCollections(XSSFWorkbook workbook, string sheet, string entityName, string dataSource)
         {
             foreach (var item in new List<string>(this._sheets.Where(s => s.StartsWith(sheet))))
             {
                 var importCollections = new List<ImportCollection>();
 
-                var activeworksheet = workbook.GetSheetAt(workbook.GetSheetIndex(item));
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(item));
 
-                for (int rownum = 0; rownum < activeworksheet.PhysicalNumberOfRows; rownum++)
+                for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
                 {
-                    var row = activeworksheet.GetRow(rownum);
+                    var row = activeWorksheet.GetRow(rowNum);
 
-                    if (row != null)
+                    if (row == null) continue;
+                    
+                    if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+
+                    if (rowNum == 0)
                     {
-                        if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
-
-                        if (rownum == 0)
-                        {
-                            GetHeaders(row);
-                        }
-                        else
-                        {
-                            var importCollection = new ImportCollection();
-                            GetLinesCollection(row, importCollection);
-                            importCollections.Add(importCollection);
-                        }
+                        GetHeaders(row);
+                    }
+                    else
+                    {
+                        var importCollection = new ImportCollection();
+                        GetLinesCollection(row, importCollection);
+                        importCollections.Add(importCollection);
                     }
                 }
 
-                dictionaryCollections.Add(item, importCollections);
-                headers.Clear();
-                this._sheetsprocessed.Add(item);
+                _dictionaryCollections.Add(item, importCollections);
+                _headers.Clear();
+                this._sheetsProcessed.Add(item);
             }
 
-            ProcessHierarchy(this.dictionaryCollections.Keys.Last());
+            ProcessHierarchy(this._dictionaryCollections.Keys.Last());
 
             var collection = PrepareCollection();
             this._data.Add((entityName, dataSource, new List<IDictionary<string, object>>(collection)));
@@ -174,10 +172,11 @@ namespace Omnia.CLI.Commands.Application
             ResetData();
         }
 
-        private List<IDictionary<string, object>> PrepareCollection()
+        private IEnumerable<IDictionary<string, object>> PrepareCollection()
         {
-            List<IDictionary<string, object>> collection = new List<IDictionary<string, object>>();
-            foreach (var item in this.dictionaryCollections.FirstOrDefault().Value)
+            var collection = new List<IDictionary<string, object>>();
+
+            foreach (var item in this._dictionaryCollections.FirstOrDefault().Value)
             {
                 collection.Add(item.Data);
             }
@@ -188,177 +187,166 @@ namespace Omnia.CLI.Commands.Application
         private void ResetData()
         {
             _lines.Clear();
-            headers.Clear();
-            this.dictionaryCollections.Clear();
+            _headers.Clear();
+            this._dictionaryCollections.Clear();
         }
 
         private void LoadSheets(XSSFWorkbook workbook)
         {
-            for (int sheetNumber = 0; sheetNumber < workbook.NumberOfSheets; sheetNumber++)
+            for (var sheetNumber = 0; sheetNumber < workbook.NumberOfSheets; sheetNumber++)
             {
-                this._sheets.Add(workbook.GetSheetAt(sheetNumber).SheetName);
+                _sheets.Add(workbook.GetSheetAt(sheetNumber).SheetName);
             }
         }
 
         private void ProcessHierarchy(string entity)
         {
-            int level = entity.Count(c => c.Equals('.'));
-            if (level != 0)
-            {
-                var importdata = this.dictionaryCollections[entity];
+            var level = entity.Count(c => c.Equals('.'));
+            if (level == 0) return;
+            
+            var importData = this._dictionaryCollections[entity];
 
-                var importCollection = this.dictionaryCollections.Where(s => s.Key.Equals(entity.Substring(0, entity.LastIndexOf('.')))).FirstOrDefault().Value;
-                foreach (var parent in importCollection)
-                {
-                    var childData = importdata.Where(i => i.ParentId == parent.Id);
-                    var field = entity.Split(".")[level];
-                    parent.Data.Add(field, childData.Select(s => s.Data));
-                }
-                dictionaryCollections.Remove(entity);
-                ProcessHierarchy(this.dictionaryCollections.Keys.Last());
+            var importCollection = _dictionaryCollections.FirstOrDefault(s => s.Key.Equals(entity.Substring(0, entity.LastIndexOf('.')))).Value;
+            foreach (var parent in importCollection)
+            {
+                var childData = importData.Where(i => i.ParentId == parent.Id);
+                var field = entity.Split(".")[level];
+                parent.Data.Add(field, childData.Select(s => s.Data));
             }
+            _dictionaryCollections.Remove(entity);
+            ProcessHierarchy(this._dictionaryCollections.Keys.Last());
         }
 
         private void GetLinesCollection(IRow row, ImportCollection collection)
         {
-            Dictionary<string, object> line = new Dictionary<string, object>();
             collection.Data = new Dictionary<string, object>();
-            if (row != null)
+            if (row == null) return;
+
+            for (var cellNum = 0; cellNum < row.LastCellNum; cellNum++)
             {
-                for (int cellnum = 0; cellnum < row.LastCellNum; cellnum++)
-                {
-                    LoadDataToCollection(row, collection, cellnum);
-                }
+                LoadDataToCollection(row, collection, cellNum);
             }
         }
 
-        private void LoadDataToCollection(IRow row, ImportCollection collection, int cellnum)
+        private void LoadDataToCollection(IRow row, ImportCollection collection, int cellNum)
         {
-            var cell = row.GetCell(cellnum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            var header = headers.Count() > cellnum ? headers[cellnum] : String.Empty;
+            var cell = row.GetCell(cellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+            var header = _headers.Count > cellNum ? _headers[cellNum] : string.Empty;
 
             if (header.Equals("#ID"))
                 collection.Id = cell.ToString();
             else if (header.Equals("ParentID"))
                 collection.ParentId = cell.ToString();
-            else if (String.IsNullOrEmpty(header))
+            else if (string.IsNullOrEmpty(header))
                 return;
-            else
+
+            switch (cell.CellType)
             {
-                switch (cell.CellType)
-                {
-                    case CellType.String:
-                        collection.Data.Add(header, cell.StringCellValue);
-                        break;
+                case CellType.String:
+                    collection.Data.Add(header, cell.StringCellValue);
+                    break;
 
-                    case CellType.Numeric:
-                        if (DateUtil.IsCellDateFormatted(cell))
-                        {
-                            DateTime date = cell.DateCellValue;
-                            collection.Data.Add(header, cell.DateCellValue);
-                        }
-                        else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue) && cell.DateCellValue != null)
-                            collection.Data.Add(header, cell.DateCellValue);
-                        else
-                            collection.Data.Add(header, cell.NumericCellValue);
-                        break;
+                case CellType.Numeric:
+                    if (DateUtil.IsCellDateFormatted(cell))
+                        collection.Data.Add(header, cell.DateCellValue);
+                    else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue))
+                        collection.Data.Add(header, cell.DateCellValue);
+                    else
+                        collection.Data.Add(header, cell.NumericCellValue);
+                    break;
 
-                    case CellType.Boolean:
-                        collection.Data.Add(header, cell.BooleanCellValue);
-                        break;
+                case CellType.Boolean:
+                    collection.Data.Add(header, cell.BooleanCellValue);
+                    break;
 
-                    case CellType.Formula:
-                        collection.Data.Add(header, cell.CellFormula);
-                        break;
+                case CellType.Formula:
+                    collection.Data.Add(header, cell.CellFormula);
+                    break;
 
-                    case CellType.Error:
-                        collection.Data.Add(header, FormulaError.ForInt(cell.ErrorCellValue).String);
-                        break;
+                case CellType.Error:
+                    collection.Data.Add(header, FormulaError.ForInt(cell.ErrorCellValue).String);
+                    break;
 
-                    case CellType.Blank:
-                        collection.Data.Add(header, String.Empty);
-                        break;
+                case CellType.Blank:
+                    collection.Data.Add(header, string.Empty);
+                    break;
 
-                    case CellType.Unknown:
-
-                    default:
-                        break;
-                }
+                case CellType.Unknown:
+                    break;
+                
+                default:
+                    throw new InvalidDataException($"Unknown Cell Type: {cell.CellType}");
             }
+
         }
 
-        private void LoadDataToLine(IRow row, Dictionary<string, object> line, int cellnum)
+        private void LoadDataToLine(IRow row, IDictionary<string, object> line, int cellNum)
         {
-            var cell = row.GetCell(cellnum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            var header = headers.Count() > cellnum ? headers[cellnum] : String.Empty;
-            if (String.IsNullOrEmpty(header))
+            var cell = row.GetCell(cellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+            var header = _headers.Count > cellNum ? _headers[cellNum] : string.Empty;
+            if (string.IsNullOrEmpty(header))
                 return;
-            else
+
+            switch (cell.CellType)
             {
-                switch (cell.CellType)
-                {
-                    case CellType.String:
-                        line.Add(header, cell.StringCellValue);
-                        break;
+                case CellType.String:
+                    line.Add(header, cell.StringCellValue);
+                    break;
 
-                    case CellType.Numeric:
-                        if (DateUtil.IsCellDateFormatted(cell))
-                        {
-                            DateTime date = cell.DateCellValue;
-                            line.Add(header, cell.DateCellValue);
-                        }
-                        else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue) && cell.DateCellValue != null)
-                            line.Add(header, cell.DateCellValue);
-                        else
-                            line.Add(header, cell.NumericCellValue);
-                        break;
+                case CellType.Numeric:
+                    if (DateUtil.IsCellDateFormatted(cell))
+                        line.Add(header, cell.DateCellValue);
+                    else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue))
+                        line.Add(header, cell.DateCellValue);
+                    else
+                        line.Add(header, cell.NumericCellValue);
+                    break;
 
-                    case CellType.Boolean:
-                        line.Add(headers[cellnum], cell.BooleanCellValue);
-                        break;
+                case CellType.Boolean:
+                    line.Add(_headers[cellNum], cell.BooleanCellValue);
+                    break;
 
-                    case CellType.Formula:
-                        line.Add(headers[cellnum], cell.CellFormula);
-                        break;
+                case CellType.Formula:
+                    line.Add(_headers[cellNum], cell.CellFormula);
+                    break;
 
-                    case CellType.Error:
-                        line.Add(headers[cellnum], FormulaError.ForInt(cell.ErrorCellValue).String);
-                        break;
+                case CellType.Error:
+                    line.Add(_headers[cellNum], FormulaError.ForInt(cell.ErrorCellValue).String);
+                    break;
 
-                    case CellType.Blank:
-                        line.Add(headers[cellnum], String.Empty);
-                        break;
+                case CellType.Blank:
+                    line.Add(_headers[cellNum], string.Empty);
+                    break;
 
-                    case CellType.Unknown:
+                case CellType.Unknown:
+                    break;
 
-                    default:
-                        break;
-                }
+                default:
+                    throw new InvalidDataException($"Unknown Cell Type: {cell.CellType}");
             }
         }
+
 
         private void GetLines(IRow row)
         {
-            Dictionary<string, object> line = new Dictionary<string, object>();
-            if (row != null)
+            var line = new Dictionary<string, object>();
+            if (row == null) return;
+            for (var cellNum = 0; cellNum < row.LastCellNum; cellNum++)
             {
-                for (int cellnum = 0; cellnum < row.LastCellNum; cellnum++)
-                {
-                    LoadDataToLine(row, line, cellnum);
-                }
-                _lines.Add(line);
+                LoadDataToLine(row, line, cellNum);
             }
+            _lines.Add(line);
         }
 
         private void GetHeaders(IRow row)
         {
             foreach (var item in row)
             {
-                headers.Add(item.StringCellValue);
+                _headers.Add(item.StringCellValue);
             }
         }
 
-        private async Task<bool> ProcessDefinitions(List<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data)
+        private async Task<bool> ProcessDefinitions(IReadOnlyCollection<(string Definition, string DataSource, List<IDictionary<string, object>> Data)> data)
         {
             var failed = new List<string>();
             var options = new ProgressBarOptions
@@ -370,19 +358,19 @@ namespace Omnia.CLI.Commands.Application
 
             using (var progressBar = new ProgressBar(data.Count, "Processing file...", options))
             {
-                foreach (var (Definition, DataSource, Data) in data)
+                foreach (var (definition, dataSource, dataEntries) in data)
                 {
-                    var (Success, Messages) = await CreateEntities(progressBar, _httpClient, Tenant, Environment, Definition, DataSource, Data);
+                    var (success, messages) = await CreateEntities(progressBar, _httpClient, Tenant, Environment, definition, dataSource, dataEntries);
                     progressBar.Tick();
 
-                    if (Success)
+                    if (success)
                         continue;
 
-                    failed.AddRange(Messages);
+                    failed.AddRange(messages);
                 }
             }
 
-            Console.WriteLine($"----- Failed: {failed.Count()} -----");
+            Console.WriteLine($"----- Failed: {failed.Count} -----");
             foreach (var message in failed)
                 Console.WriteLine(message);
 
@@ -394,7 +382,7 @@ namespace Omnia.CLI.Commands.Application
             string environmentCode,
             string definition,
             string dataSource,
-            IList<IDictionary<string, object>> data)
+            ICollection<IDictionary<string, object>> data)
         {
             var failedEntities = new List<string>();
 

@@ -7,6 +7,7 @@ namespace Omnia.CLI.Commands.Subscriptions
     [HelpOption("-h|--help")]
     [Subcommand(typeof(AddCommand))]
     [Subcommand(typeof(RemoveCommand))]
+    [Subcommand(typeof(ListCommand))]
     public class BaseCommand
     {
         public void OnExecute(CommandLineApplication app)

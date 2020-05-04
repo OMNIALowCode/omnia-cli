@@ -9,8 +9,8 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 {
     internal class ImportDataReader
     {
-        private const string ID = "#ID";
-        private const string ParentID = "ParentID";
+        private const string Id = "#ID";
+        private const string ParentId = "#ParentID";
         private readonly List<string> _headers = new List<string>();
         private readonly List<IDictionary<string, object>> _lines = new List<IDictionary<string, object>>();
         private readonly List<ImportData> _data = new List<ImportData>();
@@ -41,11 +41,11 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
 
-                var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split('.');
-                var entityName = namingParts[0];
+                var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
+                var entityName = namingParts[0].Split('.')[0];
                 var dataSource = GetDataSource(namingParts);
 
-                var lines = new List<IDictionary<string, object>>();
+                List<IDictionary<string, object>> lines;
 
                 if (_sheets.Any(s => s.StartsWith($"{sheet}.")))
                 {
@@ -61,10 +61,10 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 ResetAllData();
             }
 
-            string GetSheetNameWithoutNamingKey(string sheetName)
+            static string GetSheetNameWithoutNamingKey(string sheetName)
               => sheetName.Split('-')[0];
 
-            string GetDataSource(string[] sheetNameParts)
+            static string GetDataSource(string[] sheetNameParts)
               => sheetNameParts.Length > 1 ? sheetNameParts[1] : "default";
         }
 
@@ -208,12 +208,12 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
             var header = GetHeader();
 
-            if (header.Equals(ID))
+            if (header.Equals(Id))
             {
                 collection.Id = cell.ToString();
                 return;
             }
-            else if (header.Equals(ParentID))
+            else if (header.Equals(ParentId))
             {
                 collection.ParentId = cell.ToString();
                 return;

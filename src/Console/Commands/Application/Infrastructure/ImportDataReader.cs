@@ -8,19 +8,29 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 {
     internal class ImportDataReader
     {
+        private const string ID = "#ID";
+        private const string ParentID = "ParentID";
         private readonly List<string> _headers = new List<string>();
         private readonly List<IDictionary<string, object>> _lines = new List<IDictionary<string, object>>();
         private readonly List<ImportData> _data = new List<ImportData>();
         private readonly List<string> _sheets = new List<string>();
         private readonly List<string> _sheetsProcessed = new List<string>();
 
-        private readonly Dictionary<string, List<ImportCollection>> _dictionaryCollections = new Dictionary<string, List<ImportCollection>>();
+        private readonly Dictionary<string, List<NestedCollection>> _dictionaryCollections = new Dictionary<string, List<NestedCollection>>();
+
         public IList<ImportData> ReadExcel(string path)
         {
             var workbook = new XSSFWorkbook(path);
 
             LoadSheetNames(workbook);
 
+            ScrollSheets(workbook);
+
+            return _data;
+        }
+
+        private void ScrollSheets(XSSFWorkbook workbook)
+        {
             foreach (var sheet in _sheets)
             {
                 if (_sheetsProcessed.Contains(sheet))
@@ -32,26 +42,78 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split('.');
                 var entityName = namingParts[0];
-                var dataSource = namingParts.Length > 1 ? namingParts[1] : "default";
+                var dataSource = GetDataSource(namingParts);
+
+                var lines = new List<IDictionary<string, object>>();
 
                 if (_sheets.Any(s => s.StartsWith($"{sheet}.")))
                 {
-                    ProcessEntityWithCollections(workbook, sheet, entityName, dataSource);
+                    lines = ProcessCollectionSheet(workbook, sheet);
                 }
                 else
                 {
-                    ProcessSimpleEntity(activeWorksheet, entityName, dataSource);
+                    lines = ProcessSimpleSheet(activeWorksheet);
+                }
+
+                _data.Add(new ImportData(entityName, dataSource, lines));
+
+                ResetAllData();
+            }
+
+            string GetSheetNameWithoutNamingKey(string sheetName)
+              => sheetName.Split('-')[0];
+
+            string GetDataSource(string[] sheetNameParts)
+              => sheetNameParts.Length > 1 ? sheetNameParts[1] : "default";
+        }
+
+        private List<IDictionary<string, object>> ProcessSimpleSheet(ISheet activeWorksheet)
+        {
+            for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
+            {
+                var row = activeWorksheet.GetRow(rowNum);
+
+                if (row == null) continue;
+
+                if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+
+                switch (rowNum)
+                {
+                    case 0:
+                        ProcessHeaders(row);
+                        break;
+
+                    default:
+                        ProcessLines(row);
+                        break;
                 }
             }
 
-            return _data;
-
-            string GetSheetNameWithoutNamingKey(string sheetName)
-               => sheetName.Split('-')[0];
+            return new List<IDictionary<string, object>>(_lines);
         }
 
-        private void ProcessSimpleEntity(ISheet activeWorksheet, string entityName, string dataSource)
+        private List<IDictionary<string, object>> ProcessCollectionSheet(XSSFWorkbook workbook, string sheet)
         {
+            foreach (var item in new List<string>(_sheets.Where(s => s.StartsWith(sheet))))
+            {
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(item));
+
+                _dictionaryCollections.Add(item, ScrollRowsInCollectionSheet(activeWorksheet));
+
+                ResetHeaders();
+
+                _sheetsProcessed.Add(item);
+            }
+
+            ProcessNestedCollections(_dictionaryCollections.Keys.Last());
+
+            return new List<IDictionary<string, object>>(PrepareCollection());
+        }
+
+        private List<NestedCollection> ScrollRowsInCollectionSheet(ISheet activeWorksheet)
+        {
+            var importCollection = new List<NestedCollection>();
+
             for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
             {
                 var row = activeWorksheet.GetRow(rowNum);
@@ -62,57 +124,15 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 if (rowNum == 0)
                 {
-                    GetHeaders(row);
+                    ProcessHeaders(row);
                 }
                 else
                 {
-                    GetLines(row);
+                    importCollection.Add(GetLinesCollection(row));
                 }
             }
 
-            _data.Add(new ImportData(entityName, dataSource, new List<IDictionary<string, object>>(_lines)));
-            ResetData();
-        }
-
-        private void ProcessEntityWithCollections(XSSFWorkbook workbook, string sheet, string entityName, string dataSource)
-        {
-            foreach (var item in new List<string>(_sheets.Where(s => s.StartsWith(sheet))))
-            {
-                var importCollections = new List<ImportCollection>();
-
-                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(item));
-
-                for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
-                {
-                    var row = activeWorksheet.GetRow(rowNum);
-
-                    if (row == null) continue;
-
-                    if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
-
-                    if (rowNum == 0)
-                    {
-                        GetHeaders(row);
-                    }
-                    else
-                    {
-                        var importCollection = new ImportCollection();
-                        GetLinesCollection(row, importCollection);
-                        importCollections.Add(importCollection);
-                    }
-                }
-
-                _dictionaryCollections.Add(item, importCollections);
-                _headers.Clear();
-                _sheetsProcessed.Add(item);
-            }
-
-            ProcessHierarchy(_dictionaryCollections.Keys.Last());
-
-            var collection = PrepareCollection();
-            _data.Add(new ImportData(entityName, dataSource, new List<IDictionary<string, object>>(collection)));
-
-            ResetData();
+            return importCollection;
         }
 
         private IEnumerable<IDictionary<string, object>> PrepareCollection()
@@ -127,13 +147,6 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             return collection;
         }
 
-        private void ResetData()
-        {
-            _lines.Clear();
-            _headers.Clear();
-            _dictionaryCollections.Clear();
-        }
-
         private void LoadSheetNames(XSSFWorkbook workbook)
         {
             for (var sheetNumber = 0; sheetNumber < workbook.NumberOfSheets; sheetNumber++)
@@ -142,44 +155,63 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             }
         }
 
-        private void ProcessHierarchy(string entity)
+        private void ProcessNestedCollections(string childSheet)
         {
-            var level = entity.Count(c => c.Equals('.'));
+            var level = childSheet.Count(c => c.Equals('.'));
             if (level == 0) return;
 
-            var importData = _dictionaryCollections[entity];
+            var importData = _dictionaryCollections[childSheet];
 
-            var importCollection = _dictionaryCollections.FirstOrDefault(s => s.Key.Equals(entity.Substring(0, entity.LastIndexOf('.')))).Value;
+            var importCollection = _dictionaryCollections.FirstOrDefault(s => s.Key.Equals(GetParentSheet())).Value;
+
             foreach (var parent in importCollection)
             {
                 var childData = importData.Where(i => i.ParentId == parent.Id);
-                var field = entity.Split(".")[level];
+                var field = childSheet.Split(".")[level];
                 parent.Data.Add(field, childData.Select(s => s.Data));
             }
-            _dictionaryCollections.Remove(entity);
-            ProcessHierarchy(_dictionaryCollections.Keys.Last());
+
+            _dictionaryCollections.Remove(childSheet);
+
+            ProcessNestedCollections(_dictionaryCollections.Keys.Last());
+
+            string GetParentSheet()
+                => childSheet.Substring(0, childSheet.LastIndexOf('.'));
         }
 
-        private void GetLinesCollection(IRow row, ImportCollection collection)
+        private NestedCollection GetLinesCollection(IRow row)
         {
-            collection.Data = new Dictionary<string, object>();
-            if (row == null) return;
+            var collection = new NestedCollection
+            {
+                Data = new Dictionary<string, object>()
+            };
+
+            if (row == null) return null;
 
             for (var cellNum = 0; cellNum < row.LastCellNum; cellNum++)
             {
                 LoadDataToCollection(row, collection, cellNum);
             }
+
+            return collection;
         }
 
-        private void LoadDataToCollection(IRow row, ImportCollection collection, int cellNum)
+        private void LoadDataToCollection(IRow row, NestedCollection collection, int cellNum)
         {
             var cell = row.GetCell(cellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            var header = _headers.Count > cellNum ? _headers[cellNum] : string.Empty;
 
-            if (header.Equals("#ID"))
+            var header = GetHeader();
+
+            if (header.Equals(ID))
+            {
                 collection.Id = cell.ToString();
-            else if (header.Equals("ParentID"))
+                return;
+            }
+            else if (header.Equals(ParentID))
+            {
                 collection.ParentId = cell.ToString();
+                return;
+            }
             else if (string.IsNullOrEmpty(header))
                 return;
 
@@ -191,11 +223,18 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 case CellType.Numeric:
                     if (DateUtil.IsCellDateFormatted(cell))
+                    {
                         collection.Data.Add(header, cell.DateCellValue);
+                    }
                     else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue))
+                    {
                         collection.Data.Add(header, cell.DateCellValue);
+                    }
                     else
+                    {
                         collection.Data.Add(header, cell.NumericCellValue);
+                    }
+
                     break;
 
                 case CellType.Boolean:
@@ -221,12 +260,14 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                     throw new InvalidDataException($"Unknown Cell Type: {cell.CellType}");
             }
 
+            string GetHeader() => _headers.Count > cellNum ? _headers[cellNum] : string.Empty;
         }
 
         private void LoadDataToLine(IRow row, IDictionary<string, object> line, int cellNum)
         {
             var cell = row.GetCell(cellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-            var header = _headers.Count > cellNum ? _headers[cellNum] : string.Empty;
+            var header = GetHeader();
+
             if (string.IsNullOrEmpty(header))
                 return;
 
@@ -267,13 +308,14 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 default:
                     throw new InvalidDataException($"Unknown Cell Type: {cell.CellType}");
             }
+
+            string GetHeader() => _headers.Count > cellNum ? _headers[cellNum] : string.Empty;
         }
 
-
-        private void GetLines(IRow row)
+        private void ProcessLines(IRow row)
         {
-            var line = new Dictionary<string, object>();
             if (row == null) return;
+            var line = new Dictionary<string, object>();
             for (var cellNum = 0; cellNum < row.LastCellNum; cellNum++)
             {
                 LoadDataToLine(row, line, cellNum);
@@ -281,12 +323,19 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             _lines.Add(line);
         }
 
-        private void GetHeaders(IRow row)
+        private void ProcessHeaders(IRow row) => _headers.AddRange(row.Select(cell => cell.StringCellValue));
+
+        private void ResetLines() => _lines.Clear();
+
+        private void ResetHeaders() => _headers.Clear();
+
+        private void ResetCollections() => _dictionaryCollections.Clear();
+
+        private void ResetAllData()
         {
-            foreach (var item in row)
-            {
-                _headers.Add(item.StringCellValue);
-            }
+            ResetHeaders();
+            ResetLines();
+            ResetCollections();
         }
     }
 }

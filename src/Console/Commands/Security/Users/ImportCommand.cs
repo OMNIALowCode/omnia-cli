@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Security.Users
 {
-    [Command(Name = "import", 
+    [Command(Name = "import",
         Description = @"Import a CSV to assign users to a given tenant role. CSV example:
 
 ---
@@ -27,6 +27,7 @@ namespace Omnia.CLI.Commands.Security.Users
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
+
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
             _settings = options.Value;
@@ -35,8 +36,10 @@ namespace Omnia.CLI.Commands.Security.Users
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
+
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Import CSV data to the Tenant.")]
         public string Tenant { get; set; }
+
         [Option("--environment", CommandOptionType.SingleValue, Description = "Tenant Environment.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
 
@@ -77,7 +80,7 @@ namespace Omnia.CLI.Commands.Security.Users
 
             var tasks = entries
                 .GroupBy(r => r.Role, StringComparer.InvariantCultureIgnoreCase)
-                .Select(role => 
+                .Select(role =>
                     UpdateRole(_httpClient, role.Key, role.Select(c => c.Username).ToList())
                     );
 
@@ -101,14 +104,14 @@ namespace Omnia.CLI.Commands.Security.Users
         private static IEnumerable<CsvEntry> ParseFile(string path)
         {
             using (var reader = new StreamReader(path))
-            using (var csv = new CsvReader(reader))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
                 csv.Configuration.Delimiter = ",";
-                csv.Configuration.CultureInfo = CultureInfo.InvariantCulture;
+
                 // Ignore header case.
                 csv.Configuration.PrepareHeaderForMatch = (string header, int index) => header.ToLower();
                 return csv.GetRecords<CsvEntry>().ToList();
-            }   
+            }
         }
 
         private class CsvEntry
@@ -116,6 +119,5 @@ namespace Omnia.CLI.Commands.Security.Users
             public string Username { get; set; }
             public string Role { get; set; }
         }
-
     }
 }

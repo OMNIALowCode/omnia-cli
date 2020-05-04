@@ -1,7 +1,8 @@
 ﻿using IdentityModel.Client;
 using System;
+using System.Net.Http;
 
- namespace Omnia.CLI.Infrastructure
+namespace Omnia.CLI.Infrastructure
 {
     internal class Authentication
     {
@@ -14,21 +15,27 @@ using System;
             _identityUrl = identityUrl;
             _clientId = clientId;
             _clientSecret = clientSecret;
-
         }
+
         public async System.Threading.Tasks.Task<string> AuthenticateAsync()
         {
-            var identityClient = new DiscoveryClient(_identityUrl.ToString());
-            var disco = await identityClient.GetAsync();
+            var client = new HttpClient();
+
+            var disco = await client.GetDiscoveryDocumentAsync(_identityUrl.ToString());
+
             if (disco.IsError)
             {
                 throw new Exception(disco.Error);
-
             }
 
             // request token
-            var tokenClient = new TokenClient(disco.TokenEndpoint, _clientId, _clientSecret);
-            var tokenResponse = await tokenClient.RequestClientCredentialsAsync("api");
+            var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+            {
+                Address = disco.TokenEndpoint,
+                ClientId = _clientId,
+                ClientSecret = _clientSecret,
+                Scope = "api"
+            });
 
             if (tokenResponse.IsError)
             {

@@ -2,7 +2,7 @@
 
 namespace Omnia.CLI.Commands.Application.Infrastructure
 {
-    public class ImportCollection
+    public class NestedCollection
     {
         public string Id { get; set; }
         public string ParentId { get; set; }

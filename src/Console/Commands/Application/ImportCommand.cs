@@ -19,7 +19,6 @@ namespace Omnia.CLI.Commands.Application
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        
 
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
         {
@@ -68,8 +67,6 @@ namespace Omnia.CLI.Commands.Application
             return (int)StatusCodes.Success;
         }
 
-    
-
         private async Task<bool> ProcessDefinitions(ICollection<ImportData> data)
         {
             var failed = new List<string>();
@@ -84,7 +81,7 @@ namespace Omnia.CLI.Commands.Application
             {
                 foreach (var dataEntry in data)
                 {
-                    var (success, messages) = 
+                    var (success, messages) =
                         await CreateEntities(progressBar, _httpClient, Tenant, Environment, dataEntry.Definition, dataEntry.DataSource, dataEntry.Data);
                     progressBar.Tick();
 

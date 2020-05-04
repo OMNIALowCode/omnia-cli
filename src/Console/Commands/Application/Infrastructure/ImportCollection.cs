@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace Omnia.CLI.Infrastructure
+namespace Omnia.CLI.Commands.Application.Infrastructure
 {
     public class ImportCollection
     {

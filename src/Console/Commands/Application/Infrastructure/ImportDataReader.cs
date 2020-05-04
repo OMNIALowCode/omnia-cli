@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Application.Infrastructure
 {
@@ -20,7 +19,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         {
             var workbook = new XSSFWorkbook(path);
 
-            LoadSheets(workbook);
+            LoadSheetNames(workbook);
 
             foreach (var sheet in _sheets)
             {
@@ -135,7 +134,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             _dictionaryCollections.Clear();
         }
 
-        private void LoadSheets(XSSFWorkbook workbook)
+        private void LoadSheetNames(XSSFWorkbook workbook)
         {
             for (var sheetNumber = 0; sheetNumber < workbook.NumberOfSheets; sheetNumber++)
             {

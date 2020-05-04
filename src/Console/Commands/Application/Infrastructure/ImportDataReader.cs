@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NPOI.SS.UserModel;
@@ -69,6 +70,9 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
         private List<IDictionary<string, object>> ProcessSimpleSheet(ISheet activeWorksheet)
         {
+            if (activeWorksheet.PhysicalNumberOfRows == 0)
+                throw new Exception($"The sheet {activeWorksheet.SheetName} is Empty");
+
             for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
             {
                 var row = activeWorksheet.GetRow(rowNum);
@@ -94,15 +98,15 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
         private List<IDictionary<string, object>> ProcessCollectionSheet(XSSFWorkbook workbook, string sheet)
         {
-            foreach (var item in new List<string>(_sheets.Where(s => s.StartsWith(sheet))))
+            foreach (var activeSheet in new List<string>(_sheets.Where(s => s.StartsWith(sheet))))
             {
-                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(item));
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(activeSheet));
 
-                _dictionaryCollections.Add(item, ScrollRowsInCollectionSheet(activeWorksheet));
+                _dictionaryCollections.Add(activeSheet, ScrollRowsInCollectionSheet(activeWorksheet));
 
                 ResetHeaders();
 
-                _sheetsProcessed.Add(item);
+                _sheetsProcessed.Add(activeSheet);
             }
 
             ProcessNestedCollections(_dictionaryCollections.Keys.Last());
@@ -122,13 +126,15 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
 
-                if (rowNum == 0)
+                switch (rowNum)
                 {
-                    ProcessHeaders(row);
-                }
-                else
-                {
-                    importCollection.Add(GetLinesCollection(row));
+                    case 0:
+                        ProcessHeaders(row);
+                        break;
+
+                    default:
+                        importCollection.Add(GetLinesCollection(row));
+                        break;
                 }
             }
 

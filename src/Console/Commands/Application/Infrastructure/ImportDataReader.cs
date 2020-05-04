@@ -40,8 +40,8 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
 
-                var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split('.');
-                var entityName = namingParts[0];
+                var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
+                var entityName = namingParts[0].Split('.')[0];
                 var dataSource = GetDataSource(namingParts);
 
                 List<IDictionary<string, object>> lines;

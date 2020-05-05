@@ -14,7 +14,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         private readonly List<string> _headers = new List<string>();
         private readonly List<IDictionary<string, object>> _lines = new List<IDictionary<string, object>>();
         private readonly List<ImportData> _data = new List<ImportData>();
-        private readonly List<string> _sheets = new List<string>();
+        private readonly List<(string Sheet, string Entity, string DataSource)> _sheets = new List<(string Sheet, string Entity, string DataSource)>();
         private readonly List<string> _sheetsProcessed = new List<string>();
 
         private readonly Dictionary<string, List<NestedCollection>> _dictionaryCollections = new Dictionary<string, List<NestedCollection>>();
@@ -34,22 +34,22 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         {
             foreach (var sheet in _sheets)
             {
-                if (_sheetsProcessed.Contains(sheet))
+                if (_sheetsProcessed.Contains(sheet.Sheet))
                 {
                     continue;
                 }
 
-                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet.Sheet));
 
-                var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
-                var entityName = namingParts[0].Split('.')[0];
-                var dataSource = GetDataSource(namingParts);
+                //var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
+                var entityName = sheet.Entity;
+                var dataSource = String.IsNullOrEmpty(sheet.DataSource) ? "Default" : sheet.DataSource;  //GetDataSource(namingParts);
 
                 List<IDictionary<string, object>> lines;
 
-                if (_sheets.Any(s => s.StartsWith($"{sheet}.")))
+                if (_sheets.Any(s => s.Entity.StartsWith($"{entityName}.")))
                 {
-                    lines = ProcessCollectionSheet(workbook, sheet);
+                    lines = ProcessCollectionSheet(workbook, entityName);
                 }
                 else
                 {
@@ -96,17 +96,17 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             return new List<IDictionary<string, object>>(_lines);
         }
 
-        private List<IDictionary<string, object>> ProcessCollectionSheet(XSSFWorkbook workbook, string sheet)
+        private List<IDictionary<string, object>> ProcessCollectionSheet(XSSFWorkbook workbook, string entityName)
         {
-            foreach (var activeSheet in new List<string>(_sheets.Where(s => s.StartsWith(sheet))))
+            foreach (var activeSheet in new List<(string Sheet, string Entity, string DataSource)>(_sheets.Where(s => s.Entity.Equals(entityName) || s.Entity.StartsWith($"{entityName}."))))
             {
-                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(activeSheet));
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(activeSheet.Sheet));
 
-                _dictionaryCollections.Add(activeSheet, ScrollRowsInCollectionSheet(activeWorksheet));
+                _dictionaryCollections.Add(activeSheet.Entity, ScrollRowsInCollectionSheet(activeWorksheet));
 
                 ResetHeaders();
 
-                _sheetsProcessed.Add(activeSheet);
+                _sheetsProcessed.Add(activeSheet.Sheet);
             }
 
             ProcessNestedCollections(_dictionaryCollections.Keys.Last());
@@ -155,9 +155,13 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
         private void LoadSheetNames(XSSFWorkbook workbook)
         {
-            for (var sheetNumber = 0; sheetNumber < workbook.NumberOfSheets; sheetNumber++)
+            var configurationSheet = workbook.GetSheetAt(0);
+
+            for (int rownum = 1; rownum < configurationSheet.PhysicalNumberOfRows; rownum++)
             {
-                _sheets.Add(workbook.GetSheetAt(sheetNumber).SheetName);
+                _sheets.Add((Sheet: configurationSheet.GetRow(rownum).GetCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                             Entity: configurationSheet.GetRow(rownum).GetCell(1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                             DataSource: configurationSheet.GetRow(rownum).GetCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString()));
             }
         }
 

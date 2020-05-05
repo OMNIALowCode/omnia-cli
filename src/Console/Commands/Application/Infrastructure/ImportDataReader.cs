@@ -25,12 +25,12 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
             LoadSheetNames(workbook);
 
-            ScrollSheets(workbook);
+            ScrollSheets(workbook, path.Split('\\').Last());
 
             return _data;
         }
 
-        private void ScrollSheets(XSSFWorkbook workbook)
+        private void ScrollSheets(XSSFWorkbook workbook, string fileName)
         {
             foreach (var sheet in _sheets)
             {
@@ -40,6 +40,9 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 }
 
                 var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
+
+                if(activeWorksheet.LastRowNum == 0)
+                    throw new Exception($"The file {fileName} is empty");
 
                 var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
                 var entityName = namingParts[0].Split('.')[0];

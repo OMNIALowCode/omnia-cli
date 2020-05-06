@@ -162,7 +162,7 @@ namespace Omnia.CLI.Commands.Application
                 apiError = new ApiError()
                 {
                     Code = ((int)response.StatusCode).ToString(),
-                    Message = response.StatusCode.ToString()
+                    Message = (int)response.StatusCode != 403 ? response.StatusCode.ToString() : "Access denied!"
                 };
             }
 

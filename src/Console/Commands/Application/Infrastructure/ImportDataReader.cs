@@ -26,7 +26,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             LoadSheetNames(workbook);
 
             ScrollSheets(workbook);
-            
+
             workbook.Close();
 
             return _data;
@@ -176,7 +176,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             {
                 var childData = importData.Where(i => i.ParentId == parent.Id);
                 var field = childSheet.Split(".")[level];
-                parent.Data.Values.Add(field, childData.Select(s => s.Data));
+                parent.Data.Values.Add(field, childData.Select(s => s.Data.Values));
             }
 
             _dictionaryCollections.Remove(childSheet);

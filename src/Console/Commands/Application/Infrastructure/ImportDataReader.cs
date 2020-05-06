@@ -43,7 +43,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet.Sheet));
                 var entityName = sheet.Entity;
-                var dataSource = String.IsNullOrEmpty(sheet.DataSource) ? "Default" : sheet.DataSource;  //GetDataSource(namingParts);
+                var dataSource = string.IsNullOrEmpty(sheet.DataSource) ? "Default" : sheet.DataSource;  //GetDataSource(namingParts);
 
                 List<(int RowNum, IDictionary<string, object> Data)> lines;
 
@@ -60,13 +60,6 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 ResetAllData();
             }
-
-            //Unused methods
-            //static string GetSheetNameWithoutNamingKey(string sheetName)
-            //  => sheetName.Split('-')[0];
-
-            //static string GetDataSource(string[] sheetNameParts)
-            //  => sheetNameParts.Length > 1 ? sheetNameParts[1] : "default";
         }
 
         private List<(int RowNum, IDictionary<string, object> Data)> ProcessSimpleSheet(ISheet activeWorksheet)
@@ -165,11 +158,11 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             if(configurationSheet.PhysicalNumberOfRows < 2)
                 throw new InvalidDataException("Configurations sheet is Empty");
 
-            for (int rownum = 1; rownum < configurationSheet.PhysicalNumberOfRows; rownum++)
+            for (var rowNumber = 1; rowNumber < configurationSheet.PhysicalNumberOfRows; rowNumber++)
             {
-                _sheets.Add((Sheet: configurationSheet.GetRow(rownum).GetCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
-                             Entity: configurationSheet.GetRow(rownum).GetCell(1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
-                             DataSource: configurationSheet.GetRow(rownum).GetCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString()));
+                _sheets.Add((Sheet: configurationSheet.GetRow(rowNumber).GetCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                             Entity: configurationSheet.GetRow(rowNumber).GetCell(1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                             DataSource: configurationSheet.GetRow(rowNumber).GetCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString()));
             }
         }
 
@@ -201,10 +194,8 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         {
             var collection = new NestedCollection
             {
-                Data = (RowNum: row.RowNum, Values: new Dictionary<string, object>())
+                Data = (row.RowNum, Values: new Dictionary<string, object>())
             };
-
-            if (row == null) return null;
 
             for (var cellNum = 0; cellNum < row.LastCellNum; cellNum++)
             {
@@ -225,12 +216,14 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 collection.Id = cell.ToString();
                 return;
             }
-            else if (header.Equals(ParentId))
+
+            if (header.Equals(ParentId))
             {
                 collection.ParentId = cell.ToString();
                 return;
             }
-            else if (string.IsNullOrEmpty(header))
+
+            if (string.IsNullOrEmpty(header))
                 return;
 
             switch (cell.CellType)
@@ -339,7 +332,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             {
                 LoadDataToLine(row, line, cellNum);
             }
-            _lines.Add((RowNum: row.RowNum, data: line));
+            _lines.Add((row.RowNum, line));
         }
 
         private void ProcessHeaders(IRow row) => _headers.AddRange(row.Select(cell => cell.StringCellValue));

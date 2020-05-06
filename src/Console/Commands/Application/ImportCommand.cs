@@ -112,38 +112,34 @@ namespace Omnia.CLI.Commands.Application
             string environmentCode,
             string definition,
             string dataSource,
-            ICollection<(int RowNum, IDictionary<string, object> Values)> data)
+            ICollection<(int RowNumber, IDictionary<string, object> Values)> data)
         {
             var failedEntities = new List<string>();
 
-            int iterator = 1;
-
-            using (var child = progressBar.Spawn(data.Count, $"Processing entity {definition} with {data.Count()} records..."))
+            using (var child = progressBar.Spawn(data.Count, $"Processing entity {definition} with {data.Count} records..."))
             {
-                foreach (var entity in data)
+                foreach (var (rowNumber, values) in data)
                 {
-                    var result = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity.Values);
+                    var (statusCode, errors) = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, values);
 
-                    child.Tick(message: result.statusCode == (int)StatusCodes.Success ? null : $"Error creating entity for {dataSource} {definition}");
-                    if (result.statusCode != (int)StatusCodes.Success)
-                    {
-                        child.ForegroundColor = ConsoleColor.DarkRed;
-                        //failedEntities.Add($"{dataSource}.{definition}: {string.Join(";", entity.Values.Select(c => c.Value))} with errors: {GetErrors(result.errors)} ");
-                        failedEntities.Add($"Error to import {dataSource}.{definition}: In row {entity.RowNum} with errors: {GetErrors(result.errors)}");
-                    }
-
-                    iterator++;
+                    child.Tick(statusCode == (int)StatusCodes.Success ? null : $"Error creating entity for {dataSource} {definition}");
+                    
+                    if (statusCode == (int) StatusCodes.Success) continue;
+                    
+                    child.ForegroundColor = ConsoleColor.DarkRed;
+                    //failedEntities.Add($"{dataSource}.{definition}: {string.Join(";", entity.Values.Select(c => c.Value))} with errors: {GetErrors(result.errors)} ");
+                    failedEntities.Add($"Error to import {dataSource}.{definition}: In row {rowNumber} with errors: {GetErrors(errors)}");
                 }
             }
 
             return (!failedEntities.Any(), failedEntities.ToArray());
 
-            string GetErrors(ApiError errors) => errors != null ? ProcessErrors(errors) : "Unknown Error";
+            static string GetErrors(ApiError errors) => errors != null ? ProcessErrors(errors) : "Unknown Error";
 
-            string ProcessErrors(ApiError errors)
+            static string ProcessErrors(ApiError errors)
                     => errors.Errors != null ? JoinErrors(errors) : $" \n\r {errors.Code} - {errors.Message}";
 
-            string JoinErrors(ApiError errors)
+            static string JoinErrors(ApiError errors)
                 => string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}"));
         }
 
@@ -160,15 +156,11 @@ namespace Omnia.CLI.Commands.Application
                 return ((int)StatusCodes.Success, null);
             }
 
-            var apiError = await GetErrorFromApiResponse(response);
-            if (apiError == null)
+            var apiError = await GetErrorFromApiResponse(response) ?? new ApiError()
             {
-                apiError = new ApiError()
-                {
-                    Code = ((int)response.StatusCode).ToString(),
-                    Message = (int)response.StatusCode != 403 ? response.StatusCode.ToString() : "Access denied!"
-                };
-            }
+                Code = ((int)response.StatusCode).ToString(),
+                Message = (int)response.StatusCode != 403 ? response.StatusCode.ToString() : "Access denied!"
+            };
 
             return ((int)StatusCodes.InvalidOperation, apiError);
         }

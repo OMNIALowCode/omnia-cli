@@ -7,6 +7,6 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         public string Id { get; set; }
         public string ParentId { get; set; }
 
-        public Dictionary<string, object> Data { get; set; }
+        public (int RowNum, Dictionary<string, object> Values) Data { get; set; }
     }
 }

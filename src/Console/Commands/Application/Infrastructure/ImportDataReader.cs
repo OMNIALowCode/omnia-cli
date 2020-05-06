@@ -12,9 +12,9 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         private const string Id = "#ID";
         private const string ParentId = "#ParentID";
         private readonly List<string> _headers = new List<string>();
-        private readonly List<IDictionary<string, object>> _lines = new List<IDictionary<string, object>>();
+        private readonly List<(int RowNum, IDictionary<string, object> Data)> _lines = new List<(int RowNum, IDictionary<string, object> Data)>();
         private readonly List<ImportData> _data = new List<ImportData>();
-        private readonly List<string> _sheets = new List<string>();
+        private readonly List<(string Sheet, string Entity, string DataSource)> _sheets = new List<(string Sheet, string Entity, string DataSource)>();
         private readonly List<string> _sheetsProcessed = new List<string>();
 
         private readonly Dictionary<string, List<NestedCollection>> _dictionaryCollections = new Dictionary<string, List<NestedCollection>>();
@@ -22,13 +22,13 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         public IList<ImportData> ReadExcel(string path)
         {
             var workbook = new XSSFWorkbook(path);
-            
+
             LoadSheetNames(workbook);
 
             ScrollSheets(workbook);
             
             workbook.Close();
-            
+
             return _data;
         }
 
@@ -36,22 +36,20 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         {
             foreach (var sheet in _sheets)
             {
-                if (_sheetsProcessed.Contains(sheet))
+                if (_sheetsProcessed.Contains(sheet.Sheet))
                 {
                     continue;
                 }
 
-                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet.Sheet));
+                var entityName = sheet.Entity;
+                var dataSource = String.IsNullOrEmpty(sheet.DataSource) ? "Default" : sheet.DataSource;  //GetDataSource(namingParts);
 
-                var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
-                var entityName = namingParts[0].Split('.')[0];
-                var dataSource = GetDataSource(namingParts);
+                List<(int RowNum, IDictionary<string, object> Data)> lines;
 
-                List<IDictionary<string, object>> lines;
-
-                if (_sheets.Any(s => s.StartsWith($"{sheet}.")))
+                if (_sheets.Any(s => s.Entity.StartsWith($"{entityName}.")))
                 {
-                    lines = ProcessCollectionSheet(workbook, sheet);
+                    lines = ProcessCollectionSheet(workbook, entityName);
                 }
                 else
                 {
@@ -70,7 +68,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
               => sheetNameParts.Length > 1 ? sheetNameParts[1] : "default";
         }
 
-        private List<IDictionary<string, object>> ProcessSimpleSheet(ISheet activeWorksheet)
+        private List<(int RowNum, IDictionary<string, object> Data)> ProcessSimpleSheet(ISheet activeWorksheet)
         {
             if (activeWorksheet.PhysicalNumberOfRows == 0)
             {
@@ -99,25 +97,25 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 }
             }
 
-            return new List<IDictionary<string, object>>(_lines);
+            return new List<(int RowNum, IDictionary<string, object> Data)>(_lines);
         }
 
-        private List<IDictionary<string, object>> ProcessCollectionSheet(XSSFWorkbook workbook, string sheet)
+        private List<(int RowNum, IDictionary<string, object> Data)> ProcessCollectionSheet(XSSFWorkbook workbook, string entityName)
         {
-            foreach (var activeSheet in new List<string>(_sheets.Where(s => s.StartsWith(sheet))))
+            foreach (var activeSheet in new List<(string Sheet, string Entity, string DataSource)>(_sheets.Where(s => s.Entity.Equals(entityName) || s.Entity.StartsWith($"{entityName}."))))
             {
-                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(activeSheet));
+                var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(activeSheet.Sheet));
 
-                _dictionaryCollections.Add(activeSheet, ScrollRowsInCollectionSheet(activeWorksheet));
+                _dictionaryCollections.Add(activeSheet.Entity, ScrollRowsInCollectionSheet(activeWorksheet));
 
                 ResetHeaders();
 
-                _sheetsProcessed.Add(activeSheet);
+                _sheetsProcessed.Add(activeSheet.Sheet);
             }
 
             ProcessNestedCollections(_dictionaryCollections.Keys.Last());
 
-            return new List<IDictionary<string, object>>(PrepareCollection());
+            return new List<(int RowNum, IDictionary<string, object> Values)>(PrepareCollection());
         }
 
         private List<NestedCollection> ScrollRowsInCollectionSheet(ISheet activeWorksheet)
@@ -147,9 +145,9 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             return importCollection;
         }
 
-        private IEnumerable<IDictionary<string, object>> PrepareCollection()
+        private IEnumerable<(int RowNum, IDictionary<string, object>)> PrepareCollection()
         {
-            var collection = new List<IDictionary<string, object>>();
+            var collection = new List<(int RowNum, IDictionary<string, object> Values)>();
 
             foreach (var item in _dictionaryCollections.FirstOrDefault().Value)
             {
@@ -161,9 +159,13 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
         private void LoadSheetNames(XSSFWorkbook workbook)
         {
-            for (var sheetNumber = 0; sheetNumber < workbook.NumberOfSheets; sheetNumber++)
+            var configurationSheet = workbook.GetSheetAt(0);
+
+            for (int rownum = 1; rownum < configurationSheet.PhysicalNumberOfRows; rownum++)
             {
-                _sheets.Add(workbook.GetSheetAt(sheetNumber).SheetName);
+                _sheets.Add((Sheet: configurationSheet.GetRow(rownum).GetCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                             Entity: configurationSheet.GetRow(rownum).GetCell(1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                             DataSource: configurationSheet.GetRow(rownum).GetCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString()));
             }
         }
 
@@ -180,7 +182,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             {
                 var childData = importData.Where(i => i.ParentId == parent.Id);
                 var field = childSheet.Split(".")[level];
-                parent.Data.Add(field, childData.Select(s => s.Data));
+                parent.Data.Values.Add(field, childData.Select(s => s.Data));
             }
 
             _dictionaryCollections.Remove(childSheet);
@@ -195,7 +197,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         {
             var collection = new NestedCollection
             {
-                Data = new Dictionary<string, object>()
+                Data = (RowNum: row.RowNum, Values: new Dictionary<string, object>())
             };
 
             if (row == null) return null;
@@ -230,39 +232,40 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             switch (cell.CellType)
             {
                 case CellType.String:
-                    collection.Data.Add(header, cell.StringCellValue);
+                    collection.Data.Values.Add(header, cell.StringCellValue);
+
                     break;
 
                 case CellType.Numeric:
                     if (DateUtil.IsCellDateFormatted(cell))
                     {
-                        collection.Data.Add(header, cell.DateCellValue);
+                        collection.Data.Values.Add(header, cell.DateCellValue);
                     }
                     else if (cell.CellStyle.DataFormat >= 164 && DateUtil.IsValidExcelDate(cell.NumericCellValue))
                     {
-                        collection.Data.Add(header, cell.DateCellValue);
+                        collection.Data.Values.Add(header, cell.DateCellValue);
                     }
                     else
                     {
-                        collection.Data.Add(header, cell.NumericCellValue);
+                        collection.Data.Values.Add(header, cell.NumericCellValue);
                     }
 
                     break;
 
                 case CellType.Boolean:
-                    collection.Data.Add(header, cell.BooleanCellValue);
+                    collection.Data.Values.Add(header, cell.BooleanCellValue);
                     break;
 
                 case CellType.Formula:
-                    collection.Data.Add(header, cell.CellFormula);
+                    collection.Data.Values.Add(header, cell.CellFormula);
                     break;
 
                 case CellType.Error:
-                    collection.Data.Add(header, FormulaError.ForInt(cell.ErrorCellValue).String);
+                    collection.Data.Values.Add(header, FormulaError.ForInt(cell.ErrorCellValue).String);
                     break;
 
                 case CellType.Blank:
-                    collection.Data.Add(header, string.Empty);
+                    collection.Data.Values.Add(header, string.Empty);
                     break;
 
                 case CellType.Unknown:
@@ -332,7 +335,7 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             {
                 LoadDataToLine(row, line, cellNum);
             }
-            _lines.Add(line);
+            _lines.Add((RowNum: row.RowNum, data: line));
         }
 
         private void ProcessHeaders(IRow row) => _headers.AddRange(row.Select(cell => cell.StringCellValue));

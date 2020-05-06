@@ -112,7 +112,7 @@ namespace Omnia.CLI.Commands.Application
             string environmentCode,
             string definition,
             string dataSource,
-            ICollection<IDictionary<string, object>> data)
+            ICollection<(int RowNum, IDictionary<string, object> Values)> data)
         {
             var failedEntities = new List<string>();
 
@@ -122,13 +122,14 @@ namespace Omnia.CLI.Commands.Application
             {
                 foreach (var entity in data)
                 {
-                    var result = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity);
+                    var result = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, entity.Values);
 
                     child.Tick(message: result.statusCode == (int)StatusCodes.Success ? null : $"Error creating entity for {dataSource} {definition}");
                     if (result.statusCode != (int)StatusCodes.Success)
                     {
                         child.ForegroundColor = ConsoleColor.DarkRed;
-                        failedEntities.Add($"{dataSource}.{definition}: {string.Join(";", entity.Select(c => c.Value))} with errors: {GetErrors(result.errors)} ");
+                        //failedEntities.Add($"{dataSource}.{definition}: {string.Join(";", entity.Values.Select(c => c.Value))} with errors: {GetErrors(result.errors)} ");
+                        failedEntities.Add($"Error to import {dataSource}.{definition}: In row {entity.RowNum} with errors: {GetErrors(result.errors)}");
                     }
 
                     iterator++;
@@ -140,7 +141,10 @@ namespace Omnia.CLI.Commands.Application
             string GetErrors(ApiError errors) => errors != null ? ProcessErrors(errors) : "Unknown Error";
 
             string ProcessErrors(ApiError errors)
-                    => errors.Errors != null ? string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}")) : $" \n\r {errors.Code} - {errors.Message}";
+                    => errors.Errors != null ? JoinErrors(errors) : $" \n\r {errors.Code} - {errors.Message}";
+
+            string JoinErrors(ApiError errors)
+                => string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}"));
         }
 
         private static async Task<(int statusCode, ApiError errors)> CreateEntity(HttpClient httpClient,

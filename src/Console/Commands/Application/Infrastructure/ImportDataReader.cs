@@ -25,14 +25,14 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
             
             LoadSheetNames(workbook);
 
-            ScrollSheets(workbook, path.Split('\\').Last());
+            ScrollSheets(workbook);
             
             workbook.Close();
             
             return _data;
         }
 
-        private void ScrollSheets(XSSFWorkbook workbook, string fileName)
+        private void ScrollSheets(XSSFWorkbook workbook)
         {
             foreach (var sheet in _sheets)
             {
@@ -42,9 +42,6 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 }
 
                 var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet));
-
-                if(activeWorksheet.LastRowNum == 0)
-                    throw new Exception($"The file {fileName} is empty");
 
                 var namingParts = GetSheetNameWithoutNamingKey(activeWorksheet.SheetName).Split(' ');
                 var entityName = namingParts[0].Split('.')[0];
@@ -76,7 +73,11 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         private List<IDictionary<string, object>> ProcessSimpleSheet(ISheet activeWorksheet)
         {
             if (activeWorksheet.PhysicalNumberOfRows == 0)
-                throw new Exception($"The sheet {activeWorksheet.SheetName} is Empty");
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"The sheet {activeWorksheet.SheetName} is empty");
+                Console.ResetColor();
+            }
 
             for (var rowNum = 0; rowNum < activeWorksheet.PhysicalNumberOfRows; rowNum++)
             {

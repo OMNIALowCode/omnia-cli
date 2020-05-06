@@ -61,11 +61,12 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
                 ResetAllData();
             }
 
-            static string GetSheetNameWithoutNamingKey(string sheetName)
-              => sheetName.Split('-')[0];
+            //Unused methods
+            //static string GetSheetNameWithoutNamingKey(string sheetName)
+            //  => sheetName.Split('-')[0];
 
-            static string GetDataSource(string[] sheetNameParts)
-              => sheetNameParts.Length > 1 ? sheetNameParts[1] : "default";
+            //static string GetDataSource(string[] sheetNameParts)
+            //  => sheetNameParts.Length > 1 ? sheetNameParts[1] : "default";
         }
 
         private List<(int RowNum, IDictionary<string, object> Data)> ProcessSimpleSheet(ISheet activeWorksheet)
@@ -160,6 +161,9 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         private void LoadSheetNames(XSSFWorkbook workbook)
         {
             var configurationSheet = workbook.GetSheetAt(0);
+
+            if(configurationSheet.PhysicalNumberOfRows < 2)
+                throw new InvalidDataException("Configurations sheet is Empty");
 
             for (int rownum = 1; rownum < configurationSheet.PhysicalNumberOfRows; rownum++)
             {

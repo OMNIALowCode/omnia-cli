@@ -140,7 +140,8 @@ namespace Omnia.CLI.Commands.Application
             string GetErrors(ApiError errors) => errors != null ? ProcessErrors(errors) : "Unknown Error";
 
             string ProcessErrors(ApiError errors)
-                    => errors.Errors != null ? string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}")) : $" \n\r {errors.Code} - {errors.Message}";
+                    => errors.Errors != null ? string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}")) :
+                    (int.Parse(errors.Code) == 403 ? "Entity not found!" : $" \n\r {errors.Code} - {errors.Message}");
         }
 
         private static async Task<(int statusCode, ApiError errors)> CreateEntity(HttpClient httpClient,

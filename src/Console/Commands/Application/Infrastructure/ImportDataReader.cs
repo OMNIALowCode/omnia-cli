@@ -160,7 +160,12 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
             for (var rowNumber = 1; rowNumber < configurationSheet.PhysicalNumberOfRows; rowNumber++)
             {
-                _sheets.Add((Sheet: configurationSheet.GetRow(rowNumber).GetCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
+                var sheetName = configurationSheet.GetRow(rowNumber).GetCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString();
+
+                if(workbook.GetSheet(sheetName) == null)
+                    throw new InvalidDataException($"Sheet '{sheetName}' doesn't exist");
+
+                _sheets.Add((Sheet: sheetName,
                              Entity: configurationSheet.GetRow(rowNumber).GetCell(1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString(),
                              DataSource: configurationSheet.GetRow(rowNumber).GetCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString()));
             }

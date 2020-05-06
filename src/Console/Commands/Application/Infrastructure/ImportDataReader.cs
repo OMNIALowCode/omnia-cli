@@ -22,11 +22,13 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
         public IList<ImportData> ReadExcel(string path)
         {
             var workbook = new XSSFWorkbook(path);
-
+            
             LoadSheetNames(workbook);
 
             ScrollSheets(workbook);
-
+            
+            workbook.Close();
+            
             return _data;
         }
 

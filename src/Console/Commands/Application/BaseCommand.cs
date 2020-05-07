@@ -1,13 +1,11 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using System;
 
-namespace Omnia.CLI.Commands.Subscriptions
+namespace Omnia.CLI.Commands.Application
 {
-    [Command(Name = "subscriptions", Description = "Commands to configure subscriptions.")]
+    [Command(Name = "application", Description = "Commands related to Tenant.")]
     [HelpOption("-h|--help")]
-    [Subcommand(typeof(AddCommand))]
-    [Subcommand(typeof(RemoveCommand))]
-    [Subcommand(typeof(ListCommand))]
+    [Subcommand(typeof(ImportCommand))]
     public class BaseCommand
     {
         public void OnExecute(CommandLineApplication app)

@@ -15,9 +15,9 @@ dotnet tool install --global omnia.cli
 
 Before using the OMNIA Platform CLI, you will need to [create an API Client](https://docs.omnialowcode.com/omnia3_apiclienttutorial.html#3-define-an-api-client). 
 
-Be sure that you give access to that API Client when using commands related to a Tenant.
+Make sure you provide access to that API Client when using commands related to a Tenant.
 
-The API Client will be needed to configure the Tool and will be saved in saved in the User AppData.
+The API Client will be needed to configure the Tool and will be saved in the User AppData.
 
 
 ## Usage
@@ -33,7 +33,7 @@ Options:
 
 ### Application / Import command
 
-To import data to a tenant, you can use the following command providing the path to an Excel file. The Excel file must follow a set of rules that you can see below.
+To import data to a tenant you can use the following command, providing the path to an Excel file. The Excel file must follow a set of rules that you can see below.
 
 `omnia-cli application import --subscription MY_SUBSCRIPTION --tenant MY_TENANT --path "PATH_TO_FILE"`
 
@@ -41,7 +41,7 @@ To import data to a tenant, you can use the following command providing the path
 
 **Index sheet**
 The import will use the first sheet as an index of the structure in the file.
-You will need to layout in the first sheet a mapping between sheets and the entities you want to import.
+You will need to layout, in the first sheet, a mapping between sheets and the entities you want to import.
 
 This configuration is a table where you define 3 columns:
 
@@ -59,7 +59,7 @@ Example:
 
 **Attribute mapping**
 
-The Name of each attribute that you want to import, should be the column name in the first row of the sheet.
+The Name of each attribute that you want to import should be the column name in the first row of the sheet.
 
 **Collection attributes**
 

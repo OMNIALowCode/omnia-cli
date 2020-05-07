@@ -127,7 +127,7 @@ namespace Omnia.CLI.Commands.Application
                     if (statusCode == (int) StatusCodes.Success) continue;
                     
                     child.ForegroundColor = ConsoleColor.DarkRed;
-                    //failedEntities.Add($"{dataSource}.{definition}: {string.Join(";", entity.Values.Select(c => c.Value))} with errors: {GetErrors(result.errors)} ");
+                    
                     failedEntities.Add($"Error to import {dataSource}.{definition}: In row {rowNumber} with errors: {GetErrors(errors)}");
                 }
             }

@@ -28,7 +28,7 @@ namespace Omnia.CLI.Commands.Model
         public string Subscription { get; set; }
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
         public string Tenant { get; set; }
-        [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
+        [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to import.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
         [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the ZIP file.")]
         public string Path { get; set; }

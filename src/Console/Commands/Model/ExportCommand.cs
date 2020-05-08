@@ -29,7 +29,9 @@ namespace Omnia.CLI.Commands.Model
         public string Tenant { get; set; }
         [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
-        
+        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path where exported folders will be created.")]
+        public string Path { get; set; } = Directory.GetCurrentDirectory();
+
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
@@ -51,6 +53,12 @@ namespace Omnia.CLI.Commands.Model
                 return (int)StatusCodes.InvalidArgument;
             }
 
+            if (string.IsNullOrWhiteSpace(Path))
+            {
+                Console.WriteLine($"{nameof(Path)} is required");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
             if (!_settings.Exists(Subscription))
             {
                 Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
@@ -59,16 +67,14 @@ namespace Omnia.CLI.Commands.Model
 
 
             var sourceSettings = _settings.GetSubscription(Subscription);
-            
-            var path = Directory.GetCurrentDirectory();
 
             await _httpClient.WithSubscription(sourceSettings);
 
-            await DownloadModel(_httpClient, Tenant, Environment, Path.Combine(path, "model"));
+            await DownloadModel(_httpClient, Tenant, Environment, System.IO.Path.Combine(Path, "model"));
 
             var currentBuildVersion = await CurrentBuildNumber(_httpClient, Tenant, Environment);
 
-            await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, Path.Combine(path, "src"));
+            await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, System.IO.Path.Combine(Path, "src"));
 
             Console.WriteLine($"Tenant \"{Tenant}\" model and last build exported successfully.");
             return (int) StatusCodes.Success;

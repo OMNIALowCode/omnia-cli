@@ -15,7 +15,7 @@ namespace Omnia.CLI
             var configuration = CreateConfigurationRoot();
             
             var services = new ServiceCollection()
-                .AddSingleton<IConsole>(PhysicalConsole.Singleton)
+                .AddSingleton(PhysicalConsole.Singleton)
                 .Configure<AppSettings>(configuration)
                 .AddHttpClient()
                 .BuildServiceProvider();
@@ -40,7 +40,7 @@ namespace Omnia.CLI
                     "OMNIA", "CLI", "appsettings.json"), true)
                 .Build();
 
-        private static IList<AppSettings.Subscription> GetConfiguredSubscriptions(ServiceProvider services)
+        private static IList<AppSettings.Subscription> GetConfiguredSubscriptions(IServiceProvider services)
             => services.GetService<IOptions<AppSettings>>().Value?.Subscriptions;
 
         private static void ShowWelcomeScreen()

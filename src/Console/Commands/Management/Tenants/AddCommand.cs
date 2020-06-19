@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Management.Tenants
 {
@@ -15,8 +16,10 @@ namespace Omnia.CLI.Commands.Management.Tenants
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        private readonly IAuthenticationProvider _authenticationProvider;
+        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
         {
+            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
         }
@@ -54,7 +57,7 @@ namespace Omnia.CLI.Commands.Management.Tenants
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _httpClient.WithSubscription(sourceSettings);
+            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
 
             return await CreateTenant(_httpClient, Code, Name);
         }

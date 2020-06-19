@@ -19,9 +19,11 @@ namespace Omnia.CLI.Commands.Application
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
+        private readonly IAuthenticationProvider _authenticationProvider;
 
-        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
         {
+            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
         }
@@ -54,7 +56,7 @@ namespace Omnia.CLI.Commands.Application
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _httpClient.WithSubscription(sourceSettings);
+            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
 
             var reader = new ImportDataReader();
             try

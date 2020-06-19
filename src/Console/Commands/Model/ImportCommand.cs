@@ -18,8 +18,10 @@ namespace Omnia.CLI.Commands.Model
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        private readonly IAuthenticationProvider _authenticationProvider;
+        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
         {
+            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
         }
@@ -34,9 +36,12 @@ namespace Omnia.CLI.Commands.Model
         public string Path { get; set; }
         [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after the importation.")]
         public bool Build { get; set; }
+        [Option("--watch", CommandOptionType.NoValue, Description = "Watches for file changes in all folders and import them.")]
+        public bool Watch { get; set; }
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
+
             if (string.IsNullOrEmpty(Path))
             {
                 Console.WriteLine($"{nameof(Path)} is required");
@@ -51,7 +56,7 @@ namespace Omnia.CLI.Commands.Model
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _httpClient.WithSubscription(sourceSettings);
+            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
 
             await UploadModel(_httpClient, Tenant, Environment, Path);
 

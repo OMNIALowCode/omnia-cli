@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
 using Microsoft.AspNetCore.JsonPatch;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Security.Users
 {
@@ -16,8 +17,10 @@ namespace Omnia.CLI.Commands.Security.Users
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        private readonly IAuthenticationProvider _authenticationProvider;
+        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
         {
+            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
         }
@@ -74,7 +77,7 @@ namespace Omnia.CLI.Commands.Security.Users
 
             var sourceSettings = _settings.GetSubscription(Subscription);
             
-            await _httpClient.WithSubscription(sourceSettings);
+            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
 
             return await AddUserToRole(_httpClient, Tenant, Username, Role, Environment);
         }

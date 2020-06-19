@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model
 {
@@ -17,8 +18,12 @@ namespace Omnia.CLI.Commands.Model
     {
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
-        public ExportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        private readonly IAuthenticationProvider _authenticationProvider;
+        public ExportCommand(IOptions<AppSettings> options,
+            IHttpClientFactory httpClientFactory,
+            IAuthenticationProvider authenticationProvider)
         {
+            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
         }
@@ -68,7 +73,7 @@ namespace Omnia.CLI.Commands.Model
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _httpClient.WithSubscription(sourceSettings);
+            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
 
             await DownloadModel(_httpClient, Tenant, Environment, System.IO.Path.Combine(Path, "model"));
 
@@ -77,7 +82,7 @@ namespace Omnia.CLI.Commands.Model
             await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, System.IO.Path.Combine(Path, "src"));
 
             Console.WriteLine($"Tenant \"{Tenant}\" model and last build exported successfully.");
-            return (int) StatusCodes.Success;
+            return (int)StatusCodes.Success;
         }
 
         private static async Task DownloadModel(HttpClient httpClient, string tenantCode, string environmentCode, string path)

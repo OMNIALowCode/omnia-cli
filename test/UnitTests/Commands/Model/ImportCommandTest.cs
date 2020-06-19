@@ -12,7 +12,7 @@ using Omnia.CLI;
 using Omnia.CLI.Commands.Model;
 using Shouldly;
 using UnitTests.Fakes;
-using UnitTests.Stubs;
+using UnitTests.Extensions;
 using Xunit;
 
 namespace UnitTests.Commands.Model
@@ -30,54 +30,57 @@ namespace UnitTests.Commands.Model
         [Fact]
         public async Task OnExecute_UsingZip_ModelImportIsInvoked()
         {
-            var mockFactory = new Mock<IHttpClientFactory>();
+            var mockHttpMessageHandler = MockHttpMessageHandler();
+            var factoryMock = MockHttpClientFactory(mockHttpMessageHandler);
 
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.OK
-                });
+            var command = ImportCommand(factoryMock);
 
-            var client = new HttpClient(mockHttpMessageHandler.Object)
-            {
-                BaseAddress = new Uri("http://localhost:8080")
-            };
+            var result = await command.OnExecute(new CommandLineApplication<App>());
 
-            mockFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+            result.ShouldBe((int)StatusCodes.Success);
 
-            var factory = mockFactory.Object;
+            mockHttpMessageHandler.VerifyRequestHasBeenMade(
+                HttpMethod.Post,
+                new Uri($"{AppSettingsBuilder.DefaultEndpoint}/api/v1/{command.Tenant}/PRD/model/import"),
+                Times.Exactly(1));
+        }
 
-
-            var command = new ImportCommand(_settings, factory, new FakeAuthenticationProvider())
+        private ImportCommand ImportCommand(IMock<IHttpClientFactory> factoryMock)
+        {
+            var command = new ImportCommand(_settings, factoryMock.Object, new FakeAuthenticationProvider())
             {
                 Path = Path.Combine(Directory.GetCurrentDirectory(),
                     "Commands", "Model", "TestData", "FakeModel.zip"),
                 Tenant = "CliTesting",
                 Subscription = "Testing"
             };
-
-            var result = await command.OnExecute(new CommandLineApplication<App>());
-
-            result.ShouldBe((int)StatusCodes.Success);
-
-
-
-            // also check the 'http' call was like we expected it
-            var expectedUri = new Uri($"http://localhost:8080/api/v1/{command.Tenant}/PRD/model/import");
-
-            mockHttpMessageHandler.Protected().Verify(
-                "SendAsync",
-                Times.Exactly(1), // we expected a single external request
-                ItExpr.Is<HttpRequestMessage>(req =>
-                        req.Method == HttpMethod.Post  // we expected a GET request
-                        && req.RequestUri == expectedUri // to this uri
-                ),
-                ItExpr.IsAny<CancellationToken>()
-            );
-
+            return command;
         }
 
+        private static Mock<IHttpClientFactory> MockHttpClientFactory(IMock<HttpMessageHandler> mockHttpMessageHandler)
+        {
+            var client = new HttpClient(mockHttpMessageHandler.Object)
+            {
+                BaseAddress = new Uri(AppSettingsBuilder.DefaultEndpoint)
+            };
+
+            var mockFactory = new Mock<IHttpClientFactory>();
+            mockFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+
+            return mockFactory;
+        }
+
+        private static Mock<HttpMessageHandler> MockHttpMessageHandler()
+        {
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK
+                });
+            return mockHttpMessageHandler;
+        }
     }
 }

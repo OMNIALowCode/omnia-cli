@@ -8,19 +8,27 @@ namespace Omnia.CLI.Infrastructure
 {
     internal class AuthenticationProvider : IAuthenticationProvider
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public AuthenticationProvider(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
+
         public async Task<HttpClient> AuthenticateClient(HttpClient httpClient, AppSettings.Subscription subscription)
         {
-            var accessToken = await AuthenticateAsync(httpClient, subscription);
+            var accessToken = await AuthenticateAsync(subscription);
             var authValue = new AuthenticationHeaderValue("Bearer", accessToken);
 
             httpClient.DefaultRequestHeaders.Authorization = authValue;
             httpClient.BaseAddress = subscription.ApiUrl;
-            
+
             return httpClient;
         }
 
-        private static async Task<string> AuthenticateAsync(HttpClient httpClient, AppSettings.Subscription subscription)
+        private async Task<string> AuthenticateAsync(AppSettings.Subscription subscription)
         {
+            var httpClient = _httpClientFactory.CreateClient();
 
             var disco = await httpClient.GetDiscoveryDocumentAsync(subscription.IdentityServerUrl.ToString());
 

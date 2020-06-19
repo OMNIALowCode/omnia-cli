@@ -6,15 +6,17 @@ namespace UnitTests
 {
     public class AppSettingsBuilder
     {
+        public const string DefaultEndpoint = "http://localhost:8080";
+
         private readonly AppSettings _settings = new AppSettings();
 
         public AppSettingsBuilder WithDefaults()
         {
-            _settings.Subscriptions.Add(new AppSettings.Subscription()
+            _settings.Subscriptions.Add(new AppSettings.Subscription
             {
                 Name = "Testing",
-                Endpoint = new Uri("http://localhost:8080/"),
-                Client =  new AppSettings.Client()
+                Endpoint = new Uri(DefaultEndpoint),
+                Client =  new AppSettings.Client
                 {
                     Id = "FakeApiClient",
                     Secret = "FakeApiClientSecret"

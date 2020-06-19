@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI
 {
@@ -16,6 +17,7 @@ namespace Omnia.CLI
             
             var services = new ServiceCollection()
                 .AddSingleton(PhysicalConsole.Singleton)
+                .AddScoped<IAuthenticationProvider, AuthenticationProvider>()
                 .Configure<AppSettings>(configuration)
                 .AddHttpClient()
                 .BuildServiceProvider();

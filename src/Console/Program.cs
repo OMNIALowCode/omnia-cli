@@ -13,7 +13,7 @@ namespace Omnia.CLI
         private static int Main(string[] args)
         {
             var configuration = CreateConfigurationRoot();
-
+            
             var services = new ServiceCollection()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
                 .Configure<AppSettings>(configuration)

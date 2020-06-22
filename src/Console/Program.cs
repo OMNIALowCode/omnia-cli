@@ -14,20 +14,23 @@ namespace Omnia.CLI
         private static int Main(string[] args)
         {
             var configuration = CreateConfigurationRoot();
-            
+
             var services = new ServiceCollection()
                 .AddSingleton(PhysicalConsole.Singleton)
                 .AddScoped<IAuthenticationProvider, AuthenticationProvider>()
-                .Configure<AppSettings>(configuration)
-                .AddHttpClient()
-                .BuildServiceProvider();
+                .Configure<AppSettings>(configuration);
+
+            services
+                .AddHttpClient<IApiClient, ApiClient>();
+
+            var serviceProvider = services.BuildServiceProvider();
 
             var app = new CommandLineApplication<App>();
             app.Conventions
                 .UseDefaultConventions()
-                .UseConstructorInjection(services);
+                .UseConstructorInjection(serviceProvider);
 
-            var subscriptions = GetConfiguredSubscriptions(services);
+            var subscriptions = GetConfiguredSubscriptions(serviceProvider);
 
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();

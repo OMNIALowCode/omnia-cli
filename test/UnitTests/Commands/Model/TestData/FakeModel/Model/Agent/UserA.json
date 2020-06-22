@@ -1,0 +1,80 @@
+{
+		  "name":  "UserA" ,
+		  "dataSource": "System",
+		  "attributes": [
+{
+		      "name": "_code",
+		      "type": "Text",
+		      "isReadOnly": true,
+		      "description": "Code",
+		      "multiplicity": {
+		       				        "lower": 1,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": true,
+		      "aggregationKind": "None",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    },
+{
+		      "name": "_name",
+		      "type": "Text",
+		      "isReadOnly": true,
+		      "description": "Name",
+		      "multiplicity": {
+		       				        "lower": 1,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": true,
+		      "aggregationKind": "None",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    },
+{
+		      "name": "_description",
+		      "type": "Text",
+		      "isReadOnly": false,
+		      "description": "Test",
+		      "multiplicity": {
+		       				        "lower": 0,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": true,
+		      "aggregationKind": "None",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    },
+{
+		      "name": "Teste",
+		      "type": "Integer",
+		      "isReadOnly": true,
+		      "description": "Teste",
+		      "multiplicity": {
+		       				        "lower": 0,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": false,
+		      "aggregationKind": "None",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    },
+{
+		      "name": "Test1",
+		      "type": "a",
+		      "isReadOnly": false,
+		      "description": "",
+		      "multiplicity": {
+		       				        "lower": 1,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": false,
+		      "aggregationKind": "Shared",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    }
+		  ],
+		  "description": "",
+    	  "dataBehaviours": [],
+    	  "entityBehaviours": [],
+    	  "behaviourNamespaces": []
+}	

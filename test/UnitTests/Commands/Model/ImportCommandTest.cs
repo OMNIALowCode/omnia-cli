@@ -1,18 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using McMaster.Extensions.CommandLineUtils;
+﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Moq;
-using Moq.Protected;
 using Omnia.CLI;
 using Omnia.CLI.Commands.Model.Import;
+using Omnia.CLI.Infrastructure;
 using Shouldly;
-using UnitTests.Fakes;
-using UnitTests.Extensions;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace UnitTests.Commands.Model
@@ -30,24 +25,21 @@ namespace UnitTests.Commands.Model
         [Fact]
         public async Task OnExecute_UsingZip_ModelImportIsInvoked()
         {
-            var mockHttpMessageHandler = MockHttpMessageHandler();
-            var factoryMock = MockHttpClientFactory(mockHttpMessageHandler);
-
-            var command = ImportCommand(factoryMock);
+            var apiClientMock = MockApiClient();
+            var command = ImportCommand(apiClientMock);
 
             var result = await command.OnExecute(new CommandLineApplication<App>());
 
             result.ShouldBe((int)StatusCodes.Success);
 
-            mockHttpMessageHandler.VerifyRequestHasBeenMade(
-                HttpMethod.Post,
-                new Uri($"{AppSettingsBuilder.DefaultEndpoint}/api/v1/{command.Tenant}/PRD/model/import"),
-                Times.Exactly(1));
+            apiClientMock.Verify(client=> 
+                client.Post($"/api/v1/{command.Tenant}/PRD/model/import", It.IsAny<MultipartFormDataContent>()),
+                Times.Once);
         }
 
-        private ImportCommand ImportCommand(IMock<IHttpClientFactory> factoryMock)
+        private ImportCommand ImportCommand(IMock<IApiClient> apiClientMock)
         {
-            var command = new ImportCommand(_settings, factoryMock.Object, new FakeAuthenticationProvider())
+            var command = new ImportCommand(_settings, apiClientMock.Object)
             {
                 Path = Path.Combine(Directory.GetCurrentDirectory(),
                     "Commands", "Model", "TestData", "FakeModel.zip"),
@@ -57,30 +49,14 @@ namespace UnitTests.Commands.Model
             return command;
         }
 
-        private static Mock<IHttpClientFactory> MockHttpClientFactory(IMock<HttpMessageHandler> mockHttpMessageHandler)
+        private static Mock<IApiClient> MockApiClient()
         {
-            var client = new HttpClient(mockHttpMessageHandler.Object)
-            {
-                BaseAddress = new Uri(AppSettingsBuilder.DefaultEndpoint)
-            };
-
-            var mockFactory = new Mock<IHttpClientFactory>();
-            mockFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
-
-            return mockFactory;
-        }
-
-        private static Mock<HttpMessageHandler> MockHttpMessageHandler()
-        {
-            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-            mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.OK
-                });
-            return mockHttpMessageHandler;
+            var apiClientMock = new Mock<IApiClient>();
+            apiClientMock.Setup(s => s.Post(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>()))
+                .ReturnsAsync((true, null));
+            apiClientMock.Setup(s => s.Post(It.IsAny<string>(), It.IsAny<StringContent>()))
+                .ReturnsAsync((true, null));
+            return apiClientMock;
         }
     }
 }

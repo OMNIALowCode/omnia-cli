@@ -1,13 +1,9 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Omnia.CLI.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
-using System.Globalization;
 using System.IO;
-using System.Net.Http;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model.Import
@@ -17,31 +13,36 @@ namespace Omnia.CLI.Commands.Model.Import
     public class ImportCommand
     {
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        private readonly IAuthenticationProvider _authenticationProvider;
+        private readonly IApiClient _apiClient;
         private readonly ZipImporter _zipImporter;
-        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
+
+        public ImportCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
-            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
-            _zipImporter = new ZipImporter(_httpClient);
+            _zipImporter = new ZipImporter(apiClient);
+            _apiClient = apiClient;
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
+
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
         public string Tenant { get; set; }
+
         [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to import.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
+
         [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the ZIP file.")]
         public string Path { get; set; }
+
         [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after the importation.")]
         public bool Build { get; set; }
-        [Option("--watch", CommandOptionType.NoValue, Description = "Watches for file changes in all folders and import them.")]
+
+        [Option("--watch", CommandOptionType.NoValue,
+            Description = "Watches for file changes in all folders and import them.")]
         public bool Watch { get; set; }
 
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public async Task<int> OnExecute(CommandLineApplication cmd, CancellationToken cancellationToken = default)
         {
 
             if (string.IsNullOrEmpty(Path))
@@ -50,23 +51,17 @@ namespace Omnia.CLI.Commands.Model.Import
                 return (int)StatusCodes.InvalidArgument;
             }
 
-            if (!File.Exists(Path))
-            {
-                Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid file.");
-                return (int)StatusCodes.InvalidArgument;
-            }
-
-
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
+            await _apiClient.Authenticate(sourceSettings);
+            
 
             if (File.Exists(Path))
             {
                 if (Watch)
                 {
-                    Console.WriteLine("Watch mode not supported when using the Import command with a Zip file. Use a Directory Path to use the watch mode.");
-                    return (int)StatusCodes.InvalidOperation;
+                    Console.WriteLine("Watch mode not supported when using the Import command with a ZIP file. Use a Directory Path to use the watch mode.");
+                    return (int)StatusCodes.InvalidArgument;
                 }
 
                 if (Build)
@@ -77,7 +72,14 @@ namespace Omnia.CLI.Commands.Model.Import
 
             if (Directory.Exists(Path))
             {
-                
+                if (Watch)
+                {
+                    var directoryImporter = new DirectoryImporter(_apiClient, Tenant, Environment, Path);
+                    directoryImporter.Watch();
+                    Console.ReadKey();
+                }
+
+
             }
 
             return (int)StatusCodes.UnknownError;

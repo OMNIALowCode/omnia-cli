@@ -1,0 +1,52 @@
+{
+		  "name":  "newcommitment" ,
+		  "dataSource": "System",
+		  "attributes": [
+{
+		      "name": "_provider",
+		      "type": "UserA",
+		      "isReadOnly": false,
+		      "description": "",
+		      "multiplicity": {
+		       				        "lower": 1,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": true,
+		      "aggregationKind": "Shared",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    },
+{
+		      "name": "_reciver",
+		      "type": "UserB",
+		      "isReadOnly": false,
+		      "description": "",
+		      "multiplicity": {
+		       				        "lower": 1,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": true,
+		      "aggregationKind": "Shared",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    },
+{
+		      "name": "_resource",
+		      "type": "ResourceA",
+		      "isReadOnly": false,
+		      "description": "",
+		      "multiplicity": {
+		       				        "lower": 1,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": true,
+		      "aggregationKind": "Shared",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    }
+		  ],
+		  "description": "",
+      	  "dataBehaviours": [],
+      	  "entityBehaviours": [],
+      	  "behaviourNamespaces": []
+}	

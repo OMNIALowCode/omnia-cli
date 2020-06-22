@@ -1,0 +1,10 @@
+{
+		  "name":  "ResourceA",
+		  "dataSource": "System",
+		  "attributes": [
+		  ],
+			"description": "",
+			"dataBehaviours": [],
+			"entityBehaviours": [],
+			"behaviourNamespaces": []
+}	

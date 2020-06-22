@@ -1,0 +1,10 @@
+{
+		  "name":  "UserB" ,
+		  "dataSource": "System",
+		  "attributes": [
+		  ],
+		  "description": "",
+    	  "dataBehaviours": [],
+    	  "entityBehaviours": [],
+    	  "behaviourNamespaces": []
+}	

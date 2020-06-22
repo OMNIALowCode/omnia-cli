@@ -29,6 +29,21 @@
     <None Update="Commands\Model\TestData\FakeModel.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Commands\Model\TestData\FakeModel\Model\Agent\UserA.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Commands\Model\TestData\FakeModel\Model\Agent\UserB.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Commands\Model\TestData\FakeModel\Model\Commitment\newcommitment.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Commands\Model\TestData\FakeModel\Model\GenericEntity\a.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Commands\Model\TestData\FakeModel\Model\Resource\ResourceA.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

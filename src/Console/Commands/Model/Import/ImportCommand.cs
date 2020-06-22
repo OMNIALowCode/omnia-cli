@@ -76,6 +76,9 @@ namespace Omnia.CLI.Commands.Model.Import
                 {
                     var directoryImporter = new DirectoryImporter(_apiClient, Tenant, Environment, Path);
                     directoryImporter.Watch();
+
+                    Console.WriteLine($"Watching for changes on: {Path}...");
+                    Console.WriteLine("Press any key to exit.");
                     Console.ReadKey();
                 }
 

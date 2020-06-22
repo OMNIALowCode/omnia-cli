@@ -1,15 +1,14 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Extensions;
+using Omnia.CLI.Commands.Application.Infrastructure;
 using Omnia.CLI.Infrastructure;
 using ShellProgressBar;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Omnia.CLI.Commands.Application.Infrastructure;
+using Omnia.CLI.Extensions;
 
 namespace Omnia.CLI.Commands.Application
 {
@@ -18,14 +17,12 @@ namespace Omnia.CLI.Commands.Application
     public class ImportCommand
     {
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        private readonly IAuthenticationProvider _authenticationProvider;
+        private readonly IApiClient _apiClient;
 
-        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
+        public ImportCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
-            _authenticationProvider = authenticationProvider;
+            _apiClient = apiClient;
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -56,7 +53,7 @@ namespace Omnia.CLI.Commands.Application
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
+            await _apiClient.Authenticate(sourceSettings);
 
             var reader = new ImportDataReader();
             try
@@ -92,7 +89,7 @@ namespace Omnia.CLI.Commands.Application
                 foreach (var dataEntry in data)
                 {
                     var (success, messages) =
-                        await CreateEntities(progressBar, _httpClient, Tenant, Environment, dataEntry.Definition, dataEntry.DataSource, dataEntry.Data);
+                        await CreateEntities(progressBar, _apiClient, Tenant, Environment, dataEntry.Definition, dataEntry.DataSource, dataEntry.Data);
                     progressBar.Tick();
 
                     if (success)
@@ -109,7 +106,8 @@ namespace Omnia.CLI.Commands.Application
             return !failed.Any();
         }
 
-        private static async Task<(bool Success, string[] Messages)> CreateEntities(ProgressBarBase progressBar, HttpClient httpClient,
+        private static async Task<(bool Success, string[] Messages)> CreateEntities(ProgressBarBase progressBar, 
+            IApiClient apiClient,
             string tenantCode,
             string environmentCode,
             string definition,
@@ -122,14 +120,14 @@ namespace Omnia.CLI.Commands.Application
             {
                 foreach (var (rowNumber, values) in data)
                 {
-                    var (statusCode, errors) = await CreateEntity(httpClient, tenantCode, environmentCode, definition, dataSource, values);
+                    var (statusCode, errors) = await CreateEntity(apiClient, tenantCode, environmentCode, definition, dataSource, values);
 
                     child.Tick(statusCode == (int)StatusCodes.Success ? null : $"Error creating entity for {dataSource} {definition}");
-                    
-                    if (statusCode == (int) StatusCodes.Success) continue;
-                    
+
+                    if (statusCode == (int)StatusCodes.Success) continue;
+
                     child.ForegroundColor = ConsoleColor.DarkRed;
-                    
+
                     failedEntities.Add($"Error to import {dataSource}.{definition}: In row {rowNumber} with errors: {GetErrors(errors)}");
                 }
             }
@@ -145,29 +143,16 @@ namespace Omnia.CLI.Commands.Application
                 => string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}"));
         }
 
-        private static async Task<(int statusCode, ApiError errors)> CreateEntity(HttpClient httpClient,
+        private static async Task<(int statusCode, ApiError errors)> CreateEntity(IApiClient apiClient,
             string tenantCode,
             string environmentCode,
             string definition,
             string dataSource,
             IDictionary<string, object> data)
         {
-            var response = await httpClient.PostAsJsonAsync($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data);
-            if (response.IsSuccessStatusCode)
-            {
-                return ((int)StatusCodes.Success, null);
-            }
-
-            var apiError = await GetErrorFromApiResponse(response) ?? new ApiError()
-            {
-                Code = ((int)response.StatusCode).ToString(),
-                Message = (int)response.StatusCode != 403 ? response.StatusCode.ToString() : "Access denied!"
-            };
-
-            return ((int)StatusCodes.InvalidOperation, apiError);
+            var response = await apiClient.Post($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data.ToHttpStringContent());
+            
+            return response.Success ? ((int)StatusCodes.Success, null) : ((int)StatusCodes.InvalidOperation, response.ErrorDetails);
         }
-
-        private static Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
-            => response.Content.ReadAsJsonAsync<ApiError>();
     }
 }

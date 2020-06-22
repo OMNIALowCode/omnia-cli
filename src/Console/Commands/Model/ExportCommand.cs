@@ -1,14 +1,13 @@
-﻿using System;
-using McMaster.Extensions.CommandLineUtils;
+﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
+using Omnia.CLI.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model
 {
@@ -17,15 +16,12 @@ namespace Omnia.CLI.Commands.Model
     public class ExportCommand
     {
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        private readonly IAuthenticationProvider _authenticationProvider;
+        private readonly IApiClient _apiClient;
         public ExportCommand(IOptions<AppSettings> options,
-            IHttpClientFactory httpClientFactory,
-            IAuthenticationProvider authenticationProvider)
+            IApiClient apiClient)
         {
-            _authenticationProvider = authenticationProvider;
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
+            _apiClient = apiClient;
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -73,52 +69,44 @@ namespace Omnia.CLI.Commands.Model
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
+            await _apiClient.Authenticate(sourceSettings);
 
-            await DownloadModel(_httpClient, Tenant, Environment, System.IO.Path.Combine(Path, "model"));
+            await DownloadModel(_apiClient, Tenant, Environment, System.IO.Path.Combine(Path, "model"));
 
-            var currentBuildVersion = await CurrentBuildNumber(_httpClient, Tenant, Environment);
+            var currentBuildVersion = await CurrentBuildNumber(_apiClient, Tenant, Environment);
 
-            await DownloadBuild(_httpClient, Tenant, Environment, currentBuildVersion, System.IO.Path.Combine(Path, "src"));
+            await DownloadBuild(_apiClient, Tenant, Environment, currentBuildVersion, System.IO.Path.Combine(Path, "src"));
 
             Console.WriteLine($"Tenant \"{Tenant}\" model and last build exported successfully.");
             return (int)StatusCodes.Success;
         }
 
-        private static async Task DownloadModel(HttpClient httpClient, string tenantCode, string environmentCode, string path)
+        private static async Task DownloadModel(IApiClient apiClient, string tenantCode, string environmentCode, string path)
         {
-            var response = await httpClient.GetAsync($"/api/v1/{tenantCode}/{environmentCode}/model/export");
-            response.EnsureSuccessStatusCode();
+            var response = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/export");
+            if (!response.Success) return;
 
-            using (var responseStream = await response.Content.ReadAsStreamAsync())
-            {
-                using (var archive = new ZipArchive(responseStream))
-                {
-                    archive.ExtractToDirectory(path, true);
-                }
-            }
+            await using var responseStream = response.Content;
+            var archive = new ZipArchive(responseStream);
+            archive.ExtractToDirectory(path, true);
         }
 
-        private static async Task<string> CurrentBuildNumber(HttpClient httpClient, string tenantCode, string environmentCode)
+        private static async Task<string> CurrentBuildNumber(IApiClient apiClient, string tenantCode, string environmentCode)
         {
-            var response = await httpClient.GetAsync($"/api/v1/{tenantCode}/{environmentCode}/model/builds?pageSize=1");
-            response.EnsureSuccessStatusCode();
-            var buildData = await response.Content.ReadAsJsonAsync<List<BuildData>>();
+            var response = await apiClient.Get($"/api/v1/{tenantCode}/{environmentCode}/model/builds?pageSize=1");
+            if (!response.Success) return null;
+
+            var buildData = response.Content.ReadAsJson<List<BuildData>>();
             return buildData.First().BuildVersion;
         }
 
-        private static async Task DownloadBuild(HttpClient httpClient, string tenantCode, string environmentCode, string version, string path)
+        private static async Task DownloadBuild(IApiClient apiClient, string tenantCode, string environmentCode, string version, string path)
         {
-            var response = await httpClient.GetAsync($"/api/v1/{tenantCode}/{environmentCode}/model/builds/{version}/download");
-            response.EnsureSuccessStatusCode();
+            var response = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/builds/{version}/download");
 
-            using (var responseStream = await response.Content.ReadAsStreamAsync())
-            {
-                using (var archive = new ZipArchive(responseStream))
-                {
-                    archive.ExtractToDirectory(path, true);
-                }
-            }
+            await using var responseStream = response.Content;
+            var archive = new ZipArchive(responseStream);
+            archive.ExtractToDirectory(path, true);
         }
 
         internal class BuildData

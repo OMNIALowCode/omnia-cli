@@ -1,33 +1,36 @@
-﻿using Newtonsoft.Json;
+﻿using Omnia.CLI.Extensions;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Infrastructure
 {
-    public interface IApiClient
-    {
-        Task<(bool Success, string Content)> Get(string endpoint);
-        Task<(bool Success, ApiError ErrorDetails)> Patch(string endpoint, HttpContent content);
-        Task<(bool Success, ApiError ErrorDetails)> Post(string endpoint, HttpContent content);
-        Task Authenticate(AppSettings.Subscription subscription);
-    }
-
     public class ApiClient : IApiClient
     {
+        private readonly HttpClient _httpClient;
         private readonly IAuthenticationProvider _authenticationProvider;
         public ApiClient(HttpClient httpClient, IAuthenticationProvider authenticationProvider)
         {
-            HttpClient = httpClient;
+            _httpClient = httpClient;
             _authenticationProvider = authenticationProvider;
         }
 
-        public HttpClient HttpClient { get; }
+        
 
         public async Task<(bool Success, string Content)> Get(string endpoint)
         {
-            var response = await HttpClient.GetAsync(endpoint);
+            var response = await _httpClient.GetAsync(endpoint);
 
             var responseMessage = await response.Content.ReadAsStringAsync();
+
+            return (response.IsSuccessStatusCode, responseMessage);
+        }
+
+        public async Task<(bool Success, Stream Content)> GetStream(string endpoint)
+        {
+            var response = await _httpClient.GetAsync(endpoint);
+
+            var responseMessage = await response.Content.ReadAsStreamAsync();
 
             return (response.IsSuccessStatusCode, responseMessage);
         }
@@ -35,25 +38,29 @@ namespace Omnia.CLI.Infrastructure
         public async Task<(bool Success, ApiError ErrorDetails)> Patch(string endpoint, HttpContent content)
         {
             //TODO: Send ETAG
-            using var response = await HttpClient.PatchAsync(endpoint,
+            using var response = await _httpClient.PatchAsync(endpoint,
                 content);
 
             return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
         }
 
-        public async  Task<(bool Success, ApiError ErrorDetails)> Post(string endpoint, HttpContent content)
+        public async Task<(bool Success, ApiError ErrorDetails)> Post(string endpoint, HttpContent content)
         {
-            using var response = await HttpClient.PostAsync(endpoint, content);
+            using var response = await _httpClient.PostAsync(endpoint, content);
             return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
         }
 
 
         public async Task Authenticate(AppSettings.Subscription subscription)
         {
-            await _authenticationProvider.AuthenticateClient(HttpClient, subscription);
+            await _authenticationProvider.AuthenticateClient(_httpClient, subscription);
         }
 
         private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
-            => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
+            => await response.Content.ReadAsJsonAsync<ApiError>() ?? new ApiError()
+            {
+                Code = ((int)response.StatusCode).ToString(),
+                Message = (int)response.StatusCode != 403 ? response.StatusCode.ToString() : "Access denied!"
+            };
     }
 }

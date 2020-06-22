@@ -2,15 +2,16 @@
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Extensions;
+using Newtonsoft.Json;
+using Omnia.CLI.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
-using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Security.Users
 {
@@ -26,15 +27,13 @@ namespace Omnia.CLI.Commands.Security.Users
     [HelpOption("-h|--help")]
     public class ImportCommand
     {
+        private readonly IApiClient _apiClient;
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        private readonly IAuthenticationProvider _authenticationProvider;
 
-        public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
+        public ImportCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
-            _authenticationProvider = authenticationProvider;
+            _apiClient = apiClient;
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -79,12 +78,12 @@ namespace Omnia.CLI.Commands.Security.Users
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
+            await _apiClient.Authenticate(sourceSettings);
 
             var tasks = entries
                 .GroupBy(r => r.Role, StringComparer.InvariantCultureIgnoreCase)
                 .Select(role =>
-                    UpdateRole(_httpClient, role.Key, role.Select(c => c.Username).ToList())
+                    UpdateRole(_apiClient, role.Key, role.Select(c => c.Username).ToList())
                     );
 
             await Task.WhenAll(tasks);
@@ -93,28 +92,29 @@ namespace Omnia.CLI.Commands.Security.Users
             return (int)StatusCodes.Success;
         }
 
-        private async Task UpdateRole(HttpClient httpClient, string role, IEnumerable<string> usernames)
+        private async Task UpdateRole(IApiClient apiClient, string role, IEnumerable<string> usernames)
         {
             var patch = new JsonPatchDocument();
 
             foreach (var user in usernames)
                 patch.Add("/subjects/-", new { username = user });
 
-            var response = await httpClient.PatchAsJsonAsync($"/api/v1/{Tenant}/{Environment}/security/AuthorizationRole/{role}", patch);
-            response.EnsureSuccessStatusCode();
+            var dataAsString = JsonConvert.SerializeObject(patch);
+
+            await apiClient.Patch($"/api/v1/{Tenant}/{Environment}/security/AuthorizationRole/{role}",
+                new StringContent(dataAsString, Encoding.UTF8, "application/json"));
+            
         }
 
         private static IEnumerable<CsvEntry> ParseFile(string path)
         {
-            using (var reader = new StreamReader(path))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-            {
-                csv.Configuration.Delimiter = ",";
+            using var reader = new StreamReader(path);
+            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+            csv.Configuration.Delimiter = ",";
 
-                // Ignore header case.
-                csv.Configuration.PrepareHeaderForMatch = (string header, int index) => header.ToLower();
-                return csv.GetRecords<CsvEntry>().ToList();
-            }
+            // Ignore header case.
+            csv.Configuration.PrepareHeaderForMatch = (header, index) => header.ToLower();
+            return csv.GetRecords<CsvEntry>().ToList();
         }
 
         private class CsvEntry

@@ -91,8 +91,5 @@ namespace Omnia.CLI.Commands.Model.Import
             return response.Success;
         }
 
-        //TODO: Extract to a common area
-        private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
-            => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
     }
 }

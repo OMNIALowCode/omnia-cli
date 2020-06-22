@@ -10,7 +10,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Omnia.CLI.Commands.Model
+namespace Omnia.CLI.Commands.Model.Import
 {
     [Command(Name = "import", Description = "Import model from .zip file to Tenant.")]
     [HelpOption("-h|--help")]
@@ -19,11 +19,13 @@ namespace Omnia.CLI.Commands.Model
         private readonly AppSettings _settings;
         private readonly HttpClient _httpClient;
         private readonly IAuthenticationProvider _authenticationProvider;
+        private readonly ZipImporter _zipImporter;
         public ImportCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory, IAuthenticationProvider authenticationProvider)
         {
             _authenticationProvider = authenticationProvider;
             _settings = options.Value;
             _httpClient = httpClientFactory.CreateClient();
+            _zipImporter = new ZipImporter(_httpClient);
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -54,60 +56,33 @@ namespace Omnia.CLI.Commands.Model
                 return (int)StatusCodes.InvalidArgument;
             }
 
+
             var sourceSettings = _settings.GetSubscription(Subscription);
 
             await _authenticationProvider.AuthenticateClient(_httpClient, sourceSettings);
 
-            await UploadModel(_httpClient, Tenant, Environment, Path);
-
-            if (Build)
+            if (File.Exists(Path))
             {
-                return await BuildModel(_httpClient, Tenant, Environment);
-            }
-
-            Console.WriteLine($"Successfully imported model to tenant \"{Tenant}\".");
-            return (int)StatusCodes.Success;
-        }
-
-        private static async Task UploadModel(HttpClient httpClient, string tenantCode, string environmentCode, string path)
-        {
-            using (var content = new MultipartFormDataContent("Upload----" + DateTime.Now.ToString(CultureInfo.InvariantCulture)))
-            {
-                content.Add(ReadFileAsStream(path), "file", System.IO.Path.GetFileName(path));
-
-                using (var response = await httpClient.PostAsync($"/api/v1/{tenantCode}/{environmentCode}/model/import", content))
+                if (Watch)
                 {
-                    response.EnsureSuccessStatusCode();
+                    Console.WriteLine("Watch mode not supported when using the Import command with a Zip file. Use a Directory Path to use the watch mode.");
+                    return (int)StatusCodes.InvalidOperation;
                 }
+
+                if (Build)
+                    return await _zipImporter.ImportAndBuild(Tenant, Environment, Path);
+
+                return await _zipImporter.Import(Tenant, Environment, Path);
             }
-        }
 
-        private static async Task<int> BuildModel(HttpClient httpClient, string tenantCode, string environmentCode)
-        {
-            
-            var requestContent = new StringContent(JsonConvert.SerializeObject(new { Clean = true }), Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync($"/api/v1/{tenantCode}/{environmentCode}/model/builds", requestContent);
-            if (response.IsSuccessStatusCode)
+            if (Directory.Exists(Path))
             {
-                Console.WriteLine($"Successfully imported and built model to tenant \"{tenantCode}\".");
-                return (int)StatusCodes.Success;
+                
             }
 
-            var apiError = await GetErrorFromApiResponse(response);
-
-            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
-
-            return (int)StatusCodes.InvalidOperation;
+            return (int)StatusCodes.UnknownError;
         }
 
-        private static StreamContent ReadFileAsStream(string path)
-            => new StreamContent(new MemoryStream(GetFileAsByteArray(path)));
 
-        private static byte[] GetFileAsByteArray(string path)
-            => File.ReadAllBytes(path);
-
-        private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
-            => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
     }
 }

@@ -1,5 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using System;
+using Omnia.CLI.Commands.Model.Import;
 
 namespace Omnia.CLI.Commands.Model
 {

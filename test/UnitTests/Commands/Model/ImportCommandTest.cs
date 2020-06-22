@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using Omnia.CLI;
-using Omnia.CLI.Commands.Model;
+using Omnia.CLI.Commands.Model.Import;
 using Shouldly;
 using UnitTests.Fakes;
 using UnitTests.Extensions;

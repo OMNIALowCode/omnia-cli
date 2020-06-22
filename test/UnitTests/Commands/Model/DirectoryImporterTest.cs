@@ -12,11 +12,9 @@ namespace UnitTests.Commands.Model
     {
         private const string Tenant = "CliTesting";
         private const string Environment = "PRD";
-        private readonly ManualResetEventSlim _eventManualWorker = new ManualResetEventSlim(false);
-
 
         [Fact]
-        public void OnExecute_WithWatchAndFileHasBeenChanged_EntityIsPatched()
+        public void Watch_WhenFileIsUpdated_EntityIsPatched()
         {
             const string entity = "UserA";
             var pathToWatch = Path.Combine(Directory.GetCurrentDirectory(),
@@ -25,32 +23,64 @@ namespace UnitTests.Commands.Model
             apiClientMock.Setup(s => s.Get($"/api/v1/{Tenant}/{Environment}/model/{entity}"))
                 .ReturnsAsync((true, "{\"Test\":\"Test\"}"));
 
+            var eventManualWorker = new ManualResetEventSlim(false);
+
             var importer = new DirectoryImporter(apiClientMock.Object, Tenant, Environment,
-                pathToWatch);
-            importer.OnFileChange += Importer_OnFileChange;
+                    pathToWatch);
+            importer.OnFileChange += ImporterOnFileChange;
 
             importer.Watch();
 
-            
+
             File.WriteAllText(Path.Combine(pathToWatch, "Agent", $"{entity}.json"), "{}");
 
-            _eventManualWorker.Wait();
+            eventManualWorker.Wait();
 
             apiClientMock.Verify(client =>
-                    client.Patch($"/api/v1/{Tenant}/{Environment}/model/{entity}", 
+                    client.Patch($"/api/v1/{Tenant}/{Environment}/model/{entity}",
                         It.IsAny<StringContent>()),
-                Times.Exactly(2)); //TODO: Should be once
-        }
+                Times.Exactly(2)); //TODO: Should be once - Duplicated events triggered
 
-        private void Importer_OnFileChange(object sender, FileSystemEventArgs e)
+            void ImporterOnFileChange(object sender, FileSystemEventArgs e)
+                => eventManualWorker.Set();
+
+        }
+        [Fact]
+        public void Watch_WhenFileIsCreated_CreateRequested()
         {
-            _eventManualWorker.Set();
+            const string entity = "FakeEntity";
+            var pathToWatch = Path.Combine(Directory.GetCurrentDirectory(),
+                "Commands", "Model", "TestData", "FakeModel", "Model");
+            var fileToCreate = Path.Combine(pathToWatch, "Agent", $"{entity}.json");
+            if (File.Exists(fileToCreate))
+                File.Delete(fileToCreate);
+
+            var apiClientMock = MockApiClient();
+
+            var eventManualWorker = new ManualResetEventSlim(false);
+
+            var importer = new DirectoryImporter(apiClientMock.Object, Tenant, Environment,
+                pathToWatch);
+            importer.OnFileCreated += ImporterOnFileChange;
+
+            importer.Watch();
+
+            File.WriteAllText(fileToCreate, "{}");
+
+            eventManualWorker.Wait();
+
+            apiClientMock.Verify(client =>
+                    client.Post($"/api/v1/{Tenant}/{Environment}/model/{entity}",
+                        It.IsAny<StringContent>()),
+                Times.Exactly(1)); //TODO: Should be once
+
+            void ImporterOnFileChange(object sender, FileSystemEventArgs e)
+                => eventManualWorker.Set();
         }
 
         private static Mock<IApiClient> MockApiClient()
         {
             return new Mock<IApiClient>();
-            
         }
     }
 }

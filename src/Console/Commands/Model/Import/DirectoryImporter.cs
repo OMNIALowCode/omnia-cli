@@ -28,7 +28,7 @@ namespace Omnia.CLI.Commands.Model.Import
         public void Watch()
         {
             var watcher =
-                new FileSystemWatcher(_path) { IncludeSubdirectories = true, NotifyFilter = NotifyFilters.LastWrite };
+                new FileSystemWatcher(_path) { IncludeSubdirectories = true };
             watcher.Created += Watcher_Created;
             watcher.Changed += Watcher_Changed;
             watcher.Deleted += Watcher_Deleted;
@@ -39,6 +39,7 @@ namespace Omnia.CLI.Commands.Model.Import
         }
 
         public event FileSystemEventHandler OnFileChange;
+        public event FileSystemEventHandler OnFileCreated;
 
         private void Watcher_Error(object sender, ErrorEventArgs e)
         {
@@ -68,11 +69,14 @@ namespace Omnia.CLI.Commands.Model.Import
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            throw new NotImplementedException();
+            Console.WriteLine($"File has been created {e.FullPath}");
+
+            PostEntity(_tenant, _environment, Path.GetFileNameWithoutExtension(e.Name),
+                    File.ReadAllText(e.FullPath))
+                .GetAwaiter().GetResult();
+
+            OnFileCreated?.Invoke(this, e);
         }
-
-
-
 
         private async Task<bool> PatchEntity(string tenant, string environment, string entity, string newJson)
         {
@@ -91,5 +95,12 @@ namespace Omnia.CLI.Commands.Model.Import
             return response.Success;
         }
 
+        private async Task<bool> PostEntity(string tenant, string environment, string entity, string json)
+        {
+            var response = await _apiClient.Post($"/api/v1/{tenant}/{environment}/model/{entity}",
+                new StringContent(json, Encoding.UTF8, "application/json"));
+
+            return response.Success;
+        }
     }
 }

@@ -72,7 +72,37 @@ namespace UnitTests.Commands.Model
             apiClientMock.Verify(client =>
                     client.Post($"/api/v1/{Tenant}/{Environment}/model/{entity}",
                         It.IsAny<StringContent>()),
-                Times.Exactly(1)); //TODO: Should be once
+                Times.Once); 
+
+            void ImporterOnFileChange(object sender, FileSystemEventArgs e)
+                => eventManualWorker.Set();
+        }
+
+        [Fact]
+        public void Watch_WhenFileIsDeleted_DeleteRequested()
+        {
+            const string entity = "UserB";
+            var pathToWatch = Path.Combine(Directory.GetCurrentDirectory(),
+                "Commands", "Model", "TestData", "FakeModel", "Model");
+            var fileToDelete = Path.Combine(pathToWatch, "Agent", $"{entity}.json");
+            
+            var apiClientMock = MockApiClient();
+
+            var eventManualWorker = new ManualResetEventSlim(false);
+
+            var importer = new DirectoryImporter(apiClientMock.Object, Tenant, Environment,
+                pathToWatch);
+            importer.OnFileDeleted += ImporterOnFileChange;
+
+            importer.Watch();
+
+            File.Delete(fileToDelete);
+            
+            eventManualWorker.Wait();
+
+            apiClientMock.Verify(client =>
+                    client.Delete($"/api/v1/{Tenant}/{Environment}/model/{entity}"),
+                Times.Once); 
 
             void ImporterOnFileChange(object sender, FileSystemEventArgs e)
                 => eventManualWorker.Set();

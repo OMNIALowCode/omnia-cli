@@ -10,6 +10,7 @@ namespace Omnia.CLI.Infrastructure
         Task<(bool Success, Stream Content)> GetStream(string endpoint);
         Task<(bool Success, ApiError ErrorDetails)> Patch(string endpoint, HttpContent content);
         Task<(bool Success, ApiError ErrorDetails)> Post(string endpoint, HttpContent content);
+        Task<(bool Success, ApiError ErrorDetails)> Delete(string endpoint);
         Task Authenticate(AppSettings.Subscription subscription);
     }
 }

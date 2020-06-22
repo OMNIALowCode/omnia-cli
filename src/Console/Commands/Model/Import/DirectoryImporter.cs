@@ -40,6 +40,7 @@ namespace Omnia.CLI.Commands.Model.Import
 
         public event FileSystemEventHandler OnFileChange;
         public event FileSystemEventHandler OnFileCreated;
+        public event FileSystemEventHandler OnFileDeleted;
 
         private void Watcher_Error(object sender, ErrorEventArgs e)
         {
@@ -53,7 +54,12 @@ namespace Omnia.CLI.Commands.Model.Import
 
         private void Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
-            throw new NotImplementedException();
+            Console.WriteLine($"File has been deleted {e.FullPath}");
+
+            DeleteEntity(_tenant, _environment, Path.GetFileNameWithoutExtension(e.Name))
+                .GetAwaiter().GetResult();
+
+            OnFileDeleted?.Invoke(this, e);
         }
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
@@ -99,6 +105,13 @@ namespace Omnia.CLI.Commands.Model.Import
         {
             var response = await _apiClient.Post($"/api/v1/{tenant}/{environment}/model/{entity}",
                 new StringContent(json, Encoding.UTF8, "application/json"));
+
+            return response.Success;
+        }
+
+        private async Task<bool> DeleteEntity(string tenant, string environment, string entity)
+        {
+            var response = await _apiClient.Delete($"/api/v1/{tenant}/{environment}/model/{entity}");
 
             return response.Success;
         }

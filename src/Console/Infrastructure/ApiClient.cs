@@ -15,8 +15,6 @@ namespace Omnia.CLI.Infrastructure
             _authenticationProvider = authenticationProvider;
         }
 
-        
-
         public async Task<(bool Success, string Content)> Get(string endpoint)
         {
             var response = await _httpClient.GetAsync(endpoint);
@@ -47,6 +45,12 @@ namespace Omnia.CLI.Infrastructure
         public async Task<(bool Success, ApiError ErrorDetails)> Post(string endpoint, HttpContent content)
         {
             using var response = await _httpClient.PostAsync(endpoint, content);
+            return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
+        }
+
+        public async Task<(bool Success, ApiError ErrorDetails)> Delete(string endpoint)
+        {
+            using var response = await _httpClient.DeleteAsync(endpoint);
             return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
         }
 

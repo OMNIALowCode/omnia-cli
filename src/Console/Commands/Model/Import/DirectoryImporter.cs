@@ -1,11 +1,14 @@
 ﻿using JsonDiffPatchDotNet;
-using Newtonsoft.Json;
 using Omnia.CLI.Infrastructure;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using JsonDiffPatchDotNet.Formatters.JsonPatch;
+using Newtonsoft.Json.Linq;
+using Omnia.CLI.Extensions;
 
 namespace Omnia.CLI.Commands.Model.Import
 {
@@ -56,7 +59,8 @@ namespace Omnia.CLI.Commands.Model.Import
         {
             Console.WriteLine($"File has been deleted {e.FullPath}");
 
-            DeleteEntity(_tenant, _environment, Path.GetFileNameWithoutExtension(e.Name))
+            DeleteEntity(_tenant, _environment, FolderName(e.FullPath), 
+                    Path.GetFileNameWithoutExtension(e.Name))
                 .GetAwaiter().GetResult();
 
             OnFileDeleted?.Invoke(this, e);
@@ -66,8 +70,8 @@ namespace Omnia.CLI.Commands.Model.Import
         {
             Console.WriteLine($"File has been changed {e.FullPath}");
 
-            PatchEntity(_tenant, _environment, Path.GetFileNameWithoutExtension(e.Name),
-                    File.ReadAllText(e.FullPath))
+            PatchEntity(_tenant, _environment, FolderName(e.FullPath), Path.GetFileNameWithoutExtension(e.Name),
+                    ReadFile(e.FullPath))
                 .GetAwaiter().GetResult();
 
             OnFileChange?.Invoke(this, e);
@@ -77,43 +81,63 @@ namespace Omnia.CLI.Commands.Model.Import
         {
             Console.WriteLine($"File has been created {e.FullPath}");
 
-            PostEntity(_tenant, _environment, Path.GetFileNameWithoutExtension(e.Name),
-                    File.ReadAllText(e.FullPath))
+            PostEntity(_tenant, _environment, FolderName(e.FullPath),
+                    ReadFile(e.FullPath))
                 .GetAwaiter().GetResult();
 
             OnFileCreated?.Invoke(this, e);
         }
 
-        private async Task<bool> PatchEntity(string tenant, string environment, string entity, string newJson)
+        private async Task<bool> PatchEntity(string tenant, string environment, string definition, string entity, string newJson)
         {
             var (success, currentJson) = await
-                _apiClient.Get($"/api/v1/{tenant}/{environment}/model/{entity}");
+                _apiClient.Get($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}");
 
             if (!success)
                 return false;
 
-            var patch = new JsonDiffPatch().Diff(currentJson, newJson);
+            var patch = CalculatePatch(newJson, currentJson);
 
             //TODO: Send ETAG
-            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{entity}",
-                new StringContent(patch, Encoding.UTF8, "application/json"));
+            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
+                patch.ToHttpStringContent());
 
             return response.Success;
         }
 
-        private async Task<bool> PostEntity(string tenant, string environment, string entity, string json)
+        private static IList<Operation> CalculatePatch(string newJson, string currentJson)
         {
-            var response = await _apiClient.Post($"/api/v1/{tenant}/{environment}/model/{entity}",
+            var left = JObject.Parse(currentJson);
+            var right = JObject.Parse(newJson);
+            var patch = new JsonDiffPatch().Diff(left, right);
+            var formatter = new JsonDeltaFormatter();
+            var operations = formatter.Format(patch);
+            return operations;
+        }
+
+        private async Task<bool> PostEntity(string tenant, string environment, string definition, string json)
+        {
+            var response = await _apiClient.Post($"/api/v1/{tenant}/{environment}/model/{definition}",
                 new StringContent(json, Encoding.UTF8, "application/json"));
 
             return response.Success;
         }
 
-        private async Task<bool> DeleteEntity(string tenant, string environment, string entity)
+        private async Task<bool> DeleteEntity(string tenant, string environment, string definition, string entity)
         {
-            var response = await _apiClient.Delete($"/api/v1/{tenant}/{environment}/model/{entity}");
+            var response = await _apiClient.Delete($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}");
 
             return response.Success;
         }
+
+        private string ReadFile(string path)
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var sr = new StreamReader(fs);
+            return sr.ReadToEnd();
+        }
+
+        private static string FolderName(string path)
+            => Path.GetFileName(Path.GetDirectoryName(path));
     }
 }

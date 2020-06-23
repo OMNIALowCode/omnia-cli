@@ -20,7 +20,7 @@ namespace UnitTests.Commands.Model
             var pathToWatch = Path.Combine(Directory.GetCurrentDirectory(),
                 "Commands", "Model", "TestData", "FakeModel", "Model");
             var apiClientMock = MockApiClient();
-            apiClientMock.Setup(s => s.Get($"/api/v1/{Tenant}/{Environment}/model/{entity}"))
+            apiClientMock.Setup(s => s.Get($"/api/v1/{Tenant}/{Environment}/model/Agent/{entity}"))
                 .ReturnsAsync((true, "{\"Test\":\"Test\"}"));
 
             var eventManualWorker = new ManualResetEventSlim(false);
@@ -32,14 +32,14 @@ namespace UnitTests.Commands.Model
             importer.Watch();
 
 
-            File.WriteAllText(Path.Combine(pathToWatch, "Agent", $"{entity}.json"), "{}");
+            File.WriteAllText(Path.Combine(pathToWatch, "Agent", $"{entity}.json"), "{\"Test\":\"Bola\"}");
 
             eventManualWorker.Wait();
 
             apiClientMock.Verify(client =>
-                    client.Patch($"/api/v1/{Tenant}/{Environment}/model/{entity}",
+                    client.Patch($"/api/v1/{Tenant}/{Environment}/model/Agent/{entity}",
                         It.IsAny<StringContent>()),
-                Times.Exactly(2)); //TODO: Should be once - Duplicated events triggered
+                Times.Once);
 
             void ImporterOnFileChange(object sender, FileSystemEventArgs e)
                 => eventManualWorker.Set();
@@ -70,7 +70,7 @@ namespace UnitTests.Commands.Model
             eventManualWorker.Wait();
 
             apiClientMock.Verify(client =>
-                    client.Post($"/api/v1/{Tenant}/{Environment}/model/{entity}",
+                    client.Post($"/api/v1/{Tenant}/{Environment}/model/Agent",
                         It.IsAny<StringContent>()),
                 Times.Once); 
 
@@ -101,7 +101,7 @@ namespace UnitTests.Commands.Model
             eventManualWorker.Wait();
 
             apiClientMock.Verify(client =>
-                    client.Delete($"/api/v1/{Tenant}/{Environment}/model/{entity}"),
+                    client.Delete($"/api/v1/{Tenant}/{Environment}/model/Agent/{entity}"),
                 Times.Once); 
 
             void ImporterOnFileChange(object sender, FileSystemEventArgs e)

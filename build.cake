@@ -56,8 +56,27 @@ Task("Build")
     });
 });
 
+Task("Tests")
+    .IsDependentOn("Build")
+    .Does(() =>
+{
+    var projectFiles = GetFiles("./test/**/*.csproj");
+	var settings = new DotNetCoreTestSettings
+	{
+		Filter = "Category!=Ignore",
+		Configuration = configuration,
+		ArgumentCustomization = args=>args.Append($"--no-build")
+	};
+	
+    foreach(var file in projectFiles)
+    {
+		DotNetCoreTest(file.FullPath, settings);
+    }
+});
+	
+
 Task("Publish")
-.IsDependentOn("Build")
+.IsDependentOn("Tests")
 .Does(()=>
 {
     DotNetCorePack(solutionFile, new DotNetCorePackSettings()

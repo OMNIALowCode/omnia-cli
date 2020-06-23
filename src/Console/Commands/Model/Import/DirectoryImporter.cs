@@ -130,7 +130,7 @@ namespace Omnia.CLI.Commands.Model.Import
             return response.Success;
         }
 
-        private string ReadFile(string path)
+        private static string ReadFile(string path)
         {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var sr = new StreamReader(fs);

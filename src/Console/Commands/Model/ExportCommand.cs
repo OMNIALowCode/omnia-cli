@@ -17,6 +17,7 @@ namespace Omnia.CLI.Commands.Model
     {
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
+
         public ExportCommand(IOptions<AppSettings> options,
             IApiClient apiClient)
         {
@@ -26,13 +27,15 @@ namespace Omnia.CLI.Commands.Model
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
+
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
         public string Tenant { get; set; }
+
         [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
+
         [Option("--path", CommandOptionType.SingleValue, Description = "Complete path where exported folders will be created.")]
         public string Path { get; set; } = Directory.GetCurrentDirectory();
-
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
         {
@@ -66,7 +69,6 @@ namespace Omnia.CLI.Commands.Model
                 return (int)StatusCodes.InvalidOperation;
             }
 
-
             var sourceSettings = _settings.GetSubscription(Subscription);
 
             await _apiClient.Authenticate(sourceSettings);
@@ -84,7 +86,7 @@ namespace Omnia.CLI.Commands.Model
         private static async Task DownloadModel(IApiClient apiClient, string tenantCode, string environmentCode, string path)
         {
             var response = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/export");
-            if (!response.Success) return;
+            if (!response.ApiDetails.Success) return;
 
             await using var responseStream = response.Content;
             var archive = new ZipArchive(responseStream);
@@ -94,7 +96,7 @@ namespace Omnia.CLI.Commands.Model
         private static async Task<string> CurrentBuildNumber(IApiClient apiClient, string tenantCode, string environmentCode)
         {
             var response = await apiClient.Get($"/api/v1/{tenantCode}/{environmentCode}/model/builds?pageSize=1");
-            if (!response.Success) return null;
+            if (!response.ApiDetails.Success) return null;
 
             var buildData = response.Content.ReadAsJson<List<BuildData>>();
             return buildData.First().BuildVersion;
@@ -113,8 +115,6 @@ namespace Omnia.CLI.Commands.Model
         {
             public string BuildVersion { get; set; }
             public string State { get; set; }
-
         }
-
     }
 }

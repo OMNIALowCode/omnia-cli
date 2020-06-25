@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using JsonDiffPatchDotNet.Formatters.JsonPatch;
 using Newtonsoft.Json.Linq;
 using Omnia.CLI.Extensions;
+using System.Net;
 
 namespace Omnia.CLI.Commands.Model.Import
 {
@@ -18,6 +19,8 @@ namespace Omnia.CLI.Commands.Model.Import
         private readonly string _environment;
         private readonly string _path;
         private readonly IApiClient _apiClient;
+        private FileSystemWatcher _watcher;
+        private DateTime lastRead = DateTime.MinValue;
 
         public DirectoryImporter(IApiClient apiClient, string tenant, string environment, string path)
         {
@@ -25,29 +28,28 @@ namespace Omnia.CLI.Commands.Model.Import
             _environment = environment;
             _apiClient = apiClient;
             _path = path;
-
         }
 
         public void Watch()
         {
-            var watcher =
-                new FileSystemWatcher(_path) { IncludeSubdirectories = true };
-            watcher.Created += Watcher_Created;
-            watcher.Changed += Watcher_Changed;
-            watcher.Deleted += Watcher_Deleted;
-            watcher.Renamed += Watcher_Renamed;
-            watcher.Error += Watcher_Error;
-
-            watcher.EnableRaisingEvents = true;
+            _watcher = new FileSystemWatcher(_path) { IncludeSubdirectories = true, Filter = "*.json" };
+            _watcher.Created += Watcher_Created;
+            _watcher.Changed += Watcher_Changed;
+            _watcher.Deleted += Watcher_Deleted;
+            _watcher.Renamed += Watcher_Renamed;
+            _watcher.Error += Watcher_Error;
+            _watcher.EnableRaisingEvents = true;
         }
 
         public event FileSystemEventHandler OnFileChange;
+
         public event FileSystemEventHandler OnFileCreated;
+
         public event FileSystemEventHandler OnFileDeleted;
 
         private void Watcher_Error(object sender, ErrorEventArgs e)
         {
-            throw new NotImplementedException();
+            Console.WriteLine(e.GetException().Message);
         }
 
         private void Watcher_Renamed(object sender, RenamedEventArgs e)
@@ -57,9 +59,10 @@ namespace Omnia.CLI.Commands.Model.Import
 
         private void Watcher_Deleted(object sender, FileSystemEventArgs e)
         {
+            _watcher.EnableRaisingEvents = false;
             Console.WriteLine($"File has been deleted {e.FullPath}");
 
-            DeleteEntity(_tenant, _environment, FolderName(e.FullPath), 
+            DeleteEntity(_tenant, _environment, FolderName(e.FullPath),
                     Path.GetFileNameWithoutExtension(e.Name))
                 .GetAwaiter().GetResult();
 
@@ -68,13 +71,18 @@ namespace Omnia.CLI.Commands.Model.Import
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            Console.WriteLine($"File has been changed {e.FullPath}");
+            DateTime lastWriteTime = File.GetLastWriteTime(e.FullPath);
+            if (lastWriteTime != lastRead)
+            {
+                Console.WriteLine($"File has been changed {e.FullPath}");
 
-            PatchEntity(_tenant, _environment, FolderName(e.FullPath), Path.GetFileNameWithoutExtension(e.Name),
-                    ReadFile(e.FullPath))
-                .GetAwaiter().GetResult();
+                PatchEntity(_tenant, _environment, FolderName(e.FullPath), Path.GetFileNameWithoutExtension(e.Name),
+                        ReadFile(e.FullPath))
+                    .GetAwaiter().GetResult();
 
-            OnFileChange?.Invoke(this, e);
+                OnFileChange?.Invoke(this, e);
+                lastRead = lastWriteTime;
+            }
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
@@ -90,19 +98,56 @@ namespace Omnia.CLI.Commands.Model.Import
 
         private async Task<bool> PatchEntity(string tenant, string environment, string definition, string entity, string newJson)
         {
-            var (success, currentJson) = await
+            var apiresponse = await
                 _apiClient.Get($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}");
 
-            if (!success)
+            if (!apiresponse.ApiDetails.Success && apiresponse.ApiDetails.StatusCode != HttpStatusCode.NotFound)
+            {
+                FeedbacktoUsers(apiresponse.ApiDetails);
+
                 return false;
+            }
 
-            var patch = CalculatePatch(newJson, currentJson);
+            if (apiresponse.ApiDetails.StatusCode.Equals(HttpStatusCode.NotFound))
+            {
+                var response = await _apiClient.Post($"/api/v1/{tenant}/{environment}/model/{definition}",
+                new StringContent(newJson, Encoding.UTF8, "application/json"));
 
-            //TODO: Send ETAG
-            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
-                patch.ToHttpStringContent());
+                FeedbacktoUsers(response);
 
-            return response.Success;
+                return response.Success;
+            }
+            else
+            {
+                var patch = CalculatePatch(newJson, apiresponse.Content);
+
+                //TODO: Send ETAG
+                var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
+                    patch.ToHttpStringContent());
+
+                FeedbacktoUsers(response);
+
+                return response.Success;
+            }
+        }
+
+        private static void FeedbacktoUsers(ApiResponse apiresponse)
+        {
+            if (apiresponse.ErrorDetails != null)
+            {
+                if (apiresponse.ErrorDetails.Errors != null)
+                {
+                    apiresponse.ErrorDetails.Errors.ForEach(e => Console.WriteLine(e.Message));
+                }
+                else
+                {
+                    Console.WriteLine(apiresponse.ErrorDetails.Message);
+                }
+            }
+            else
+            {
+                Console.WriteLine(apiresponse.StatusCode.ToString());
+            }
         }
 
         private static IList<Operation> CalculatePatch(string newJson, string currentJson)
@@ -120,12 +165,16 @@ namespace Omnia.CLI.Commands.Model.Import
             var response = await _apiClient.Post($"/api/v1/{tenant}/{environment}/model/{definition}",
                 new StringContent(json, Encoding.UTF8, "application/json"));
 
+            FeedbacktoUsers(response);
+
             return response.Success;
         }
 
         private async Task<bool> DeleteEntity(string tenant, string environment, string definition, string entity)
         {
             var response = await _apiClient.Delete($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}");
+
+            FeedbacktoUsers(response);
 
             return response.Success;
         }

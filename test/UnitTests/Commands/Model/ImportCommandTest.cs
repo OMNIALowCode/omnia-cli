@@ -15,6 +15,7 @@ namespace UnitTests.Commands.Model
     public class ImportCommandTest
     {
         private readonly IOptions<AppSettings> _settings;
+
         public ImportCommandTest()
         {
             _settings = new AppSettingsBuilder()
@@ -32,7 +33,7 @@ namespace UnitTests.Commands.Model
 
             result.ShouldBe((int)StatusCodes.Success);
 
-            apiClientMock.Verify(client=> 
+            apiClientMock.Verify(client =>
                 client.Post($"/api/v1/{command.Tenant}/PRD/model/import", It.IsAny<MultipartFormDataContent>()),
                 Times.Once);
         }
@@ -53,9 +54,9 @@ namespace UnitTests.Commands.Model
         {
             var apiClientMock = new Mock<IApiClient>();
             apiClientMock.Setup(s => s.Post(It.IsAny<string>(), It.IsAny<MultipartFormDataContent>()))
-                .ReturnsAsync((true, null));
+                .ReturnsAsync(new ApiResponse(true, System.Net.HttpStatusCode.OK));
             apiClientMock.Setup(s => s.Post(It.IsAny<string>(), It.IsAny<StringContent>()))
-                .ReturnsAsync((true, null));
+                .ReturnsAsync(new ApiResponse(true, System.Net.HttpStatusCode.OK));
             return apiClientMock;
         }
     }

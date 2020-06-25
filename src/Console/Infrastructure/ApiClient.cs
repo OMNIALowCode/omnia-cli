@@ -1,5 +1,7 @@
 ﻿using Omnia.CLI.Extensions;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -9,51 +11,55 @@ namespace Omnia.CLI.Infrastructure
     {
         private readonly HttpClient _httpClient;
         private readonly IAuthenticationProvider _authenticationProvider;
+
         public ApiClient(HttpClient httpClient, IAuthenticationProvider authenticationProvider)
         {
             _httpClient = httpClient;
             _authenticationProvider = authenticationProvider;
         }
 
-        public async Task<(bool Success, string Content)> Get(string endpoint)
+        public async Task<(ApiResponse, string)> Get(string endpoint)
         {
             var response = await _httpClient.GetAsync(endpoint);
 
             var responseMessage = await response.Content.ReadAsStringAsync();
 
-            return (response.IsSuccessStatusCode, responseMessage);
+            return (new ApiResponse(response.IsSuccessStatusCode, response.StatusCode, new Dictionary<string, object> {
+                { "ETAG", response.Headers.ETag }}
+            ), responseMessage);
         }
 
-        public async Task<(bool Success, Stream Content)> GetStream(string endpoint)
+        public async Task<(ApiResponse, Stream)> GetStream(string endpoint)
         {
             var response = await _httpClient.GetAsync(endpoint);
 
             var responseMessage = await response.Content.ReadAsStreamAsync();
 
-            return (response.IsSuccessStatusCode, responseMessage);
+            return (new ApiResponse(response.IsSuccessStatusCode, response.StatusCode, new Dictionary<string, object> {
+                { "ETAG", response.Headers.ETag }}
+            ), responseMessage);
         }
 
-        public async Task<(bool Success, ApiError ErrorDetails)> Patch(string endpoint, HttpContent content)
+        public async Task<ApiResponse> Patch(string endpoint, HttpContent content)
         {
             //TODO: Send ETAG
-            using var response = await _httpClient.PatchAsync(endpoint,
+            var response = await _httpClient.PatchAsync(endpoint,
                 content);
 
-            return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
+            return response.IsSuccessStatusCode ? new ApiResponse(true, response.StatusCode, errorDetails: null) : new ApiResponse(false, response.StatusCode, await GetErrorFromApiResponse(response));
         }
 
-        public async Task<(bool Success, ApiError ErrorDetails)> Post(string endpoint, HttpContent content)
+        public async Task<ApiResponse> Post(string endpoint, HttpContent content)
         {
-            using var response = await _httpClient.PostAsync(endpoint, content);
-            return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
+            var response = await _httpClient.PostAsync(endpoint, content);
+            return response.IsSuccessStatusCode ? new ApiResponse(true, response.StatusCode, errorDetails: null) : new ApiResponse(false, response.StatusCode, await GetErrorFromApiResponse(response));
         }
 
-        public async Task<(bool Success, ApiError ErrorDetails)> Delete(string endpoint)
+        public async Task<ApiResponse> Delete(string endpoint)
         {
-            using var response = await _httpClient.DeleteAsync(endpoint);
-            return response.IsSuccessStatusCode ? (true, null) : (false, await GetErrorFromApiResponse(response));
+            var response = await _httpClient.DeleteAsync(endpoint);
+            return response.IsSuccessStatusCode ? new ApiResponse(true, response.StatusCode, errorDetails: null) : new ApiResponse(false, response.StatusCode, await GetErrorFromApiResponse(response));
         }
-
 
         public async Task Authenticate(AppSettings.Subscription subscription)
         {

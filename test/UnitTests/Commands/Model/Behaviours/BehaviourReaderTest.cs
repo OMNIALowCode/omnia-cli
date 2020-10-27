@@ -95,9 +95,9 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 	
 		}
 
-        private void BeforeCollectionEntityInitialize(Child entry)
+        private void BeforecollectionEntityInitialize(Child entry)
 		{
-			//entry._name = ""Child initialized"";
+			entry._name = ""Child initialized"";
 		}
 }
 }";
@@ -111,7 +111,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var behaviours = reader.ExtractMethods(FileText);
 
             behaviours.ShouldNotBeNull();
-            behaviours.Count.ShouldBe(5); //TODO: AfterSave and BeforeSave are false positives
+            behaviours.Count.ShouldBe(6); //TODO: AfterSave and BeforeSave are false positives
         }
 
         [Fact]
@@ -208,6 +208,39 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Attribute.ShouldBe("name");
+        }
+
+        [Fact]
+        public void ExtractMethods_WithBeforeCollectionEntityInitialize_ValidType()
+        {
+            var reader = new BehaviourReader();
+
+            var intialize = reader.ExtractMethods(FileText)
+                .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
+
+            intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeCollectionEntityInitialize);
+        }
+
+        [Fact]
+        public void ExtractMethods_WithBeforeCollectionEntityInitialize_ValidExpression()
+        {
+            var reader = new BehaviourReader();
+
+            var intialize = reader.ExtractMethods(FileText)
+                .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
+
+            intialize.Expression.ShouldBe("\t\t\tentry._name = \"Child initialized\";\r\n");
+        }
+
+        [Fact]
+        public void ExtractMethods_WithBeforeCollectionEntityInitialize_CorrectAttribute()
+        {
+            var reader = new BehaviourReader();
+
+            var intialize = reader.ExtractMethods(FileText)
+                .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
+
+            intialize.Attribute.ShouldBe("collection");
         }
     }
 }

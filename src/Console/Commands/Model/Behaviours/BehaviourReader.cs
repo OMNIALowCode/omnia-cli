@@ -59,7 +59,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 var initialize when initialize.Equals("ExecuteInitialize") => BehaviourType.Initialize,
                 var change when change.StartsWith("On") && change.EndsWith("PropertyChange") => BehaviourType.Action,
                 var formula when formula.StartsWith("Get") => BehaviourType.Formula,
-                //var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("Before") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => BehaviourType.BeforeCollectionEntityInitialize,
+                var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("Before") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => BehaviourType.BeforeCollectionEntityInitialize,
 
                 _ => BehaviourType.AfterChange,
             };

@@ -31,8 +31,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
                     return Name.Substring("On".Length, Name.Length - "PropertyChange".Length - 2);
                 case BehaviourType.Formula:
                     return Name.Substring("Get".Length, Name.Length - 3);
-                /*case BehaviourType.BeforeCollectionEntityInitialize:
-                    return Name.Substring("Before".Length, Name.Length - "EntityInitialize".Length - 2);*/
+                case BehaviourType.BeforeCollectionEntityInitialize:
+                    return Name.Substring("Before".Length, Name.Length - "EntityInitialize".Length - 6);
                 default:
                     break;
             }

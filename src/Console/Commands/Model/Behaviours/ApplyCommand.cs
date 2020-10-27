@@ -5,6 +5,7 @@ using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -58,22 +59,12 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             await _apiClient.Authenticate(sourceSettings);
 
-            foreach (var file in Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories))
-            {
-                Console.WriteLine($"Processing file {file}...");
-                var content = await ReadFile(file).ConfigureAwait(false);
+            
+            var files = Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories);
 
-                var operations = _reader.ExtractMethods(content);
-
-                if (operations.Count == 0) continue;
-
-                var replacedWithSuccess = await _definitionService.ReplaceBehaviours(Tenant, Environment,
-                    ExtractEntityFromFileName(file), operations).ConfigureAwait(false);
-
-                if(!replacedWithSuccess)
-                    Console.WriteLine($"Failed to apply behaviours from file {file}.");
-
-            }
+            var processFileTasks  = files.Select(ProcessFile);
+            
+            await Task.WhenAll(processFileTasks);
 
             if (Build)
                 await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
@@ -82,6 +73,23 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             Console.WriteLine($"Successfully applyed behaviours to tenant \"{Tenant}\" model.");
             return (int)StatusCodes.Success;
         }
+
+        private async Task ProcessFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            var operations = _reader.ExtractMethods(content);
+
+            if (operations.Count == 0) return;
+
+            var replacedWithSuccess = await _definitionService.ReplaceBehaviours(Tenant, Environment,
+                ExtractEntityFromFileName(filepath), operations).ConfigureAwait(false);
+
+            if (!replacedWithSuccess)
+                Console.WriteLine($"Failed to apply behaviours from file {filepath}.");
+        }
+
         private static string ExtractEntityFromFileName(string filepath)
         {
             var filename = System.IO.Path.GetFileName(filepath);
@@ -93,5 +101,6 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var sr = new StreamReader(fs);
             return await sr.ReadToEndAsync().ConfigureAwait(false);
         }
+
     }
 }

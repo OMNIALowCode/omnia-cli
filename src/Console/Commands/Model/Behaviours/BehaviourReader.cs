@@ -29,14 +29,25 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static Behaviour MapMethod(MethodDeclarationSyntax method)
         {
-            var statement = method.DescendantNodes()
-                .OfType<ExpressionStatementSyntax>().FirstOrDefault();
+            var methodType = MapType(method);
+            var expression = ExtractExpression(method, methodType);
 
             return new Behaviour
             {
-                Expression = statement?.GetText().ToString(),
+                Expression = expression,
                 Name = method.Identifier.ValueText,
-                Type = MapType(method)
+                Type = methodType
+            };
+        }
+
+        private static string ExtractExpression(MethodDeclarationSyntax method, BehaviourType type)
+        {
+            var nodes = method.DescendantNodes();
+
+            return type switch
+            {
+                BehaviourType.Formula => nodes.OfType<ReturnStatementSyntax>().FirstOrDefault()?.GetText().ToString(),
+                _ => nodes.OfType<ExpressionStatementSyntax>().FirstOrDefault()?.GetText().ToString(),
             };
         }
 
@@ -47,8 +58,10 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
                 var initialize when initialize.Equals("ExecuteInitialize") => BehaviourType.Initialize,
                 var change when change.StartsWith("On") && change.EndsWith("PropertyChange") => BehaviourType.Action,
-                _ => BehaviourType.AfterChange
-                //_ => throw new NotImplementedException()
+                var formula when formula.StartsWith("Get") => BehaviourType.Formula,
+                //var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("Before") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => BehaviourType.BeforeCollectionEntityInitialize,
+
+                _ => BehaviourType.AfterChange,
             };
         }
     }

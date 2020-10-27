@@ -1,6 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
@@ -65,9 +66,11 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 await _definitionService.ReplaceBehaviours(Tenant, Environment,
                 "Agent", //TODO: DISCOVER ENTITY TYPE
                  ExtractEntityFromFileName(file), operations).ConfigureAwait(false);
-
-
             }
+
+            if (Build)
+                await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
+
 
             Console.WriteLine($"Successfully applyed behaviours to tenant \"{Tenant}\" model.");
             return (int)StatusCodes.Success;

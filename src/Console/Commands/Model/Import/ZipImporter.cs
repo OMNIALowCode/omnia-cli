@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Omnia.CLI.Infrastructure;
+using Omnia.CLI.Commands.Model.Extensions;
 
 namespace Omnia.CLI.Commands.Model.Import
 {
@@ -22,7 +23,7 @@ namespace Omnia.CLI.Commands.Model.Import
         {
             await Import(tenant, environment, path);
 
-            return await BuildModel(_apiClient, tenant, environment);
+            return await _apiClient.BuildModel(tenant, environment);
         }
 
 
@@ -44,25 +45,6 @@ namespace Omnia.CLI.Commands.Model.Import
 
             var response = await apiClient.Post($"/api/v1/{tenantCode}/{environmentCode}/model/import", content);
             return response.Success;
-        }
-
-        private static async Task<int> BuildModel(IApiClient apiClient, string tenantCode, string environmentCode)
-        {
-
-            var requestContent = new StringContent(JsonConvert.SerializeObject(new { Clean = true }), Encoding.UTF8, "application/json");
-
-            var response = await apiClient.Post($"/api/v1/{tenantCode}/{environmentCode}/model/builds", requestContent);
-            if (response.Success)
-            {
-                Console.WriteLine($"Successfully imported and built model to tenant \"{tenantCode}\".");
-                return (int)StatusCodes.Success;
-            }
-
-            var apiError = response.ErrorDetails;
-
-            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
-
-            return (int)StatusCodes.InvalidOperation;
         }
 
         private static StreamContent ReadFileAsStream(string path)

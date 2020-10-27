@@ -26,7 +26,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var definition = await GetDefinitionForEntity(tenant, environment, entity).ConfigureAwait(false);
 
             var patch = new JsonPatchDocument().Replace("/entityBehaviours", behaviours.ToArray());
-            var dataAsString = JsonConvert.SerializeObject(patch);
+            var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
                 new StringContent(dataAsString,

@@ -54,6 +54,10 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 return (int)StatusCodes.InvalidArgument;
             }
 
+            var sourceSettings = _settings.GetSubscription(Subscription);
+
+            await _apiClient.Authenticate(sourceSettings);
+
             foreach (var file in Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories))
             {
                 Console.WriteLine($"Processing file {file}...");
@@ -63,8 +67,12 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
                 if (operations.Count == 0) continue;
 
-                await _definitionService.ReplaceBehaviours(Tenant, Environment,
+                var replacedWithSuccess = await _definitionService.ReplaceBehaviours(Tenant, Environment,
                     ExtractEntityFromFileName(file), operations).ConfigureAwait(false);
+
+                if(!replacedWithSuccess)
+                    Console.WriteLine($"Failed to apply behaviours from file {file}.");
+
             }
 
             if (Build)
@@ -77,13 +85,13 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         private static string ExtractEntityFromFileName(string filepath)
         {
             var filename = System.IO.Path.GetFileName(filepath);
-            return filename.Substring(0, filename.Length - ".Operations.cs".Length - 2);
+            return filename.Substring(0, filename.Length - ".Operations.cs".Length);
         }
-        private static Task<string> ReadFile(string path)
+        private static async Task<string> ReadFile(string path)
         {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var sr = new StreamReader(fs);
-            return sr.ReadToEndAsync();
+            return await sr.ReadToEndAsync().ConfigureAwait(false);
         }
     }
 }

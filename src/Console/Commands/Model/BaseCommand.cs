@@ -8,6 +8,7 @@ namespace Omnia.CLI.Commands.Model
     [HelpOption("-h|--help")]
     [Subcommand(typeof(ExportCommand))]
     [Subcommand(typeof(ImportCommand))]
+    [Subcommand(typeof(Omnia.CLI.Commands.Model.Behaviours.BaseCommand))]
     public class BaseCommand
     {
         public void OnExecute(CommandLineApplication app)

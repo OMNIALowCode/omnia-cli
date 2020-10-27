@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Omnia.CLI.Infrastructure;
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model.Import
@@ -38,11 +37,7 @@ namespace Omnia.CLI.Commands.Model.Import
         [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after the importation.")]
         public bool Build { get; set; }
 
-        [Option("--watch", CommandOptionType.NoValue,
-            Description = "Watches for file changes in all folders and import them.")]
-        public bool Watch { get; set; }
-
-        public async Task<int> OnExecute(CommandLineApplication cmd, CancellationToken cancellationToken = default)
+        public async Task<int> OnExecute(CommandLineApplication cmd)
         {
 
             if (string.IsNullOrEmpty(Path))
@@ -51,41 +46,21 @@ namespace Omnia.CLI.Commands.Model.Import
                 return (int)StatusCodes.InvalidArgument;
             }
 
+            if (!File.Exists(Path))
+            {
+                Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid file.");
+                return (int)StatusCodes.InvalidArgument;
+            }
+
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _apiClient.Authenticate(sourceSettings);
-            
+            await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
 
-            if (File.Exists(Path))
-            {
-                if (Watch)
-                {
-                    Console.WriteLine("Watch mode not supported when using the Import command with a ZIP file. Use a Directory Path to use the watch mode.");
-                    return (int)StatusCodes.InvalidArgument;
-                }
+            if (Build)
+                return await _zipImporter.ImportAndBuild(Tenant, Environment, Path).ConfigureAwait(false);
 
-                if (Build)
-                    return await _zipImporter.ImportAndBuild(Tenant, Environment, Path);
+            return await _zipImporter.Import(Tenant, Environment, Path).ConfigureAwait(false);
 
-                return await _zipImporter.Import(Tenant, Environment, Path);
-            }
-
-            if (Directory.Exists(Path))
-            {
-                if (Watch)
-                {
-                    var directoryImporter = new DirectoryImporter(_apiClient, Tenant, Environment, Path);
-                    directoryImporter.Watch();
-
-                    Console.WriteLine($"Watching for changes on: {Path}...");
-                    Console.WriteLine("Press any key to exit.");
-                    Console.ReadKey();
-                }
-
-
-            }
-
-            return (int)StatusCodes.UnknownError;
         }
 
 

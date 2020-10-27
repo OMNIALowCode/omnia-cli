@@ -171,7 +171,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Action);
         }
-
+        [Fact]
         public void ExtractMethods_WithPropertyChange_CorrectAttribute()
         {
             var reader = new BehaviourReader();
@@ -181,6 +181,5 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             initialize.Attribute.ShouldBe("_code");
         }
-
     }
 }

@@ -48,7 +48,6 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             }
 
             if (!Directory.Exists(Path))
-
             {
                 Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid directory.");
                 return (int)StatusCodes.InvalidArgument;
@@ -76,7 +75,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         private static string ExtractEntityFromFileName(string filepath)
         {
             var filename = System.IO.Path.GetFileName(filepath);
-            return filename.Substring(0, filename.Length - ".Operations.cs".Length);
+            return filename.Substring(0, filename.Length - ".Operations.cs".Length - 2);
         }
         private static Task<string> ReadFile(string path)
         {

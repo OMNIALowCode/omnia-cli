@@ -29,7 +29,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
             switch (Type)
             {
                 case BehaviourType.Action:
-                    return Name.Substring("On".Length, Name.Length - "PropertyChange".Length);
+                    return Name.Substring("On".Length, Name.Length - "PropertyChange".Length - 2);
                 // case BehaviourType.Formula:
                 //     throw new NotImplementedException();
                 // case BehaviourType.BeforeCollectionEntityInitialize:

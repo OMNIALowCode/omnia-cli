@@ -30,10 +30,10 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
             {
                 case BehaviourType.Action:
                     return Name.Substring("On".Length, Name.Length - "PropertyChange".Length - 2);
-                // case BehaviourType.Formula:
-                //     throw new NotImplementedException();
-                // case BehaviourType.BeforeCollectionEntityInitialize:
-                //     throw new NotImplementedException();
+                case BehaviourType.Formula:
+                    return Name.Substring("Get".Length, Name.Length - 3);
+                /*case BehaviourType.BeforeCollectionEntityInitialize:
+                    return Name.Substring("Before".Length, Name.Length - "EntityInitialize".Length - 2);*/
                 default:
                     break;
             }

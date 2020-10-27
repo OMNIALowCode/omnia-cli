@@ -1,16 +1,6 @@
-﻿
-using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
-using Moq;
-using Omnia.CLI;
-using Omnia.CLI.Commands.Model.Behaviours;
-using Omnia.CLI.Commands.Model.Import;
-using Omnia.CLI.Infrastructure;
+﻿using Omnia.CLI.Commands.Model.Behaviours;
 using Shouldly;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace UnitTests.Commands.Model.Behaviours
@@ -57,6 +47,10 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 		private void ExecuteAfterUpdate(){
 		}
 
+        private String Getname() { 
+			return ""New Name"";
+		}
+
 		private void On_codePropertyChange(String oldValue, String newValue)
 		{
             _name = newValue;
@@ -101,10 +95,11 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 	
 		}
 
-        		private void BeforeChildEntityInitialize(Child entry)
+        private void BeforeCollectionEntityInitialize(Child entry)
 		{
-		}	
-	}
+			//entry._name = ""Child initialized"";
+		}
+}
 }";
 
 
@@ -116,7 +111,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var behaviours = reader.ExtractMethods(FileText);
 
             behaviours.ShouldNotBeNull();
-            behaviours.Count.ShouldBe(4); //TODO: AfterSave and BeforeSave are false positives
+            behaviours.Count.ShouldBe(5); //TODO: AfterSave and BeforeSave are false positives
         }
 
         [Fact]
@@ -180,6 +175,39 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
             initialize.Attribute.ShouldBe("_code");
+        }
+        
+        [Fact]
+        public void ExtractMethods_WithFormula_ValidType()
+        {
+            var reader = new BehaviourReader();
+
+            var formula = reader.ExtractMethods(FileText)
+                .First(m => m.Name.Equals("Getname"));
+
+            formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Formula);
+        }
+
+        [Fact]
+        public void ExtractMethods_WithFormula_ValidExpression()
+        {
+            var reader = new BehaviourReader();
+
+            var formula = reader.ExtractMethods(FileText)
+                .First(m => m.Name.Equals("Getname"));
+            
+            formula.Expression.ShouldBe("\t\t\treturn \"New Name\";\r\n");
+         }
+
+        [Fact]
+        public void ExtractMethods_WithFormula_CorrectAttribute()
+        {
+            var reader = new BehaviourReader();
+
+            var formula = reader.ExtractMethods(FileText)
+                .First(m => m.Name.Equals("Getname"));
+
+            formula.Attribute.ShouldBe("name");
         }
     }
 }

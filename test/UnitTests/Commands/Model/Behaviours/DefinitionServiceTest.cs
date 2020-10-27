@@ -27,10 +27,12 @@ namespace UnitTests.Commands.Model.Behaviours
                 }
             };
             var apiClientMock = new Mock<IApiClient>();
+            apiClientMock.Setup(r => r.Get($"/api/v1/{tenant}/{environment}/model/output/definitions/{entity}"))
+                .ReturnsAsync((new ApiResponse(true), "{\"instanceOf\":\"Agent\"}"));
 
             var service = new DefinitionService(apiClientMock.Object);
 
-            await service.ReplaceBehaviours(tenant, environment, definition, entity, behaviours)
+            await service.ReplaceBehaviours(tenant, environment, entity, behaviours)
                 .ConfigureAwait(false);
 
             apiClientMock.Verify(r => r.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",

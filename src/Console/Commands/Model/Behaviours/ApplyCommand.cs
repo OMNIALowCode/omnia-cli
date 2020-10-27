@@ -64,8 +64,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 if (operations.Count == 0) continue;
 
                 await _definitionService.ReplaceBehaviours(Tenant, Environment,
-                "Agent", //TODO: DISCOVER ENTITY TYPE
-                 ExtractEntityFromFileName(file), operations).ConfigureAwait(false);
+                    ExtractEntityFromFileName(file), operations).ConfigureAwait(false);
             }
 
             if (Build)

@@ -59,6 +59,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
 		private void On_codePropertyChange(String oldValue, String newValue)
 		{
+            _name = newValue;
 		}	
 		private void On_descriptionPropertyChange(String oldValue, String newValue)
 		{
@@ -115,7 +116,17 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var behaviours = reader.ExtractMethods(FileText);
 
             behaviours.ShouldNotBeNull();
-            behaviours.Count.ShouldBe(16);
+            behaviours.Count.ShouldBe(4); //TODO: AfterSave and BeforeSave are false positives
+        }
+
+        [Fact]
+        public void ExtractMethods_EmptyMethodsAreIgnored()
+        {
+            var reader = new BehaviourReader();
+
+            var behaviours = reader.ExtractMethods(FileText);
+
+            behaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
         }
 
         [Fact]

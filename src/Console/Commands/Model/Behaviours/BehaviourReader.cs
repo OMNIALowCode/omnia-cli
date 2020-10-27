@@ -20,15 +20,17 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return root.DescendantNodes(null, false)
                 .OfType<MethodDeclarationSyntax>()
                 .Select(MapMethod)
+                .Where(HasExpression)
                 .ToList();
+
+            static bool HasExpression(Behaviour m)
+                => !string.IsNullOrEmpty(m.Expression);
         }
 
         private static Behaviour MapMethod(MethodDeclarationSyntax method)
         {
             var statement = method.DescendantNodes()
                 .OfType<ExpressionStatementSyntax>().FirstOrDefault();
-
-
 
             return new Behaviour
             {

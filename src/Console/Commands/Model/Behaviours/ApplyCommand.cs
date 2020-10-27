@@ -6,6 +6,7 @@ using Omnia.CLI.Infrastructure;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,11 +18,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours
     public class ApplyCommand
     {
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        public ApplyCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        private readonly IApiClient _apiClient;
+        private readonly DefinitionService _definitionService;
+        private readonly BehaviourReader _reader = new BehaviourReader();
+        public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
+            _apiClient = apiClient;
+            _definitionService = new DefinitionService(_apiClient);
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -43,15 +47,42 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 return (int)StatusCodes.InvalidArgument;
             }
 
-            if (!File.Exists(Path))
+            if (!Directory.Exists(Path))
+
             {
-                Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid file.");
+                Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid directory.");
                 return (int)StatusCodes.InvalidArgument;
             }
 
-            Console.WriteLine($"Successfully imported model to tenant \"{Tenant}\".");
+            foreach (var file in Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories))
+            {
+                Console.WriteLine($"Processing file {file}...");
+                var content = await ReadFile(file).ConfigureAwait(false);
+
+                var operations = _reader.ExtractMethods(content);
+
+                if (operations.Count == 0) continue;
+
+                await _definitionService.ReplaceBehaviours(Tenant, Environment,
+                "Agent", //TODO: DISCOVER ENTITY TYPE
+                 ExtractEntityFromFileName(file), operations).ConfigureAwait(false);
+
+
+            }
+
+            Console.WriteLine($"Successfully applyed behaviours to tenant \"{Tenant}\" model.");
             return (int)StatusCodes.Success;
         }
-
+        private static string ExtractEntityFromFileName(string filepath)
+        {
+            var filename = System.IO.Path.GetFileName(filepath);
+            return filename.Substring(0, filename.Length - ".Operations.cs".Length);
+        }
+        private static Task<string> ReadFile(string path)
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var sr = new StreamReader(fs);
+            return sr.ReadToEndAsync();
+        }
     }
 }

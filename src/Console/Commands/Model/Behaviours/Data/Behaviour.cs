@@ -1,4 +1,6 @@
 using System;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
 namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
@@ -18,6 +20,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
     {
         public string Name { get; set; }
         public string Attribute => GetAttribute();
+        [JsonConverter(typeof(StringEnumConverter))]
         public BehaviourType Type { get; set; }
         public string Expression { get; set; }
 

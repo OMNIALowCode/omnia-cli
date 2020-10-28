@@ -30,7 +30,14 @@ namespace Omnia.CLI.Infrastructure
         {
             var httpClient = _httpClientFactory.CreateClient();
 
-            var disco = await httpClient.GetDiscoveryDocumentAsync(subscription.IdentityServerUrl.ToString());
+            var request = new DiscoveryDocumentRequest()
+            {
+                Address = subscription.IdentityServerUrl.ToString(),
+            };
+            request.Policy.RequireHttps = false;
+            request.Policy.ValidateIssuerName = false;
+
+            var disco = await httpClient.GetDiscoveryDocumentAsync(request);
 
             if (disco.IsError)
             {

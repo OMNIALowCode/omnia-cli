@@ -46,7 +46,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             return type switch
             {
-                var behaviour when behaviour.Equals(BehaviourType.Formula) || behaviour.Equals(BehaviourType.AfterSave) => SyntaxFactory.Block(nodes.OfType<ExpressionStatementSyntax>()).GetText().ToString().Trim('{', '}') + SyntaxFactory.Block(nodes.OfType<ReturnStatementSyntax>()).GetText().ToString().Trim('{', '}'),
+                var behaviour when behaviour.Equals(BehaviourType.Formula) || behaviour.Equals(BehaviourType.AfterSave) => SyntaxFactory.Block(nodes.Where(n => n is ExpressionStatementSyntax || n is ReturnStatementSyntax).OfType<StatementSyntax>()).GetText().ToString().Trim('{', '}'),
                 _ => SyntaxFactory.Block(nodes.OfType<ExpressionStatementSyntax>()).GetText().ToString().Trim('{', '}'),
             };
         }

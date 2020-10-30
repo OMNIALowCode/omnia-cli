@@ -1,16 +1,10 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Omnia.CLI.Commands.Model.Extensions;
-using Omnia.CLI.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model.Behaviours
@@ -59,11 +53,11 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             await _apiClient.Authenticate(sourceSettings);
 
-            
+
             var files = Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories);
 
-            var processFileTasks  = files.Select(ProcessFile);
-            
+            var processFileTasks = files.Select(ProcessFile);
+
             await Task.WhenAll(processFileTasks);
 
             if (Build)
@@ -79,13 +73,16 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             Console.WriteLine($"Processing file {filepath}...");
             var content = await ReadFile(filepath).ConfigureAwait(false);
 
-            var operations = _reader.ExtractMethods(content);
+            var entity = _reader.ExtractData(content);
 
-            if (operations.Count == 0) return;
+            if (entity.Behaviours.Count > 0 || entity.Usings.Count > 0)
+                await ReplaceData(filepath, entity).ConfigureAwait(false);
+        }
 
-            var replacedWithSuccess = await _definitionService.ReplaceBehaviours(Tenant, Environment,
-                ExtractEntityFromFileName(filepath), operations).ConfigureAwait(false);
-
+        private async Task ReplaceData(string filepath, Data.Entity entity)
+        {
+            bool replacedWithSuccess = await _definitionService.ReplaceData(Tenant, Environment,
+                            ExtractEntityFromFileName(filepath), entity).ConfigureAwait(false);
             if (!replacedWithSuccess)
                 Console.WriteLine($"Failed to apply behaviours from file {filepath}.");
         }

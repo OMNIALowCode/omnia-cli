@@ -1,11 +1,10 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
-using Omnia.CLI.Extensions;
+using Omnia.CLI.Commands.Model.Behaviours.Data;
 using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model.Behaviours
@@ -19,13 +18,18 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             _apiClient = apiClient;
         }
 
-        public async Task<bool> ReplaceBehaviours(string tenant, string environment,
+        public async Task<bool> ReplaceData(string tenant, string environment,
             string entity,
-            IList<Data.Behaviour> behaviours)
+            Entity entityData)
         {
             var definition = await GetDefinitionForEntity(tenant, environment, entity).ConfigureAwait(false);
 
-            var patch = new JsonPatchDocument().Replace("/entityBehaviours", behaviours.ToArray());
+            var patch = new JsonPatchDocument();
+            if (entityData.Behaviours?.Count > 0)
+                patch.Replace("/entityBehaviours", entityData.Behaviours.ToArray());
+            if (entityData.Usings?.Count > 0)
+                patch.Replace("/behaviourNamespaces", entityData.Usings.Select(MapToBehaviourNamespace));
+
             var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
@@ -48,5 +52,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 return definition.ToString();
             return null;
         }
+
+        private static object MapToBehaviourNamespace(string usingDirective)
+        => new
+        {
+            Name = usingDirective.Replace(".", ""),
+            ExecutionLocation = "Internal", // TODO
+            FullyQualifiedName = usingDirective
+        };
+
     }
 }

@@ -32,6 +32,7 @@ using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Omnia.Libraries.Infrastructure.Behaviours;
 using Action = Omnia.Libraries.Infrastructure.Behaviours.Action;
+using MyCompany.CustomDll;
 
 
 namespace Omnia.Behaviours.T99.Internal.System.Model
@@ -115,250 +116,282 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
 
         [Fact]
-        public void ExtractMethods_Successfully()
+        public void ExtractData_Successfully()
         {
             var reader = new BehaviourReader();
 
-            var behaviours = reader.ExtractMethods(FileText);
+            var entity = reader.ExtractData(FileText);
 
-            behaviours.ShouldNotBeNull();
-            behaviours.Count.ShouldBe(8); //TODO: AfterSave and BeforeSave are false positives
+            entity.Behaviours.ShouldNotBeNull();
+            entity.Behaviours.Count.ShouldBe(8); //TODO: AfterSave and BeforeSave are false positives
         }
 
         [Fact]
-        public void ExtractMethods_EmptyMethodsAreIgnored()
+        public void ExtractData_EmptyMethodsAreIgnored()
         {
             var reader = new BehaviourReader();
 
-            var behaviours = reader.ExtractMethods(FileText);
+            var entity = reader.ExtractData(FileText);
 
-            behaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
+            entity.Behaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
         }
 
         [Fact]
-        public void ExtractMethods_HasInitialize()
+        public void ExtractData_HasInitialize()
         {
             var reader = new BehaviourReader();
 
-            var behaviours = reader.ExtractMethods(FileText);
+            var entity = reader.ExtractData(FileText);
 
-            behaviours.ShouldContain(m => m.Name.Equals("Initialize"));
+            entity.Behaviours.ShouldContain(m => m.Name.Equals("Initialize"));
         }
 
         [Fact]
-        public void ExtractMethods_ValidExpression()
+        public void ExtractData_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var initialize = reader.ExtractMethods(FileText)
+            var initialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
 
             initialize.Expression.ShouldBe("\t\t\tthis._name = \"Hello World!\";\r\n");
         }
 
         [Fact]
-        public void ExtractMethods_UsesCommentName()
+        public void ExtractData_UsesCommentName()
         {
             var reader = new BehaviourReader();
 
-            var initialize = reader.ExtractMethods(FileText)
+            var initialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
 
             initialize.Name.ShouldBe("Initialize");
         }
 
         [Fact]
-        public void ExtractMethods_UsesCommentDescription()
+        public void ExtractData_UsesCommentDescription()
         {
             var reader = new BehaviourReader();
 
-            var initialize = reader.ExtractMethods(FileText)
+            var initialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
 
             initialize.Description.ShouldBe($"Set the name to:{Environment.NewLine}Hello World!");
         }
 
         [Fact]
-        public void ExtractMethods_ValidType()
+        public void ExtractData_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var initialize = reader.ExtractMethods(FileText)
+            var initialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("Initialize"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
         }
 
         [Fact]
-        public void ExtractMethods_WithPropertyChange_ValidType()
+        public void ExtractData_WithPropertyChange_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var initialize = reader.ExtractMethods(FileText)
+            var initialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Action);
         }
 
         [Fact]
-        public void ExtractMethods_WithPropertyChange_CorrectAttribute()
+        public void ExtractData_WithPropertyChange_CorrectAttribute()
         {
             var reader = new BehaviourReader();
 
-            var initialize = reader.ExtractMethods(FileText)
+            var initialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
             initialize.Attribute.ShouldBe("_code");
         }
 
         [Fact]
-        public void ExtractMethods_WithFormula_ValidType()
+        public void ExtractData_WithFormula_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var formula = reader.ExtractMethods(FileText)
+            var formula = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Formula);
         }
 
         [Fact]
-        public void ExtractMethods_WithFormula_ValidExpression()
+        public void ExtractData_WithFormula_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var formula = reader.ExtractMethods(FileText)
+            var formula = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Expression.ShouldBe("\t\t\treturn \"New Name\";\r\n");
         }
 
         [Fact]
-        public void ExtractMethods_WithFormula_CorrectAttribute()
+        public void ExtractData_WithFormula_CorrectAttribute()
         {
             var reader = new BehaviourReader();
 
-            var formula = reader.ExtractMethods(FileText)
+            var formula = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Attribute.ShouldBe("name");
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeCollectionEntityInitialize_ValidType()
+        public void ExtractData_WithBeforeCollectionEntityInitialize_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var intialize = reader.ExtractMethods(FileText)
+            var intialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
 
             intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeCollectionEntityInitialize);
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeCollectionEntityInitialize_ValidExpression()
+        public void ExtractData_WithBeforeCollectionEntityInitialize_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var intialize = reader.ExtractMethods(FileText)
+            var intialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
 
             intialize.Expression.ShouldBe("\t\t\tentry._name = \"Child initialized\";\r\n");
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeCollectionEntityInitialize_CorrectAttribute()
+        public void ExtractData_WithBeforeCollectionEntityInitialize_CorrectAttribute()
         {
             var reader = new BehaviourReader();
 
-            var intialize = reader.ExtractMethods(FileText)
+            var intialize = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
 
             intialize.Attribute.ShouldBe("collection");
         }
 
         [Fact]
-        public void ExtractMethods_WithAfterChange_ValidType()
+        public void ExtractData_WithAfterChange_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var afterChange = reader.ExtractMethods(FileText)
+            var afterChange = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteAfterUpdate"));
 
             afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.AfterChange);
         }
 
         [Fact]
-        public void ExtractMethods_WithAfterChange_ValidExpression()
+        public void ExtractData_WithAfterChange_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var afterChange = reader.ExtractMethods(FileText)
+            var afterChange = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteAfterUpdate"));
             afterChange.Expression.ShouldBe("\t\t\tthis._name = \"Hello World 3!\";\r\n");
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeChange_ValidType()
+        public void ExtractData_WithBeforeChange_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var beforeChange = reader.ExtractMethods(FileText)
+            var beforeChange = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteBeforeUpdate"));
 
             beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeChange);
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeChange_ValidExpression()
+        public void ExtractData_WithBeforeChange_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var beforeChange = reader.ExtractMethods(FileText)
+            var beforeChange = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteBeforeUpdate"));
             beforeChange.Expression.ShouldBe("\t\t\tthis._name = \"Hello World 2!\";\r\n");
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeSave_ValidType()
+        public void ExtractData_WithBeforeSave_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var beforeSave = reader.ExtractMethods(FileText)
+            var beforeSave = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteBeforeSave"));
 
             beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeSave);
         }
 
         [Fact]
-        public void ExtractMethods_WithBeforeSave_ValidExpression()
+        public void ExtractData_WithBeforeSave_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var beforeSave = reader.ExtractMethods(FileText)
+            var beforeSave = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteBeforeSave"));
             beforeSave.Expression.ShouldBe("\t\t\tChild.ForEach(a => a.ExecuteBeforeSave());\r\n\t\t\t_name = \"tst\";\r\n");
         }
 
         [Fact]
-        public void ExtractMethods_WithAfterSave_ValidType()
+        public void ExtractData_WithAfterSave_ValidType()
         {
             var reader = new BehaviourReader();
 
-            var afterSave = reader.ExtractMethods(FileText)
+            var afterSave = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteAfterSave"));
 
             afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.AfterSave);
         }
 
         [Fact]
-        public void ExtractMethods_WithAfterSave_ValidExpression()
+        public void ExtractData_WithAfterSave_ValidExpression()
         {
             var reader = new BehaviourReader();
 
-            var afterSave = reader.ExtractMethods(FileText)
+            var afterSave = reader.ExtractData(FileText)
+                .Behaviours
                 .First(m => m.Name.Equals("ExecuteAfterSave"));
             afterSave.Expression.ShouldBe("\t\t\tChild.ForEach(async a => await a.ExecuteAfterSave());\r\n\t\t\treturn await Task.FromResult(AfterSaveMessage.Empty);\r\n");
+        }
+
+        [Fact]
+        public void ExtractUsings_Successfully()
+        {
+            var reader = new BehaviourReader();
+
+            var entity = reader.ExtractData(FileText);
+
+            entity.Usings.ShouldNotBeNull();
+            entity.Usings.Count.ShouldBe(1);
+            entity.Usings.Single().ShouldBe("MyCompany.CustomDll");
         }
     }
 }

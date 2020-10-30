@@ -15,11 +15,12 @@ namespace UnitTests.Commands.Model.Behaviours
         private const string Environment = "PRD";
         private const string Definition = "Agent";
         private const string Entity = "Customer";
+        private const string Namespace = "Omnia.Behaviours.Template.Internal.System.Model";
 
         [Fact]
         public async Task ReplaceData_WithBehavioursList_Successful()
         {
-            var entityData = new Entity(
+            var entityData = new Entity(Namespace,
             new List<Behaviour>()
             {
                 new Behaviour()

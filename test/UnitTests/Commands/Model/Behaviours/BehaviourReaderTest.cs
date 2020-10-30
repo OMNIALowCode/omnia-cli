@@ -383,7 +383,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         }
 
         [Fact]
-        public void ExtractUsings_Successfully()
+        public void ExtractData_SuccessfullyExtractUsings()
         {
             var reader = new BehaviourReader();
 
@@ -392,6 +392,16 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             entity.Usings.ShouldNotBeNull();
             entity.Usings.Count.ShouldBe(1);
             entity.Usings.Single().ShouldBe("MyCompany.CustomDll");
+        }
+
+        [Fact]
+        public void ExtractData_NamespaceMatch()
+        {
+            var reader = new BehaviourReader();
+
+            var entity = reader.ExtractData(FileText);
+
+            entity.Namespace.ShouldBe("Omnia.Behaviours.T99.Internal.System.Model");
         }
     }
 }

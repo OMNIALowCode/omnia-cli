@@ -28,7 +28,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             if (entityData.Behaviours?.Count > 0)
                 patch.Replace("/entityBehaviours", entityData.Behaviours.ToArray());
             if (entityData.Usings?.Count > 0)
-                patch.Replace("/behaviourNamespaces", entityData.Usings.Select(MapToBehaviourNamespace));
+                patch.Replace("/behaviourNamespaces", 
+                    entityData.Usings.Select(u=>MapToBehaviourNamespace(u, entityData.Namespace)));
 
             var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
 
@@ -53,11 +54,11 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return null;
         }
 
-        private static object MapToBehaviourNamespace(string usingDirective)
+        private static object MapToBehaviourNamespace(string usingDirective, string @namespace)
         => new
         {
             Name = usingDirective.Replace(".", ""),
-            ExecutionLocation = "Internal", // TODO
+            ExecutionLocation = @namespace.Split('.').ElementAtOrDefault(3) ?? "Internal",
             FullyQualifiedName = usingDirective
         };
 

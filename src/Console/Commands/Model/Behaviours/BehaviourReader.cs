@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
@@ -32,10 +31,18 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         {
             var tree = CSharpSyntaxTree.ParseText(text);
             var root = tree.GetCompilationUnitRoot();
-            
+
             return new Entity(
+                ExtractNamespace(root),
                 ExtractMethods(root),
                 ExtractUsings(root));
+        }
+
+        private static string ExtractNamespace(CompilationUnitSyntax root)
+        {
+            var namespaceDeclaration = root.DescendantNodes(null, false)
+                .OfType<NamespaceDeclarationSyntax>();
+            return namespaceDeclaration.Single().Name.ToString();
         }
 
         private static IList<Behaviour> ExtractMethods(CompilationUnitSyntax root)

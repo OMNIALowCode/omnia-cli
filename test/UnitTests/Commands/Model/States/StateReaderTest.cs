@@ -140,6 +140,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 	/// -------------------------
 	private bool EvaluateStateTransition_Initial_Confirm()
 	{
+			var test = ""tst"";
 			this._name = ""Confirmation"";
 			return true;
 	}
@@ -505,7 +506,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 				.Transitions.First(t => t.Name.Equals("Confirm"));
 
 			confirm.Evaluation.ShouldNotBeNull();
-			confirm.Evaluation.Expression.ShouldBe("\t\t\tthis._name = \"Confirmation\";\r\n\t\t\treturn true;\r\n");
+			confirm.Evaluation.Expression.ShouldBe("\t\t\tvar test = \"tst\";\r\n\t\t\tthis._name = \"Confirmation\";\r\n\t\t\treturn true;\r\n");
 			confirm.Evaluation.Decision.ShouldNotBeNull();
 		}
 

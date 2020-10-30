@@ -44,6 +44,7 @@ namespace Omnia.CLI.Commands.Model.States
 						Decisions = ExtractDecisions(evaluateStateTransitionsCases, stateName),
 						IsInitial = ExtractIsInitial(evaluateStateTransitionsCases, stateName),
 						Transitions = ExtractTransitions(methods, evaluateStateTransitionsCases, stateName),
+						ExpressionAssignTo = ExtractAssignTo(methods, stateName)
 					}).ToList();
 		}
 
@@ -76,11 +77,11 @@ namespace Omnia.CLI.Commands.Model.States
 
 			return (from transitionName in transitionNames
 					let transitionExpression = ExtractTransitionExpression(methods, stateName, transitionName)
-						from evaluation in evaluateStateTransitionsCases
-						where evaluation.Labels.ToString().Contains($"EvaluateStateTransition_{stateName}_{transitionName}()")
-						let transitionType = evaluation.Labels.ToString().Contains($"case RequestAssistanceStateMachineStates.{stateName} when \"") ? EvaluationType.Decision : EvaluationType.Automatic
-						let statements = SyntaxFactory.Block(evaluation.Statements[0])
-						let goToStateName = (statements.GetText().ToString().Split('.')[1]).Split(')')[0]
+					from evaluation in evaluateStateTransitionsCases
+					where evaluation.Labels.ToString().Contains($"EvaluateStateTransition_{stateName}_{transitionName}()")
+					let transitionType = evaluation.Labels.ToString().Contains($"case RequestAssistanceStateMachineStates.{stateName} when \"") ? EvaluationType.Decision : EvaluationType.Automatic
+					let statements = SyntaxFactory.Block(evaluation.Statements[0])
+					let goToStateName = (statements.GetText().ToString().Split('.')[1]).Split(')')[0]
 
 					select new Transition()
 					{
@@ -103,9 +104,20 @@ namespace Omnia.CLI.Commands.Model.States
 					select method.Identifier.ValueText.Substring(method.Identifier.ValueText.IndexOf($"EvaluateStateTransition_{stateName}_") + $"EvaluateStateTransition_{stateName}_".Length)).ToList();
 		}
 
-		private static string ExtractTransitionExpression(List<MethodDeclarationSyntax> methods, string stateName, string transitionName){
+		private static string ExtractTransitionExpression(List<MethodDeclarationSyntax> methods, string stateName, string transitionName)
+		{
 			return (from method in methods
 					where method.Identifier.ValueText.Equals($"EvaluateStateTransition_{stateName}_{transitionName}")
+					let nodes = method.DescendantNodes()
+					let block = SyntaxFactory.Block(nodes.Where(n => n is ExpressionStatementSyntax || n is ReturnStatementSyntax).OfType<StatementSyntax>())
+					select block.GetText().ToString().Trim('{', '}')
+					).FirstOrDefault();
+		}
+
+		private static string ExtractAssignTo(List<MethodDeclarationSyntax> methods, string stateName)
+		{
+			return (from method in methods
+					where method.Identifier.ValueText.StartsWith($"AssignTo_{stateName}")
 					let nodes = method.DescendantNodes()
 					let block = SyntaxFactory.Block(nodes.Where(n => n is ExpressionStatementSyntax || n is ReturnStatementSyntax).OfType<StatementSyntax>())
 					select block.GetText().ToString().Trim('{', '}')

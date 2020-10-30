@@ -31,6 +31,9 @@ namespace Omnia.CLI.Commands.Model.States.Data
         public string BehaviourIn { get; set; }
         public string BehaviourOut { get; set; }
         public bool IsInitial { get; set; }
+#nullable enable
         public List<Transition>? Transitions { get; set; }
+#nullable disable
+        public string ExpressionAssignTo { get; set; }
     }
 }

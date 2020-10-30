@@ -125,15 +125,15 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 	/// -------------------------
 	private string AssignTo_Initial()
 	{
-		return null;
+			return null;
 	}
 	private string AssignTo_Rejected()
 	{
-		return null;
+			return null;
 	}
 	private string AssignTo_Accepted()
 	{
-		return null;
+			return null;
 	}
 
 	/// Transition Expressions
@@ -535,6 +535,39 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 			draft.Evaluation.ShouldNotBeNull();
 			draft.Evaluation.Expression.ShouldBe("\t\t\treturn true;\r\n");
 			draft.Evaluation.Decision.ShouldBeNull();
+		}
+
+		[Fact]
+		public void ExtractMethods_ValidInitialExpressionAssignTo()
+		{
+			var reader = new StateReader();
+
+			var initial = reader.ExtractMethods(FileText)
+				.First(m => m.Name.Equals("Initial"));
+
+			initial.ExpressionAssignTo.ShouldBe("\t\t\treturn null;\r\n");
+		}
+
+		[Fact]
+		public void ExtractMethods_ValidRejectedExpressionAssignTo()
+		{
+			var reader = new StateReader();
+
+			var rejected = reader.ExtractMethods(FileText)
+				.First(m => m.Name.Equals("Rejected"));
+
+			rejected.ExpressionAssignTo.ShouldBe("\t\t\treturn null;\r\n");
+		}
+
+		[Fact]
+		public void ExtractMethods_ValidAcceptedExpressionAssignTo()
+		{
+			var reader = new StateReader();
+
+			var accepted = reader.ExtractMethods(FileText)
+				.First(m => m.Name.Equals("Accepted"));
+
+			accepted.ExpressionAssignTo.ShouldBe("\t\t\treturn null;\r\n");
 		}
 	}
 }

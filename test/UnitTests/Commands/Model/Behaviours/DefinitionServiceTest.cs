@@ -11,35 +11,38 @@ namespace UnitTests.Commands.Model.Behaviours
 {
     public class DefinitionServiceTest
     {
+        private const string Tenant = "Template";
+        private const string Environment = "PRD";
+        private const string Definition = "Agent";
+        private const string Entity = "Customer";
+        private const string Namespace = "Omnia.Behaviours.Template.Internal.System.Model";
+
         [Fact]
-        public async Task ReplaceBehaviours_Successful()
+        public async Task ReplaceData_WithBehavioursList_Successful()
         {
-            const string tenant = "Template";
-            const string environment = "PRD";
-            const string definition = "Agent";
-            const string entity = "Customer";
-            var behaviours = new List<Behaviour>()
+            var entityData = new Entity(Namespace,
+            new List<Behaviour>()
             {
                 new Behaviour()
                 {
                     Name = "ExecuteInitialize",
                     Expression = "_code = \"Hi\";"
                 }
-            };
+            }, null);
+
             var apiClientMock = new Mock<IApiClient>();
-            apiClientMock.Setup(r => r.Get($"/api/v1/{tenant}/{environment}/model/output/definitions/{entity}"))
+            apiClientMock.Setup(r => r.Get($"/api/v1/{Tenant}/{Environment}/model/output/definitions/{Entity}"))
                 .ReturnsAsync((new ApiResponse(true), "{\"instanceOf\":\"Agent\"}"));
             apiClientMock.Setup(r => r.Patch(It.IsAny<string>(), It.IsAny<HttpContent>()))
                 .ReturnsAsync((new ApiResponse(true)));
 
             var service = new DefinitionService(apiClientMock.Object);
 
-            await service.ReplaceBehaviours(tenant, environment, entity, behaviours)
+            await service.ReplaceData(Tenant, Environment, Entity, entityData)
                 .ConfigureAwait(false);
 
-            apiClientMock.Verify(r => r.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
+            apiClientMock.Verify(r => r.Patch($"/api/v1/{Tenant}/{Environment}/model/{Definition}/{Entity}",
             It.IsAny<StringContent>()));
-
         }
     }
 }

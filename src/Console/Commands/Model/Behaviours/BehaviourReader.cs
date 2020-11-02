@@ -35,6 +35,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return new Entity(
                 ExtractNamespace(root),
                 ExtractMethods(root),
+                null,
                 ExtractUsings(root));
         }
 

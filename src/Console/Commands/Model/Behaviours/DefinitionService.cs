@@ -25,8 +25,10 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var definition = await GetDefinitionForEntity(tenant, environment, entity).ConfigureAwait(false);
 
             var patch = new JsonPatchDocument();
-            if (entityData.Behaviours?.Count > 0)
-                patch.Replace("/entityBehaviours", entityData.Behaviours.ToArray());
+            if (entityData.EntityBehaviours?.Count > 0)
+                patch.Replace("/entityBehaviours", entityData.EntityBehaviours.ToArray());
+            if (entityData.DataBehaviours?.Count > 0)
+                patch.Replace("/dataBehaviours", entityData.DataBehaviours.ToArray());
             if (entityData.Usings?.Count > 0)
                 patch.Replace("/behaviourNamespaces", 
                     entityData.Usings.Select(u=>MapToBehaviourNamespace(u, entityData.Namespace)));

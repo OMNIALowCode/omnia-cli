@@ -1,8 +1,10 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
+using Omnia.CLI.Commands.Model.Behaviours.Data;
 using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,7 +18,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
         private readonly DefinitionService _definitionService;
-        private readonly BehaviourReader _reader = new BehaviourReader();
+        private readonly BehaviourReader _entityBehaviourReader = new BehaviourReader();
+        private readonly DaoReader _daoReader = new DaoReader();
         public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
             _settings = options.Value;
@@ -51,14 +54,25 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _apiClient.Authenticate(sourceSettings);
+            await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
+            
+            IEnumerable<Task<(string name, Entity entity)>> processFileTasks =
+                ProcessEntityBehaviours().Union(
+                    ProcessDataBehaviours()
+                );
+            var entities = await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
+            var applyTasks = entities.GroupBy(g => g.name)
+                .Select(g =>
+                    ApplyEntityChanges(g.Key,
+                        new Entity(g.First().entity.Namespace,
+                        g.SelectMany(e => e.entity.EntityBehaviours).ToList(),
+                        g.SelectMany(e => e.entity.DataBehaviours).ToList(),
+                        g.SelectMany(e => e.entity.Usings).ToList())
+                    )
+                );
 
-            var files = Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories);
-
-            var processFileTasks = files.Select(ProcessFile);
-
-            await Task.WhenAll(processFileTasks);
+            await Task.WhenAll(applyTasks).ConfigureAwait(false);
 
             if (Build)
                 await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
@@ -68,29 +82,56 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return (int)StatusCodes.Success;
         }
 
-        private async Task ProcessFile(string filepath)
+        private IEnumerable<Task<(string name, Entity entity)>> ProcessEntityBehaviours()
+        {
+            var files = Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories);
+
+            return files.Select(ProcessEntityBehavioursFile);
+        }
+
+        private IEnumerable<Task<(string name, Entity entity)>> ProcessDataBehaviours()
+        {
+            var files = Directory.GetFiles(Path, "*Dao.cs", SearchOption.AllDirectories);
+
+            return files.Select(ProcessDaoFile);
+        }
+
+        private async Task<(string name, Entity entity)> ProcessEntityBehavioursFile(string filepath)
         {
             Console.WriteLine($"Processing file {filepath}...");
             var content = await ReadFile(filepath).ConfigureAwait(false);
 
-            var entity = _reader.ExtractData(content);
-
-            if (entity.Behaviours.Count > 0 || entity.Usings.Count > 0)
-                await ReplaceData(filepath, entity).ConfigureAwait(false);
+            return (ExtractEntityNameFromFileName(filepath, ".Operations.cs"), _entityBehaviourReader.ExtractData(content));
         }
 
-        private async Task ReplaceData(string filepath, Data.Entity entity)
+        private async Task<(string name, Entity entity)> ProcessDaoFile(string filepath)
         {
-            bool replacedWithSuccess = await _definitionService.ReplaceData(Tenant, Environment,
-                            ExtractEntityFromFileName(filepath), entity).ConfigureAwait(false);
-            if (!replacedWithSuccess)
-                Console.WriteLine($"Failed to apply behaviours from file {filepath}.");
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (ExtractEntityNameFromFileName(filepath, "Dao.cs"), _daoReader.ExtractData(content));
         }
 
-        private static string ExtractEntityFromFileName(string filepath)
+        private async Task ApplyEntityChanges(string name, Entity entity)
+        {
+            if (entity.EntityBehaviours?.Count == 0 &&
+                entity.DataBehaviours?.Count == 0 &&
+                entity.Usings?.Count == 0)
+                return;
+
+            var applySuccessfully = await ReplaceData(name, entity).ConfigureAwait(false);
+            if (!applySuccessfully)
+                Console.WriteLine($"Failed to apply behaviours to entity {name}.");
+        }
+
+        private async Task<bool> ReplaceData(string name, Data.Entity entity)
+            =>  await _definitionService.ReplaceData(Tenant, Environment,
+                            name, entity).ConfigureAwait(false);
+
+        private static string ExtractEntityNameFromFileName(string filepath, string suffix)
         {
             var filename = System.IO.Path.GetFileName(filepath);
-            return filename.Substring(0, filename.Length - ".Operations.cs".Length);
+            return filename.Substring(0, filename.Length - suffix.Length);
         }
         private static async Task<string> ReadFile(string path)
         {

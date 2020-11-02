@@ -82,8 +82,8 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 
             var entity = reader.ExtractData(FileText);
 
-            entity.Behaviours.ShouldNotBeNull();
-            entity.Behaviours.Count.ShouldBe(5);
+            entity.DataBehaviours.ShouldNotBeNull();
+            entity.DataBehaviours.Count.ShouldBe(5);
         }
 
         [Fact]
@@ -93,17 +93,17 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 
             var entity = reader.ExtractData(FileText);
 
-            entity.Behaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
+            entity.DataBehaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
         }
 
         [Fact]
-        public void ExtractData_HasInitialize()
+        public void ExtractData_HasCreate()
         {
             var reader = new DaoReader();
 
             var entity = reader.ExtractData(FileText);
 
-            entity.Behaviours.ShouldContain(m => m.Name.Equals("Create"));
+            entity.DataBehaviours.ShouldContain(m => m.Name.Equals("Create"));
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
             var reader = new DaoReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .DataBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
 
             initialize.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
@@ -131,7 +131,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
             var reader = new DaoReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .DataBehaviours
                 .First(m => m.Name.Equals("Read"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Read);

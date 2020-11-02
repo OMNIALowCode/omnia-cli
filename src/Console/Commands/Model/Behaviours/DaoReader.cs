@@ -22,14 +22,15 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             "Omnia.Libraries.Infrastructure.Behaviours.Query",
             "Omnia.Libraries.Infrastructure.Behaviours.Action",
         };
-                
-        public Dao ExtractData(string text)
+
+        public Entity ExtractData(string text)
         {
             var tree = CSharpSyntaxTree.ParseText(text);
             var root = tree.GetCompilationUnitRoot();
 
-            return new Dao(
+            return new Entity(
                 ExtractNamespace(root),
+                null,
                 ExtractMethods(root),
                 ExtractUsings(root));
         }
@@ -90,7 +91,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 => blockText
                     .Substring(0, blockText.LastIndexOf('}'))
                       .Substring(blockText.IndexOf('{') + 1);
-                    
+
         }
 
         private static DataBehaviourType MapType(MethodDeclarationSyntax method)

@@ -28,7 +28,7 @@ namespace UnitTests.Commands.Model.Behaviours
                     Name = "ExecuteInitialize",
                     Expression = "_code = \"Hi\";"
                 }
-            }, null);
+            }, null, null);
 
             var apiClientMock = new Mock<IApiClient>();
             apiClientMock.Setup(r => r.Get($"/api/v1/{Tenant}/{Environment}/model/output/definitions/{Entity}"))

@@ -121,8 +121,8 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var entity = reader.ExtractData(FileText);
 
-            entity.Behaviours.ShouldNotBeNull();
-            entity.Behaviours.Count.ShouldBe(8);
+            entity.EntityBehaviours.ShouldNotBeNull();
+            entity.EntityBehaviours.Count.ShouldBe(8);
         }
 
         [Fact]
@@ -132,7 +132,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var entity = reader.ExtractData(FileText);
 
-            entity.Behaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
+            entity.EntityBehaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
         }
 
         [Fact]
@@ -142,7 +142,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var entity = reader.ExtractData(FileText);
 
-            entity.Behaviours.ShouldContain(m => m.Name.Equals("Initialize"));
+            entity.EntityBehaviours.ShouldContain(m => m.Name.Equals("Initialize"));
         }
 
         [Fact]
@@ -151,7 +151,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
 
             initialize.Expression.ShouldBe("this._name = \"Hello World!\";");
@@ -163,7 +163,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
 
             initialize.Name.ShouldBe("Initialize");
@@ -175,7 +175,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
 
             initialize.Description.ShouldBe($"Set the name to:{Environment.NewLine}Hello World!");
@@ -187,7 +187,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("Initialize"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
@@ -199,7 +199,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Action);
@@ -211,7 +211,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
             initialize.Attribute.ShouldBe("_code");
@@ -223,7 +223,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var formula = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Formula);
@@ -235,7 +235,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var formula = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Expression.ShouldBe("return \"New Name\";");
@@ -247,7 +247,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var formula = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("Getname"));
 
             formula.Attribute.ShouldBe("name");
@@ -259,7 +259,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var intialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
             intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeCollectionEntityInitialize);
@@ -271,7 +271,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var intialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
             intialize.Expression.ShouldBe("entry._name = \"Child initialized\";");
@@ -283,7 +283,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var intialize = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
             intialize.Attribute.ShouldBe("collection");
@@ -295,7 +295,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var afterChange = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnAfterUpdate"));
 
             afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.AfterChange);
@@ -307,7 +307,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var afterChange = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnAfterUpdate"));
             afterChange.Expression.ShouldBe(@"this._name = ""Hello World 3!"";
             this._name = ""Hello World 4!"";");
@@ -319,7 +319,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var beforeChange = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforeUpdate"));
 
             beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeChange);
@@ -331,7 +331,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var beforeChange = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforeUpdate"));
             beforeChange.Expression.ShouldBe("this._name = \"Hello World 2!\";");
         }
@@ -342,7 +342,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var beforeSave = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforeSave"));
 
             beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeSave);
@@ -354,7 +354,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var beforeSave = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforeSave"));
             beforeSave.Expression.ShouldBe("_name = \"tst\";");
         }
@@ -365,7 +365,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var afterSave = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnAfterSave"));
 
             afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.AfterSave);
@@ -377,7 +377,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var reader = new BehaviourReader();
 
             var afterSave = reader.ExtractData(FileText)
-                .Behaviours
+                .EntityBehaviours
                 .First(m => m.Name.Equals("OnAfterSave"));
             afterSave.Expression.ShouldBe("return await Task.FromResult(AfterSaveMessage.Empty);");
         }

@@ -75,7 +75,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         private static Behaviour MapMethod(MethodDeclarationSyntax method)
         {
             var methodType = MapType(method);
-            var expression = ExtractExpression(method, methodType);
+            var expression = ExtractExpression(method);
 
             string name = null;
             string description = null;
@@ -99,15 +99,18 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             };
         }
 
-        private static string ExtractExpression(MethodDeclarationSyntax method, BehaviourType type)
+        private static string ExtractExpression(MethodDeclarationSyntax method)
         {
             var nodes = method.DescendantNodes();
 
-            return type switch
-            {
-                var behaviour when behaviour.Equals(BehaviourType.Formula) || behaviour.Equals(BehaviourType.AfterSave) => SyntaxFactory.Block(nodes.Where(n => n is ExpressionStatementSyntax || n is ReturnStatementSyntax).OfType<StatementSyntax>()).GetText().ToString().Trim('{', '}'),
-                _ => SyntaxFactory.Block(nodes.OfType<ExpressionStatementSyntax>()).GetText().ToString().Trim('{', '}'),
-            };
+            var blockText = nodes.OfType<BlockSyntax>().SingleOrDefault()?.ToFullString();
+            return RemoveWithoutLeadingAndTrailingBraces(blockText).Trim();
+
+            static string RemoveWithoutLeadingAndTrailingBraces(string blockText)
+                => blockText
+                    .Substring(0, blockText.LastIndexOf('}'))
+                      .Substring(blockText.IndexOf('{') + 1);
+                    
         }
 
         private static BehaviourType MapType(MethodDeclarationSyntax method)

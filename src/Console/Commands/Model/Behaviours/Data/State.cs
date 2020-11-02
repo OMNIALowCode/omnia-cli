@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Omnia.CLI.Commands.Model.States.Data
+namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
     public enum EvaluationType
 	{
@@ -11,9 +11,7 @@ namespace Omnia.CLI.Commands.Model.States.Data
     public class Evaluation
 	{
         public string Expression { get; set; }
-#nullable enable
-        public string? Decision { get; set; }
-#nullable disable
+        public string Decision { get; set; }
     }
 
     public class Transition
@@ -31,10 +29,7 @@ namespace Omnia.CLI.Commands.Model.States.Data
         public string BehaviourIn { get; set; }
         public string BehaviourOut { get; set; }
         public bool IsInitial { get; set; }
-#nullable enable
-        public List<Transition>? Transitions { get; set; }
-#nullable disable
+        public List<Transition> Transitions { get; set; }
         public string ExpressionAssignTo { get; set; }
-        public string StateMachineName { get; set; }
     }
 }

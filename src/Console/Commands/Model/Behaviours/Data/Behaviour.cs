@@ -33,7 +33,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
                 case BehaviourType.Formula:
                     return Name.Substring("Get".Length, Name.Length - 3);
                 case BehaviourType.BeforeCollectionEntityInitialize:
-                    return Name.Substring("Before".Length, Name.Length - "EntityInitialize".Length - 6);
+                    return Name.Substring("OnBefore".Length, Name.Length - "EntityInitialize".Length - 8);
                 default:
                     break;
             }

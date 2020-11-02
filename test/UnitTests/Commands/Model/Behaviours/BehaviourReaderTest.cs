@@ -44,16 +44,16 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         /// Set the name to:
 		/// Hello World!
 		/// </summary>
-		private void ExecuteInitialize(){
+		private void OnInitialize(){
 			this._name = ""Hello World!"";
 		}
 
-		private void ExecuteBeforeUpdate()
+		private void OnBeforeUpdate()
 		{
 			this._name = ""Hello World 2!"";
 		}
 
-		private void ExecuteAfterUpdate()
+		private void OnAfterUpdate()
 		{
 			this._name = ""Hello World 3!"";
 		}
@@ -95,19 +95,19 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 		}	
 
 
-		public  void ExecuteBeforeSave()
+		public  void OnBeforeSave()
 		{
-			Child.ForEach(a => a.ExecuteBeforeSave());
+			Child.ForEach(a => a.OnBeforeSave());
 			_name = ""tst"";
 		}
 
-		public  async Task<AfterSaveMessage> ExecuteAfterSave()
+		public  async Task<AfterSaveMessage> OnAfterSave()
 		{
-			Child.ForEach(async a => await a.ExecuteAfterSave());
+			Child.ForEach(async a => await a.OnAfterSave());
 			return await Task.FromResult(AfterSaveMessage.Empty);
 		}
 
-        private void BeforecollectionEntityInitialize(Child entry)
+        private void OnBeforecollectionEntityInitialize(Child entry)
 		{
 			entry._name = ""Child initialized"";
 		}
@@ -261,7 +261,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var intialize = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
+                .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
             intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeCollectionEntityInitialize);
         }
@@ -273,7 +273,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var intialize = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
+                .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
             intialize.Expression.ShouldBe("\t\t\tentry._name = \"Child initialized\";\r\n");
         }
@@ -285,7 +285,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var intialize = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
+                .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
             intialize.Attribute.ShouldBe("collection");
         }
@@ -297,7 +297,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var afterChange = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteAfterUpdate"));
+                .First(m => m.Name.Equals("OnAfterUpdate"));
 
             afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.AfterChange);
         }
@@ -309,7 +309,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var afterChange = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteAfterUpdate"));
+                .First(m => m.Name.Equals("OnAfterUpdate"));
             afterChange.Expression.ShouldBe("\t\t\tthis._name = \"Hello World 3!\";\r\n");
         }
 
@@ -320,7 +320,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var beforeChange = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteBeforeUpdate"));
+                .First(m => m.Name.Equals("OnBeforeUpdate"));
 
             beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeChange);
         }
@@ -332,7 +332,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var beforeChange = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteBeforeUpdate"));
+                .First(m => m.Name.Equals("OnBeforeUpdate"));
             beforeChange.Expression.ShouldBe("\t\t\tthis._name = \"Hello World 2!\";\r\n");
         }
 
@@ -343,7 +343,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var beforeSave = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteBeforeSave"));
+                .First(m => m.Name.Equals("OnBeforeSave"));
 
             beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeSave);
         }
@@ -355,8 +355,8 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var beforeSave = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteBeforeSave"));
-            beforeSave.Expression.ShouldBe("\t\t\tChild.ForEach(a => a.ExecuteBeforeSave());\r\n\t\t\t_name = \"tst\";\r\n");
+                .First(m => m.Name.Equals("OnBeforeSave"));
+            beforeSave.Expression.ShouldBe("\t\t\tChild.ForEach(a => a.OnBeforeSave());\r\n\t\t\t_name = \"tst\";\r\n");
         }
 
         [Fact]
@@ -366,7 +366,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var afterSave = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteAfterSave"));
+                .First(m => m.Name.Equals("OnAfterSave"));
 
             afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.AfterSave);
         }
@@ -378,8 +378,8 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var afterSave = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Name.Equals("ExecuteAfterSave"));
-            afterSave.Expression.ShouldBe("\t\t\tChild.ForEach(async a => await a.ExecuteAfterSave());\r\n\t\t\treturn await Task.FromResult(AfterSaveMessage.Empty);\r\n");
+                .First(m => m.Name.Equals("OnAfterSave"));
+            afterSave.Expression.ShouldBe("\t\t\tChild.ForEach(async a => await a.OnAfterSave());\r\n\t\t\treturn await Task.FromResult(AfterSaveMessage.Empty);\r\n");
         }
 
         [Fact]

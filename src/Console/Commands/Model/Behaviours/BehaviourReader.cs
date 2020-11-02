@@ -114,15 +114,15 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         {
             return method.Identifier.ValueText switch
             {
-                var initialize when initialize.Equals("ExecuteInitialize") => BehaviourType.Initialize,
+                var initialize when initialize.Equals("OnInitialize") => BehaviourType.Initialize,
                 var change when change.StartsWith("On") && change.EndsWith("PropertyChange") => BehaviourType.Action,
                 var formula when formula.StartsWith("Get") => BehaviourType.Formula,
-                var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("Before") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => BehaviourType.BeforeCollectionEntityInitialize,
+                var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("OnBefore") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => BehaviourType.BeforeCollectionEntityInitialize,
 
-                var afterChange when afterChange.Equals("ExecuteAfterUpdate") => BehaviourType.AfterChange,
-                var beforeChange when beforeChange.Equals("ExecuteBeforeUpdate") => BehaviourType.BeforeChange,
-                var beforeSave when beforeSave.Equals("ExecuteBeforeSave") => BehaviourType.BeforeSave,
-                var afterSave when afterSave.Equals("ExecuteAfterSave") => BehaviourType.AfterSave,
+                var afterChange when afterChange.Equals("OnAfterUpdate") => BehaviourType.AfterChange,
+                var beforeChange when beforeChange.Equals("OnBeforeUpdate") => BehaviourType.BeforeChange,
+                var beforeSave when beforeSave.Equals("OnBeforeSave") => BehaviourType.BeforeSave,
+                var afterSave when afterSave.Equals("OnAfterSave") => BehaviourType.AfterSave,
 
                 _ => throw new NotSupportedException()
             };

@@ -45,7 +45,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return namespaceDeclaration.Single().Name.ToString();
         }
 
-        private static IList<Behaviour> ExtractMethods(CompilationUnitSyntax root)
+        private static IList<EntityBehaviour> ExtractMethods(CompilationUnitSyntax root)
         {
             return root.DescendantNodes(null, false)
                             .OfType<MethodDeclarationSyntax>()
@@ -53,7 +53,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                             .Where(HasExpression)
                             .ToList();
 
-            static bool HasExpression(Behaviour m)
+            static bool HasExpression(EntityBehaviour m)
                 => !string.IsNullOrEmpty(m.Expression);
         }
 
@@ -72,7 +72,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 => !DefaultUsings.Contains(usingDirective) && !usingDirective.StartsWith(BehaviourNamespacePrefix);
         }
 
-        private static Behaviour MapMethod(MethodDeclarationSyntax method)
+        private static EntityBehaviour MapMethod(MethodDeclarationSyntax method)
         {
             var methodType = MapType(method);
             var expression = ExtractExpression(method);
@@ -90,7 +90,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 (name, description) = ParseXmlComment(xml.ToFullString());
             }
 
-            return new Behaviour
+            return new EntityBehaviour
             {
                 Expression = expression,
                 Name = name ?? method.Identifier.ValueText,
@@ -113,19 +113,19 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                     
         }
 
-        private static BehaviourType MapType(MethodDeclarationSyntax method)
+        private static EntityBehaviourType MapType(MethodDeclarationSyntax method)
         {
             return method.Identifier.ValueText switch
             {
-                var initialize when initialize.Equals("OnInitialize") => BehaviourType.Initialize,
-                var change when change.StartsWith("On") && change.EndsWith("PropertyChange") => BehaviourType.Action,
-                var formula when formula.StartsWith("Get") => BehaviourType.Formula,
-                var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("OnBefore") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => BehaviourType.BeforeCollectionEntityInitialize,
+                var initialize when initialize.Equals("OnInitialize") => EntityBehaviourType.Initialize,
+                var change when change.StartsWith("On") && change.EndsWith("PropertyChange") => EntityBehaviourType.Action,
+                var formula when formula.StartsWith("Get") => EntityBehaviourType.Formula,
+                var beforeCollectionEntityInitialize when beforeCollectionEntityInitialize.StartsWith("OnBefore") && beforeCollectionEntityInitialize.EndsWith("EntityInitialize") => EntityBehaviourType.BeforeCollectionEntityInitialize,
 
-                var afterChange when afterChange.Equals("OnAfterUpdate") => BehaviourType.AfterChange,
-                var beforeChange when beforeChange.Equals("OnBeforeUpdate") => BehaviourType.BeforeChange,
-                var beforeSave when beforeSave.Equals("OnBeforeSave") => BehaviourType.BeforeSave,
-                var afterSave when afterSave.Equals("OnAfterSave") => BehaviourType.AfterSave,
+                var afterChange when afterChange.Equals("OnAfterUpdate") => EntityBehaviourType.AfterChange,
+                var beforeChange when beforeChange.Equals("OnBeforeUpdate") => EntityBehaviourType.BeforeChange,
+                var beforeSave when beforeSave.Equals("OnBeforeSave") => EntityBehaviourType.BeforeSave,
+                var afterSave when afterSave.Equals("OnAfterSave") => EntityBehaviourType.AfterSave,
 
                 _ => throw new NotSupportedException()
             };

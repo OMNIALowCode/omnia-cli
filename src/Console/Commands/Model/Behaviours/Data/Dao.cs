@@ -2,16 +2,16 @@
 
 namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
-    public class Entity
+    public class Dao
     {
-        public Entity(string @namespace, IList<EntityBehaviour> behaviours, IList<string> usings)
+        public Dao(string @namespace, IList<DataBehaviour> behaviours, IList<string> usings)
         {
             Namespace = @namespace;
             Behaviours = behaviours;
             Usings = usings;
         }
 
-        public IList<EntityBehaviour> Behaviours { get; }
+        public IList<DataBehaviour> Behaviours { get; }
         public IList<string> Usings { get; }
         public string Namespace { get; }
     }

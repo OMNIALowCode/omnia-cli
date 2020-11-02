@@ -4,7 +4,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
-    public enum BehaviourType
+    public enum EntityBehaviourType
     {
         Action,
         AfterChange,
@@ -16,23 +16,23 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
         BeforeCollectionEntityInitialize
     }
 
-    public class Behaviour
+    public class EntityBehaviour
     {
         public string Name { get; set; }
         public string Description { get; set; }
         public string Attribute => GetAttribute();
-        public BehaviourType Type { get; set; }
+        public EntityBehaviourType Type { get; set; }
         public string Expression { get; set; }
 
         private string GetAttribute()
         {
             switch (Type)
             {
-                case BehaviourType.Action:
+                case EntityBehaviourType.Action:
                     return Name.Substring("On".Length, Name.Length - "PropertyChange".Length - 2);
-                case BehaviourType.Formula:
+                case EntityBehaviourType.Formula:
                     return Name.Substring("Get".Length, Name.Length - 3);
-                case BehaviourType.BeforeCollectionEntityInitialize:
+                case EntityBehaviourType.BeforeCollectionEntityInitialize:
                     return Name.Substring("OnBefore".Length, Name.Length - "EntityInitialize".Length - 8);
                 default:
                     break;

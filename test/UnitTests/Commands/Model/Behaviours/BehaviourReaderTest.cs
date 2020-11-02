@@ -56,6 +56,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 		private void OnAfterUpdate()
 		{
 			this._name = ""Hello World 3!"";
+            this._name = ""Hello World 4!"";
 		}
 
         private String Getname(){ 
@@ -151,7 +152,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var initialize = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
 
             initialize.Expression.ShouldBe("this._name = \"Hello World!\";");
         }
@@ -163,7 +164,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var initialize = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
 
             initialize.Name.ShouldBe("Initialize");
         }
@@ -175,7 +176,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var initialize = reader.ExtractData(FileText)
                 .Behaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
 
             initialize.Description.ShouldBe($"Set the name to:{Environment.NewLine}Hello World!");
         }
@@ -189,7 +190,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("Initialize"));
 
-            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
         }
 
         [Fact]
@@ -201,7 +202,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
-            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Action);
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Action);
         }
 
         [Fact]
@@ -225,7 +226,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("Getname"));
 
-            formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Formula);
+            formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Formula);
         }
 
         [Fact]
@@ -261,7 +262,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
-            intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeCollectionEntityInitialize);
+            intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeCollectionEntityInitialize);
         }
 
         [Fact]
@@ -297,7 +298,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("OnAfterUpdate"));
 
-            afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.AfterChange);
+            afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.AfterChange);
         }
 
         [Fact]
@@ -308,7 +309,8 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var afterChange = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("OnAfterUpdate"));
-            afterChange.Expression.ShouldBe("this._name = \"Hello World 3!\";");
+            afterChange.Expression.ShouldBe(@"this._name = ""Hello World 3!"";
+            this._name = ""Hello World 4!"";");
         }
 
         [Fact]
@@ -320,7 +322,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("OnBeforeUpdate"));
 
-            beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeChange);
+            beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeChange);
         }
 
         [Fact]
@@ -343,7 +345,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("OnBeforeSave"));
 
-            beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.BeforeSave);
+            beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeSave);
         }
 
         [Fact]
@@ -366,7 +368,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("OnAfterSave"));
 
-            afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.AfterSave);
+            afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.AfterSave);
         }
 
         [Fact]

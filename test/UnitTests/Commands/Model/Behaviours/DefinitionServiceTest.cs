@@ -21,9 +21,9 @@ namespace UnitTests.Commands.Model.Behaviours
         public async Task ReplaceData_WithBehavioursList_Successful()
         {
             var entityData = new Entity(Namespace,
-            new List<Behaviour>()
+            new List<EntityBehaviour>()
             {
-                new Behaviour()
+                new EntityBehaviour()
                 {
                     Name = "ExecuteInitialize",
                     Expression = "_code = \"Hi\";"

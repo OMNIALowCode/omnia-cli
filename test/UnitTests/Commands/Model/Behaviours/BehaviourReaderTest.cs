@@ -155,7 +155,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.BehaviourType.Initialize);
 
-            initialize.Expression.ShouldBe("\t\t\tthis._name = \"Hello World!\";\r\n");
+            initialize.Expression.ShouldBe("this._name = \"Hello World!\";");
         }
 
         [Fact]
@@ -239,7 +239,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("Getname"));
 
-            formula.Expression.ShouldBe("\t\t\treturn \"New Name\";\r\n");
+            formula.Expression.ShouldBe("return \"New Name\";");
         }
 
         [Fact]
@@ -275,7 +275,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .Behaviours
                 .First(m => m.Name.Equals("BeforecollectionEntityInitialize"));
 
-            intialize.Expression.ShouldBe("\t\t\tentry._name = \"Child initialized\";\r\n");
+            intialize.Expression.ShouldBe("entry._name = \"Child initialized\";");
         }
 
         [Fact]
@@ -310,7 +310,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var afterChange = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("ExecuteAfterUpdate"));
-            afterChange.Expression.ShouldBe("\t\t\tthis._name = \"Hello World 3!\";\r\n");
+            afterChange.Expression.ShouldBe("this._name = \"Hello World 3!\";");
         }
 
         [Fact]
@@ -333,7 +333,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var beforeChange = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("ExecuteBeforeUpdate"));
-            beforeChange.Expression.ShouldBe("\t\t\tthis._name = \"Hello World 2!\";\r\n");
+            beforeChange.Expression.ShouldBe("this._name = \"Hello World 2!\";");
         }
 
         [Fact]
@@ -356,7 +356,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var beforeSave = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("ExecuteBeforeSave"));
-            beforeSave.Expression.ShouldBe("\t\t\tChild.ForEach(a => a.ExecuteBeforeSave());\r\n\t\t\t_name = \"tst\";\r\n");
+            beforeSave.Expression.ShouldBe("Child.ForEach(a => a.ExecuteBeforeSave());\r\n\t\t\t_name = \"tst\";");
         }
 
         [Fact]
@@ -379,7 +379,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var afterSave = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("ExecuteAfterSave"));
-            afterSave.Expression.ShouldBe("\t\t\tChild.ForEach(async a => await a.ExecuteAfterSave());\r\n\t\t\treturn await Task.FromResult(AfterSaveMessage.Empty);\r\n");
+            afterSave.Expression.ShouldBe("Child.ForEach(async a => await a.ExecuteAfterSave());\r\n\t\t\treturn await Task.FromResult(AfterSaveMessage.Empty);");
         }
 
         [Fact]

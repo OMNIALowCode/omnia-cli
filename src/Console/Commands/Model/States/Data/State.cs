@@ -35,5 +35,6 @@ namespace Omnia.CLI.Commands.Model.States.Data
         public List<Transition>? Transitions { get; set; }
 #nullable disable
         public string ExpressionAssignTo { get; set; }
+        public string StateMachineName { get; set; }
     }
 }

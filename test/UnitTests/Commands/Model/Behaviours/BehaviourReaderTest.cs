@@ -97,13 +97,11 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
 		public  void OnBeforeSave()
 		{
-			Child.ForEach(a => a.OnBeforeSave());
 			_name = ""tst"";
 		}
 
 		public  async Task<AfterSaveMessage> OnAfterSave()
 		{
-			Child.ForEach(async a => await a.OnAfterSave());
 			return await Task.FromResult(AfterSaveMessage.Empty);
 		}
 
@@ -123,7 +121,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var entity = reader.ExtractData(FileText);
 
             entity.Behaviours.ShouldNotBeNull();
-            entity.Behaviours.Count.ShouldBe(8); //TODO: AfterSave and BeforeSave are false positives
+            entity.Behaviours.Count.ShouldBe(8);
         }
 
         [Fact]
@@ -356,7 +354,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var beforeSave = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("OnBeforeSave"));
-            beforeSave.Expression.ShouldBe("Child.ForEach(a => a.OnBeforeSave());\r\n\t\t\t_name = \"tst\";");
+            beforeSave.Expression.ShouldBe("_name = \"tst\";");
         }
 
         [Fact]
@@ -379,7 +377,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
             var afterSave = reader.ExtractData(FileText)
                 .Behaviours
                 .First(m => m.Name.Equals("OnAfterSave"));
-            afterSave.Expression.ShouldBe("Child.ForEach(async a => await a.OnAfterSave());\r\n\t\t\treturn await Task.FromResult(AfterSaveMessage.Empty);");
+            afterSave.Expression.ShouldBe("return await Task.FromResult(AfterSaveMessage.Empty);");
         }
 
         [Fact]

@@ -2,34 +2,31 @@ using System.Collections.Generic;
 
 namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
-    public enum EvaluationType
+    public class StateMethod
 	{
-        Automatic,
-        Decision
+        public string Type { get; set; }
+        public string Expression { get; set; }
+        public string State { get; set; }
 	}
     
-    public class Evaluation
-	{
+    public class StateBehaviour
+    {
+        public string Name { get; set; }
+        public string Type { get; set; }
         public string Expression { get; set; }
-        public string Decision { get; set; }
     }
 
     public class Transition
     {
         public string Name { get; set; }
-        public string GoToStateName { get; set; }
-        public EvaluationType Type { get; set; }
-        public Evaluation Evaluation { get; set; }
+        public string Expression { get; set; }
     }
 
     public class State
     {
         public string Name { get; set; }
-        public List<string> Decisions { get; set; }
-        public string BehaviourIn { get; set; }
-        public string BehaviourOut { get; set; }
-        public bool IsInitial { get; set; }
+        public string AssignToExpression { get; set; }
+        public List<StateBehaviour> Behaviours { get; set; }
         public List<Transition> Transitions { get; set; }
-        public string ExpressionAssignTo { get; set; }
     }
 }

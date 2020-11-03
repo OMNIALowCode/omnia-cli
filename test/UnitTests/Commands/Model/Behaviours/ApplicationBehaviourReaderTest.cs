@@ -39,6 +39,10 @@ namespace Omnia.Behaviours.T99.Internal.System
     {
         public static async Task<IDictionary<string,object>> HelloWorldAsync(IDictionary<string,object> args = null, Context context = null)
         {
+            if(context == null) 
+            {
+                throw new Exception(""Missing context"");
+            }
             return new Dictionary<string, object>() { { ""GreetingMessage"", ""Hello World!"" } };
         }
     }
@@ -51,7 +55,11 @@ namespace Omnia.Behaviours.T99.Internal.System
 
             var expression = reader.ExtractData(FileText).Expression;
 
-            expression.ShouldBe("return new Dictionary<string, object>() { { \"GreetingMessage\", \"Hello World!\" } };");
+            expression.ShouldBe(@"if(context == null) 
+            {
+                throw new Exception(""Missing context"");
+            }
+            return new Dictionary<string, object>() { { ""GreetingMessage"", ""Hello World!"" } };");
         }
 
         [Fact]

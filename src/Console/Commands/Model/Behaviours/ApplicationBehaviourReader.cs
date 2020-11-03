@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Extensions;
+
 namespace Omnia.CLI.Commands.Model.Behaviours
 {
     public class ApplicationBehaviourReader
@@ -60,14 +60,16 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static string ExtractExpression(CompilationUnitSyntax root)
         {
-            var blockText = root.DescendantNodes(null, false).OfType<BlockSyntax>().SingleOrDefault()?.ToFullString();
-            return RemoveWithoutLeadingAndTrailingBraces(blockText).Trim();
+            var method = root.DescendantNodes(null, false).OfType<MethodDeclarationSyntax>().SingleOrDefault();
+            if(method == null) return null;
 
-            static string RemoveWithoutLeadingAndTrailingBraces(string blockText)
+            var blockText = method.Body.ToFullString();
+            return WithoutLeadingAndTrailingBraces(blockText).Trim();
+
+            static string WithoutLeadingAndTrailingBraces(string blockText)
                 => blockText
                     .Substring(0, blockText.LastIndexOf('}'))
                       .Substring(blockText.IndexOf('{') + 1);
-                    
         }
     }
 }

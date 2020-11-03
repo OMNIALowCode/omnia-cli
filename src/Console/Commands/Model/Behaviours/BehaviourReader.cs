@@ -102,16 +102,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static string ExtractExpression(MethodDeclarationSyntax method)
         {
-            var nodes = method.DescendantNodes();
+            
+            var blockText =  method.Body?.ToFullString();
+            return WithoutLeadingAndTrailingBraces(blockText).Trim();
 
-            var blockText =  nodes.OfType<BlockSyntax>().SingleOrDefault()?.ToFullString();
-            return RemoveWithoutLeadingAndTrailingBraces(blockText).Trim();
-
-            static string RemoveWithoutLeadingAndTrailingBraces(string blockText)
+            static string WithoutLeadingAndTrailingBraces(string blockText)
                 => blockText
                     .Substring(0, blockText.LastIndexOf('}'))
-                      .Substring(blockText.IndexOf('{') + 1);
-                    
+                      .Substring(blockText.IndexOf('{') + 1);  
         }
 
         private static EntityBehaviourType MapType(MethodDeclarationSyntax method)

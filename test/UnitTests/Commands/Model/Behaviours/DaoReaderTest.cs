@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Omnia.Behaviours.IMP_L2.External.Primavera;
 using Omnia.Behaviours.IMP_L2.Dtos;
@@ -35,17 +36,13 @@ using MySystem;
 
 namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 {
-    public class CustomerDao
+    public partial class CustomerDao
     {
-		public CustomerDao(Context context)
-		{
-			this._Context = context;
-		}
-		
-		[JsonIgnore]
-		public readonly Context _Context;
-
-		public CustomerDto Create(string identifier, CustomerDto dto, IDictionary<string,object> args, string concurrencyVersion){
+        /// <summary>
+		/// Create
+        /// Create path.txt file
+		/// </summary>
+		public async Task<CustomerDto> CreateAsync(string identifier, CustomerDto dto, IDictionary<string,object> args, string concurrencyVersion){
 			using (StreamWriter file = File.CreateText(@""D:\path.txt""))
             {
                     var serializer = new JsonSerializer();
@@ -55,19 +52,19 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
             return new CustomerDto();
 		}
 
-		public bool Delete(string identifier, IDictionary<string,object> args, string concurrencyVersion){
+		public async Task<bool> DeleteAsync(string identifier, IDictionary<string,object> args, string concurrencyVersion){
 			return false;
 		}
 		
-		public CustomerDto Read(string identifier, IDictionary<string,object> args){
+		public async Task<CustomerDto> ReadAsync(string identifier, IDictionary<string,object> args){
 			return new CustomerDto();
 		}
 
-		public (int totalRecords, IList<IDictionary<string,object>> data) ReadList(QueryContext queryContext, IDictionary<string,object> args, int? page = 1, int? pageSize = 25){
+		public async Task<(int totalRecords, IList<IDictionary<string,object>> data)> ReadListAsync(QueryContext queryContext, IDictionary<string,object> args, int? page = 1, int? pageSize = 25){
 			  return (0, null);
 		}
 
-		public CustomerDto Update(string identifier, CustomerDto dto, IDictionary<string,object> args, string concurrencyVersion){
+		public async Task<CustomerDto> UpdateAsync(string identifier, CustomerDto dto, IDictionary<string,object> args, string concurrencyVersion){
 			return new CustomerDto();
 		}
 	}
@@ -111,11 +108,11 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
         {
             var reader = new DaoReader();
 
-            var initialize = reader.ExtractData(FileText)
+            var create = reader.ExtractData(FileText)
                 .DataBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
 
-            initialize.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
+            create.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
             {
                     var serializer = new JsonSerializer();
                     serializer.Serialize(file, dto);
@@ -130,13 +127,24 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
         {
             var reader = new DaoReader();
 
-            var initialize = reader.ExtractData(FileText)
+            var read = reader.ExtractData(FileText)
                 .DataBehaviours
                 .First(m => m.Name.Equals("Read"));
 
-            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Read);
+            read.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Read);
         }
 
+        [Fact]
+        public void ExtractData_UsesCommentDescription()
+        {
+            var reader = new DaoReader();
+
+            var create = reader.ExtractData(FileText)
+                .DataBehaviours
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
+
+            create.Description.ShouldBe("Create path.txt file");
+        }
 
         [Fact]
         public void ExtractData_SuccessfullyExtractUsings()

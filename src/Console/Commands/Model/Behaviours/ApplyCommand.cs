@@ -145,7 +145,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         }
 
         private async Task<bool> ReplaceData(string name, Data.Entity entity)
-            =>  await _definitionService.ReplaceData(Tenant, Environment,
+            =>  await _definitionService.ReplaceEntityData(Tenant, Environment,
                             name, entity).ConfigureAwait(false);
 
         private static string ExtractEntityNameFromFileName(string filepath, string suffix)

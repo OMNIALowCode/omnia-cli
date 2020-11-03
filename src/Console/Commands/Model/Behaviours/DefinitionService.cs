@@ -18,6 +18,23 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             _apiClient = apiClient;
         }
 
+        public async Task<bool> ReplaceApplicationBehaviourData(string tenant, string environment,
+            string entity,
+            ApplicationBehaviour applicationBehaviourData)
+        {
+            var patch = new JsonPatchDocument();
+
+            patch.Replace("/expression", applicationBehaviourData.Expression);
+
+            var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
+
+            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/ApplicationBehaviour/{entity}",
+                new StringContent(dataAsString,
+                                Encoding.UTF8,
+                                "application/json")).ConfigureAwait(false);
+            return response.Success;
+        }
+
         public async Task<bool> ReplaceData(string tenant, string environment,
             string entity,
             Entity entityData)
@@ -30,8 +47,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             if (entityData.DataBehaviours?.Count > 0)
                 patch.Replace("/dataBehaviours", entityData.DataBehaviours.ToArray());
             if (entityData.Usings?.Count > 0)
-                patch.Replace("/behaviourNamespaces", 
-                    entityData.Usings.Select(u=>MapToBehaviourNamespace(u, entityData.Namespace)));
+                patch.Replace("/behaviourNamespaces",
+                    entityData.Usings.Select(u => MapToBehaviourNamespace(u, entityData.Namespace)));
 
             var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
 

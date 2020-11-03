@@ -19,6 +19,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         private readonly IApiClient _apiClient;
         private readonly DefinitionService _definitionService;
         private readonly BehaviourReader _entityBehaviourReader = new BehaviourReader();
+        private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
         private readonly DaoReader _daoReader = new DaoReader();
         public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
@@ -104,6 +105,17 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return (ExtractEntityNameFromFileName(filepath, ".Operations.cs"), _entityBehaviourReader.ExtractData(content));
         }
 
+        private async Task ProcessApplicationBehaviourFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            var applicationBehaviour = _applicationReader.ExtractData(content);
+
+            if (!string.IsNullOrEmpty(applicationBehaviour.Expression))
+                await ReplaceApplicationBehaviourData(filepath, applicationBehaviour);
+        }
+
         private async Task<(string name, Entity entity)> ProcessDaoFile(string filepath)
         {
             Console.WriteLine($"Processing file {filepath}...");
@@ -122,6 +134,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var applySuccessfully = await ReplaceData(name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply behaviours to entity {name}.");
+        }
+
+        private async Task ReplaceApplicationBehaviourData(string filepath, Data.ApplicationBehaviour entity)
+        {
+            bool replacedWithSuccess = await _definitionService.ReplaceApplicationBehaviourData(Tenant, Environment,
+                            ExtractEntityNameFromFileName(filepath, string.Empty), entity).ConfigureAwait(false);
+            if (!replacedWithSuccess)
+                Console.WriteLine($"Failed to apply behaviours from file {filepath}.");
         }
 
         private async Task<bool> ReplaceData(string name, Data.Entity entity)

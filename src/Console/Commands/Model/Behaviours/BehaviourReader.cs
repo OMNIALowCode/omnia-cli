@@ -104,7 +104,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         {
             var nodes = method.DescendantNodes();
 
-            var blockText = nodes.OfType<BlockSyntax>().SingleOrDefault()?.ToFullString();
+            var blockText =  nodes.OfType<BlockSyntax>().SingleOrDefault()?.ToFullString();
             return RemoveWithoutLeadingAndTrailingBraces(blockText).Trim();
 
             static string RemoveWithoutLeadingAndTrailingBraces(string blockText)

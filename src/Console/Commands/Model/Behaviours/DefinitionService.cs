@@ -35,7 +35,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return response.Success;
         }
 
-        public async Task<bool> ReplaceData(string tenant, string environment,
+        public async Task<bool> ReplaceEntityData(string tenant, string environment,
             string entity,
             Entity entityData)
         {

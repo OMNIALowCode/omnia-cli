@@ -18,7 +18,7 @@ namespace UnitTests.Commands.Model.Behaviours
         private const string Namespace = "Omnia.Behaviours.Template.Internal.System.Model";
 
         [Fact]
-        public async Task ReplaceData_WithBehavioursList_Successful()
+        public async Task ReplaceEntityData_WithBehavioursList_Successful()
         {
             var entityData = new Entity(Namespace,
             new List<EntityBehaviour>()
@@ -38,7 +38,7 @@ namespace UnitTests.Commands.Model.Behaviours
 
             var service = new DefinitionService(apiClientMock.Object);
 
-            await service.ReplaceData(Tenant, Environment, Entity, entityData)
+            await service.ReplaceEntityData(Tenant, Environment, Entity, entityData)
                 .ConfigureAwait(false);
 
             apiClientMock.Verify(r => r.Patch($"/api/v1/{Tenant}/{Environment}/model/{Definition}/{Entity}",

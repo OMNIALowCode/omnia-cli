@@ -15,6 +15,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             "System.Collections.Generic",
             "System.Linq",
             "System.Net",
+            "System.Threading.Tasks",
             "Newtonsoft.Json",
             "Omnia.Libraries.Infrastructure.Connector",
             "Omnia.Libraries.Infrastructure.Connector.Client",
@@ -77,7 +78,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return new DataBehaviour
             {
                 Expression = expression,
-                Name = method.Identifier.ValueText,
+                Name = GetMethodName(method),
                 Type = methodType
             };
         }
@@ -96,7 +97,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static DataBehaviourType MapType(MethodDeclarationSyntax method)
         {
-            return method.Identifier.ValueText switch
+            return GetMethodName(method) switch
             {
                 var create when create.Equals("Create") => DataBehaviourType.Create,
                 var update when update.Equals("Update") => DataBehaviourType.Update,
@@ -106,5 +107,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 _ => throw new NotSupportedException()
             };
         }
+
+        private static string GetMethodName(MethodDeclarationSyntax method)
+            => method.Identifier.ValueText.Substring(0, method.Identifier.ValueText.Length - "Async".Length);
     }
 }

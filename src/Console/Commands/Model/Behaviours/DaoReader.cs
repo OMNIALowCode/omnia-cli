@@ -4,6 +4,8 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
+using Omnia.CLI.Commands.Model.Behaviours.Extensions;
+
 namespace Omnia.CLI.Commands.Model.Behaviours
 {
     public class DaoReader
@@ -72,14 +74,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static DataBehaviour MapMethod(MethodDeclarationSyntax method)
         {
-            var methodType = MapType(method);
-            var expression = ExtractExpression(method);
+            var (name, description) = method.ExtractDataFromComment();
 
             return new DataBehaviour
             {
-                Expression = expression,
-                Name = GetMethodName(method),
-                Type = methodType
+                Expression = ExtractExpression(method),
+                Name = name ?? GetMethodName(method),
+                Type = MapType(method),
+                Description = description
             };
         }
 

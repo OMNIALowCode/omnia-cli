@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Extensions;
+using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 namespace Omnia.CLI.Commands.Model.Behaviours
 {
     public class BehaviourReader
@@ -75,41 +75,26 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static EntityBehaviour MapMethod(MethodDeclarationSyntax method)
         {
-            var methodType = MapType(method);
-            var expression = ExtractExpression(method);
-
-            string name = null;
-            string description = null;
-
-            var comments = method.GetLeadingTrivia();
-            foreach (var comment in comments)
-            {
-                var xml = comment.GetStructure();
-
-                if (xml == null) continue;
-
-                (name, description) = ParseXmlComment(xml.ToFullString());
-            }
+            var (name, description) = method.ExtractDataFromComment();
 
             return new EntityBehaviour
             {
-                Expression = expression,
+                Expression = ExtractExpression(method),
                 Name = name ?? method.Identifier.ValueText,
                 Description = description,
-                Type = methodType
+                Type = MapType(method)
             };
         }
 
         private static string ExtractExpression(MethodDeclarationSyntax method)
         {
-            
-            var blockText =  method.Body?.ToFullString();
+            var blockText = method.Body?.ToFullString();
             return WithoutLeadingAndTrailingBraces(blockText).Trim();
 
             static string WithoutLeadingAndTrailingBraces(string blockText)
                 => blockText
                     .Substring(0, blockText.LastIndexOf('}'))
-                      .Substring(blockText.IndexOf('{') + 1);  
+                      .Substring(blockText.IndexOf('{') + 1);
         }
 
         private static EntityBehaviourType MapType(MethodDeclarationSyntax method)
@@ -128,33 +113,6 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
                 _ => throw new NotSupportedException()
             };
-        }
-
-        private static (string name, string description) ParseXmlComment(string comment)
-        {
-            var content = comment
-                    .Split(Environment.NewLine)
-                    .Select(WithoutSpaces)
-                    .Select(WithoutComment)
-                    .Select(WithoutSpaces)
-                    .Where(line => !IsSummaryTag(line) && !string.IsNullOrEmpty(line))
-                    .ToArray();
-
-            if (content.Length == 0) return (null, null);
-
-            var name = content[0];
-            var description = string.Join(Environment.NewLine, content.Skip(1));
-
-            return (name, description);
-
-            static string WithoutSpaces(string text)
-                => text.Trim();
-
-            static string WithoutComment(string text)
-                => text.TrimStart("///");
-
-            static bool IsSummaryTag(string text)
-                => text.Equals("<summary>") || text.Equals("</summary>");
         }
     }
 }

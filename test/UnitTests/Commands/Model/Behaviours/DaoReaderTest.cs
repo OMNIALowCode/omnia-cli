@@ -40,6 +40,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
     {
         /// <summary>
 		/// Create
+        /// Create path.txt file
 		/// </summary>
 		public async Task<CustomerDto> CreateAsync(string identifier, CustomerDto dto, IDictionary<string,object> args, string concurrencyVersion){
 			using (StreamWriter file = File.CreateText(@""D:\path.txt""))
@@ -107,11 +108,11 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
         {
             var reader = new DaoReader();
 
-            var initialize = reader.ExtractData(FileText)
+            var create = reader.ExtractData(FileText)
                 .DataBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
 
-            initialize.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
+            create.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
             {
                     var serializer = new JsonSerializer();
                     serializer.Serialize(file, dto);
@@ -126,13 +127,24 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
         {
             var reader = new DaoReader();
 
-            var initialize = reader.ExtractData(FileText)
+            var read = reader.ExtractData(FileText)
                 .DataBehaviours
                 .First(m => m.Name.Equals("Read"));
 
-            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Read);
+            read.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Read);
         }
 
+        [Fact]
+        public void ExtractData_UsesCommentDescription()
+        {
+            var reader = new DaoReader();
+
+            var create = reader.ExtractData(FileText)
+                .DataBehaviours
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
+
+            create.Description.ShouldBe("Create path.txt file");
+        }
 
         [Fact]
         public void ExtractData_SuccessfullyExtractUsings()

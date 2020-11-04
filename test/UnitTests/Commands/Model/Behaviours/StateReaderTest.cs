@@ -199,376 +199,257 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 			states.Count.ShouldBe(3);
 		}
 
-		//		[Fact]
-		//		public void ExtractMethods_HasName()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_HasName()
+		{
+			var reader = new StateReader();
 
-		//			var states = reader.ExtractMethods(FileText);
+			var states = reader.ExtractMethods(FileText);
 
-		//			states.ShouldNotContain(s => string.IsNullOrEmpty(s.Name));
-		//		}
+			states.ShouldNotContain(s => string.IsNullOrEmpty(s.Name));
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_InitialHasDecisions()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_InitialHasTransitions()
+		{
+			var reader = new StateReader();
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			initial.Decisions.ShouldNotBeEmpty();
-		//			initial.Decisions.Count.ShouldBe(2);
-		//		}
+			initial.Transitions.ShouldNotBeEmpty();
+			initial.Transitions.Count.ShouldBe(3);
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_RejectedEmptyDecisions()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_AcceptedEmptyTransitions()
+		{
+			var reader = new StateReader();
 
-		//			var rejected = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Rejected"));
+			var accepted = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Accepted"));
 
-		//			rejected.Decisions.ShouldBeEmpty();
-		//		}
+			accepted.Transitions.ShouldBeEmpty();
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_AcceptedEmptyDecisions()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_RejectedEmptyTransitions()
+		{
+			var reader = new StateReader();
 
-		//			var accepted = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Accepted"));
+			var rejected = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Rejected"));
 
-		//			accepted.Decisions.ShouldBeEmpty();
-		//		}
+			rejected.Transitions.ShouldBeEmpty();
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidInitialDecisions()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_InitialHasConfirmTransition()
+		{
+			var reader = new StateReader();
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			initial.Decisions.ShouldContain("Accept");
-		//			initial.Decisions.ShouldContain("Reject");
-		//		}
+			initial.Transitions.ShouldContain(t => t.Name.Equals("Confirm"));
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidInitialBehaviourIn()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_InitialHasDeclineTransition()
+		{
+			var reader = new StateReader();
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			initial.BehaviourIn.ShouldBe("\t\t\tthis._name = \"Initial In Name\";\r\n");
-		//		}
+			initial.Transitions.ShouldContain(t => t.Name.Equals("Decline"));
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidInitialBehaviourOut()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_InitialHasDraftTransition()
+		{
+			var reader = new StateReader();
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			initial.BehaviourOut.ShouldBe("\t\t\tthis._name = \"Initial Out Name\";\r\n");
-		//		}
+			initial.Transitions.ShouldContain(t => t.Name.Equals("Draft"));
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidAcceptedBehaviourOut()
-		//		{
-		//			var reader = new StateReader();
 
-		//			var accepted = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Accepted"));
 
-		//			accepted.BehaviourOut.ShouldBeEmpty();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidInitialHasBehaviours()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidAcceptedBehaviourIn()
-		//		{
-		//			var reader = new StateReader();
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			var accepted = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Accepted"));
+			initial.Behaviours.Count.ShouldBe(2);
+		}
 
-		//			accepted.BehaviourIn.ShouldBeEmpty();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidAcceptedHasBehaviours()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidRejectedBehaviourOut()
-		//		{
-		//			var reader = new StateReader();
+			var accepted = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Accepted"));
 
-		//			var rejected = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Rejected"));
+			accepted.Behaviours.Count.ShouldBe(2);
+		}
 
-		//			rejected.BehaviourOut.ShouldBeEmpty();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidRejectedHasBehaviours()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidRejectedBehaviourIn()
-		//		{
-		//			var reader = new StateReader();
+			var rejected = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Rejected"));
 
-		//			var rejected = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Rejected"));
+			rejected.Behaviours.Count.ShouldBe(2);
+		}
 
-		//			rejected.BehaviourIn.ShouldBeEmpty();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidInitialBehaviourIn()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidInitialIsInitial()
-		//		{
-		//			var reader = new StateReader();
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialIn") && b.Type.Equals("In"));
+			initial.Behaviours.Where(b => b.Name.Equals("OnInitialIn")).Single().Expression.ShouldBe("this._name = \"Initial In Name\";");
+		}
 
-		//			initial.IsInitial.ShouldNotBeNull();
-		//			initial.IsInitial.ShouldBeTrue();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidInitialBehaviourOut()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidAcceptedIsInitial()
-		//		{
-		//			var reader = new StateReader();
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//			var accepted = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Accepted"));
+			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialOut") && b.Type.Equals("Out"));
+			initial.Behaviours.Where(b => b.Name.Equals("OnInitialOut")).Single().Expression.ShouldBe("this._name = \"Initial Out Name\";");
+		}
 
-		//			accepted.IsInitial.ShouldNotBeNull();
-		//			accepted.IsInitial.ShouldBeFalse();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidAcceptedBehaviourIn()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidRejectedIsInitial()
-		//		{
-		//			var reader = new StateReader();
+			var accepted = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Accepted"));
 
-		//			var rejected = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Rejected"));
+			accepted.Behaviours.ShouldContain(b => b.Name.Equals("OnAcceptedIn") && b.Type.Equals("In"));
+			accepted.Behaviours.Where(b => b.Name.Equals("OnAcceptedIn")).Single().Expression.ShouldBeEmpty();
+		}
 
-		//			rejected.IsInitial.ShouldNotBeNull();
-		//			rejected.IsInitial.ShouldBeFalse();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidAcceptedBehaviourOut()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_InitialHasTransitions()
-		//		{
-		//			var reader = new StateReader();
+			var accepted = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Accepted"));
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			accepted.Behaviours.ShouldContain(b => b.Name.Equals("OnAcceptedOut") && b.Type.Equals("Out"));
+			accepted.Behaviours.Where(b => b.Name.Equals("OnAcceptedOut")).Single().Expression.ShouldBeEmpty();
+		}
 
-		//			initial.Transitions.ShouldNotBeEmpty();
-		//			initial.Transitions.Count.ShouldBe(3);
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidRejectedBehaviourIn()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_AcceptedEmptyTransitions()
-		//		{
-		//			var reader = new StateReader();
+			var rejected = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Rejected"));
 
-		//			var accepted = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Accepted"));
+			rejected.Behaviours.ShouldContain(b => b.Name.Equals("OnRejectedIn") && b.Type.Equals("In"));
+			rejected.Behaviours.Where(b => b.Name.Equals("OnRejectedIn")).Single().Expression.ShouldBeEmpty();
+		}
 
-		//			accepted.Transitions.ShouldBeEmpty();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidRejectedBehaviourOut()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_RejectedEmptyTransitions()
-		//		{
-		//			var reader = new StateReader();
+			var rejected = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Rejected"));
 
-		//			var rejected = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Rejected"));
+			rejected.Behaviours.ShouldContain(b => b.Name.Equals("OnRejectedOut") && b.Type.Equals("Out"));
+			rejected.Behaviours.Where(b => b.Name.Equals("OnRejectedOut")).Single().Expression.ShouldBeEmpty();
+		}
 
-		//			rejected.Transitions.ShouldBeEmpty();
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidConfirmExpression()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_InitialHasConfirmTransition()
-		//		{
-		//			var reader = new StateReader();
+			var confirm = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"))
+				.Transitions.Single(t => t.Name.Equals("Confirm"));
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			confirm.Expression.ShouldBe("var test = \"tst\";\r\n\t\t\tthis._name = \"Confirmation\";\r\n\t\t\treturn true;");
+		}
 
-		//			initial.Transitions.ShouldContain(t => t.Name.Equals("Confirm"));
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidDeclineExpression()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_InitialHasDeclineTransition()
-		//		{
-		//			var reader = new StateReader();
+			var decline = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"))
+				.Transitions.Single(t => t.Name.Equals("Decline"));
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			decline.Expression.ShouldBe("return true;");
+		}
 
-		//			initial.Transitions.ShouldContain(t => t.Name.Equals("Decline"));
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidDraftExpression()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_InitialHasDraftTransition()
-		//		{
-		//			var reader = new StateReader();
+			var draft = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"))
+				.Transitions.Single(t => t.Name.Equals("Draft"));
 
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
+			draft.Expression.ShouldBe("return true;");
+		}
 
-		//			initial.Transitions.ShouldContain(t => t.Name.Equals("Draft"));
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidInitialAssignToExpression()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidConfirmGoToStateName()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var confirm = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Confirm"));
-
-		//			confirm.GoToStateName.ShouldBe("Accepted");
-		//		}
+			var initial = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Initial"));
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidDeclineGoToStateName()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var reject = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Decline"));
-
-		//			reject.GoToStateName.ShouldBe("Rejected");
-		//		}
+			initial.AssignToExpression.ShouldBe("return null;");
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidDraftGoToStateName()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var draft = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Draft"));
-
-		//			draft.GoToStateName.ShouldBe("Initial");
-		//		}
+		[Fact]
+		public void ExtractMethods_ValidRejectedAssignToExpression()
+		{
+			var reader = new StateReader();
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidConfirmEvaluationType()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var confirm = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Confirm"));
+			var rejected = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Rejected"));
 
-		//			confirm.Type.ShouldBe(EvaluationType.Decision);
-		//		}
+			rejected.AssignToExpression.ShouldBe("return null;");
+		}
 
-		//		[Fact]
-		//		public void ExtractMethods_ValidDeclineEvaluationType()
-		//		{
-		//			var reader = new StateReader();
+		[Fact]
+		public void ExtractMethods_ValidAcceptedAssignToExpression()
+		{
+			var reader = new StateReader();
 
-		//			var reject = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Decline"));
+			var accepted = reader.ExtractMethods(FileText)
+				.Single(m => m.Name.Equals("Accepted"));
 
-		//			reject.Type.ShouldBe(EvaluationType.Decision);
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidDraftEvaluationType()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var draft = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Draft"));
-
-		//			draft.Type.ShouldBe(EvaluationType.Automatic);
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidConfirmEvaluation()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var confirm = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Confirm"));
-
-		//			confirm.Evaluation.ShouldNotBeNull();
-		//			confirm.Evaluation.Expression.ShouldBe("\t\t\tvar test = \"tst\";\r\n\t\t\tthis._name = \"Confirmation\";\r\n\t\t\treturn true;\r\n");
-		//			confirm.Evaluation.Decision.ShouldNotBeNull();
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidDeclineEvaluation()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var reject = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Decline"));
-
-		//			reject.Evaluation.ShouldNotBeNull();
-		//			reject.Evaluation.Expression.ShouldBe("\t\t\treturn true;\r\n");
-		//			reject.Evaluation.Decision.ShouldNotBeNull();
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidDraftEvaluation()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var draft = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"))
-		//				.Transitions.First(t => t.Name.Equals("Draft"));
-
-		//			draft.Evaluation.ShouldNotBeNull();
-		//			draft.Evaluation.Expression.ShouldBe("\t\t\treturn true;\r\n");
-		//			draft.Evaluation.Decision.ShouldBeNull();
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidInitialExpressionAssignTo()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var initial = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Initial"));
-
-		//			initial.ExpressionAssignTo.ShouldBe("\t\t\treturn null;\r\n");
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidRejectedExpressionAssignTo()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var rejected = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Rejected"));
-
-		//			rejected.ExpressionAssignTo.ShouldBe("\t\t\treturn null;\r\n");
-		//		}
-
-		//		[Fact]
-		//		public void ExtractMethods_ValidAcceptedExpressionAssignTo()
-		//		{
-		//			var reader = new StateReader();
-
-		//			var accepted = reader.ExtractMethods(FileText)
-		//				.First(m => m.Name.Equals("Accepted"));
-
-		//			accepted.ExpressionAssignTo.ShouldBe("\t\t\treturn null;\r\n");
-		//}
+			accepted.AssignToExpression.ShouldBe("return null;");
+		}
 	}
 }

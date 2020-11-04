@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model.Behaviours
@@ -64,6 +65,11 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 );
             var entities = await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
+            IEnumerable<Task<(string name, ApplicationBehaviour entity)>> processApplicationBehaviourFileTasks =
+                ProcessApplicationBehaviours();
+
+            var applicationBehaviours = await Task.WhenAll(processApplicationBehaviourFileTasks).ConfigureAwait(false);
+
             var applyTasks = entities.GroupBy(g => g.name)
                 .Select(g =>
                     ApplyEntityChanges(g.Key,
@@ -74,7 +80,13 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                     )
                 );
 
+            var applyApplicationBehaviourTasks = applicationBehaviours
+                .Select(g =>
+                    ApplyApplicationBehaviourChanges(g.name, g.entity)
+                );
+
             await Task.WhenAll(applyTasks).ConfigureAwait(false);
+            await Task.WhenAll(applyApplicationBehaviourTasks).ConfigureAwait(false);
 
 
             var codeDependencies = await ProcessCodeDependencies();
@@ -85,8 +97,18 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
 
 
-            Console.WriteLine($"Successfully applyed behaviours to tenant \"{Tenant}\" model.");
+            Console.WriteLine($"Successfully applied behaviours to tenant \"{Tenant}\" model.");
             return (int)StatusCodes.Success;
+        }
+
+        private IEnumerable<Task<(string name, ApplicationBehaviour entity)>> ProcessApplicationBehaviours()
+        {
+            Regex reg = new Regex(@"\\Application\\[^\\]+\.cs$");
+            var files = Directory.GetFiles(System.IO.Path.Combine(Path), "*.cs", SearchOption.AllDirectories)
+                .Where(path => reg.IsMatch(path))
+                     .ToList();
+
+            return files.Select(ProcessApplicationBehavioursFile);
         }
 
         private IEnumerable<Task<(string name, Entity entity)>> ProcessEntityBehaviours()
@@ -142,15 +164,12 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return (ExtractEntityNameFromFileName(filepath, ".Operations.cs"), _entityBehaviourReader.ExtractData(content));
         }
 
-        private async Task ProcessApplicationBehaviourFile(string filepath)
+        private async Task<(string name, ApplicationBehaviour entity)> ProcessApplicationBehavioursFile(string filepath)
         {
             Console.WriteLine($"Processing file {filepath}...");
             var content = await ReadFile(filepath).ConfigureAwait(false);
 
-            var applicationBehaviour = _applicationReader.ExtractData(content);
-
-            if (!string.IsNullOrEmpty(applicationBehaviour.Expression))
-                await ReplaceApplicationBehaviourData(filepath, applicationBehaviour);
+            return (ExtractEntityNameFromFileName(filepath, ".cs"), _applicationReader.ExtractData(content));
         }
 
         private async Task<(string name, Entity entity)> ProcessDaoFile(string filepath)
@@ -230,13 +249,18 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 Console.WriteLine($"Failed to apply behaviours to entity {name}.");
         }
 
-        private async Task ReplaceApplicationBehaviourData(string filepath, Data.ApplicationBehaviour entity)
+        private async Task ApplyApplicationBehaviourChanges(string name, ApplicationBehaviour entity)
         {
-            bool replacedWithSuccess = await _definitionService.ReplaceApplicationBehaviourData(Tenant, Environment,
-                            ExtractEntityNameFromFileName(filepath, string.Empty), entity).ConfigureAwait(false);
-            if (!replacedWithSuccess)
-                Console.WriteLine($"Failed to apply behaviours from file {filepath}.");
+
+            var applySuccessfully = await ReplaceApplicationBehaviourData(name, entity).ConfigureAwait(false);
+            if (!applySuccessfully)
+                Console.WriteLine($"Failed to apply behaviours to entity {name}.");
         }
+
+        private async Task<bool> ReplaceApplicationBehaviourData(string filepath, ApplicationBehaviour entity)
+        => await _definitionService.ReplaceApplicationBehaviourData(Tenant, Environment,
+                            ExtractEntityNameFromFileName(filepath, string.Empty), entity).ConfigureAwait(false);
+
 
         private async Task<bool> ReplaceData(string name, Data.Entity entity)
             => await _definitionService.ReplaceData(Tenant, Environment,

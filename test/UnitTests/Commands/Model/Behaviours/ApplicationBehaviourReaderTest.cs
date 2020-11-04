@@ -37,6 +37,11 @@ namespace Omnia.Behaviours.T99.Internal.System
 {
     public static partial class SystemApplicationBehaviours
     {
+		/// <summary>
+		/// HelloWorld
+        /// Send a message:
+		/// Hello World!
+		/// </summary>
         public static async Task<IDictionary<string,object>> HelloWorldAsync(IDictionary<string,object> args = null, Context context = null)
         {
             if(context == null) 
@@ -47,6 +52,26 @@ namespace Omnia.Behaviours.T99.Internal.System
         }
     }
 }";
+
+        [Fact]
+        public void ExtractData_UsesCommentName()
+        {
+            var reader = new ApplicationBehaviourReader();
+
+            var applicationBehaviour = reader.ExtractData(FileText);
+            
+            applicationBehaviour.Name.ShouldBe("HelloWorld");
+        }
+
+        [Fact]
+        public void ExtractData_UsesCommentDescription()
+        {
+            var reader = new ApplicationBehaviourReader();
+
+            var applicationBehaviour = reader.ExtractData(FileText);
+
+            applicationBehaviour.Description.ShouldBe($"Send a message:{Environment.NewLine}Hello World!");
+        }
 
         [Fact]
         public void ExtractData_ValidExpression()

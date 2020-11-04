@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
+using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 
 namespace Omnia.CLI.Commands.Model.Behaviours
 {
@@ -30,7 +31,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var tree = CSharpSyntaxTree.ParseText(text);
             var root = tree.GetCompilationUnitRoot();
 
+            var method = root.DescendantNodes(null, false)
+                            .OfType<MethodDeclarationSyntax>();
+
+            var (name, description) = method.First().ExtractDataFromComment();
+
             return new ApplicationBehaviour(
+                name,
+                description,
                 ExtractNamespace(root),
                 ExtractExpression(root),
                 ExtractUsings(root));

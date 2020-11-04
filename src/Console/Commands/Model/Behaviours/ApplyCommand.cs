@@ -21,31 +21,15 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 		private readonly DefinitionService _definitionService;
 		private readonly BehaviourReader _entityBehaviourReader = new BehaviourReader();
 		private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
-		private readonly StateReader _stateReader = new StateReader();
 		private readonly DaoReader _daoReader = new DaoReader();
+		private readonly DependencyReader _dependencyReader = new DependencyReader();
+		private readonly StateReader _stateReader = new StateReader();
 		public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
 		{
 			_settings = options.Value;
 			_apiClient = apiClient;
 			_definitionService = new DefinitionService(_apiClient);
 		}
-    [Command(Name = "apply", Description = "Apply behaviours to model from source code.")]
-    [HelpOption("-h|--help")]
-    public class ApplyCommand
-    {
-        private readonly AppSettings _settings;
-        private readonly IApiClient _apiClient;
-        private readonly DefinitionService _definitionService;
-        private readonly BehaviourReader _entityBehaviourReader = new BehaviourReader();
-        private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
-        private readonly DaoReader _daoReader = new DaoReader();
-        private readonly DependencyReader _dependencyReader = new DependencyReader();
-        public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
-        {
-            _settings = options.Value;
-            _apiClient = apiClient;
-            _definitionService = new DefinitionService(_apiClient);
-        }
 
 		[Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
 		public string Subscription { get; set; }

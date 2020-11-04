@@ -290,28 +290,6 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidAcceptedHasBehaviours()
-		{
-			var reader = new StateReader();
-
-			var accepted = reader.ExtractData(FileText)
-				.Single(m => m.Name.Equals("Accepted"));
-
-			accepted.Behaviours.Count.ShouldBe(2);
-		}
-
-		[Fact]
-		public void ExtractMethods_ValidRejectedHasBehaviours()
-		{
-			var reader = new StateReader();
-
-			var rejected = reader.ExtractData(FileText)
-				.Single(m => m.Name.Equals("Rejected"));
-
-			rejected.Behaviours.Count.ShouldBe(2);
-		}
-
-		[Fact]
 		public void ExtractMethods_ValidInitialBehaviourIn()
 		{
 			var reader = new StateReader();
@@ -333,54 +311,6 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 
 			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialOut") && b.Type.Equals("Out"));
 			initial.Behaviours.Where(b => b.Name.Equals("OnInitialOut")).Single().Expression.ShouldBe("this._name = \"Initial Out Name\";");
-		}
-
-		[Fact]
-		public void ExtractMethods_ValidAcceptedBehaviourIn()
-		{
-			var reader = new StateReader();
-
-			var accepted = reader.ExtractData(FileText)
-				.Single(m => m.Name.Equals("Accepted"));
-
-			accepted.Behaviours.ShouldContain(b => b.Name.Equals("OnAcceptedIn") && b.Type.Equals("In"));
-			accepted.Behaviours.Where(b => b.Name.Equals("OnAcceptedIn")).Single().Expression.ShouldBeEmpty();
-		}
-
-		[Fact]
-		public void ExtractMethods_ValidAcceptedBehaviourOut()
-		{
-			var reader = new StateReader();
-
-			var accepted = reader.ExtractData(FileText)
-				.Single(m => m.Name.Equals("Accepted"));
-
-			accepted.Behaviours.ShouldContain(b => b.Name.Equals("OnAcceptedOut") && b.Type.Equals("Out"));
-			accepted.Behaviours.Where(b => b.Name.Equals("OnAcceptedOut")).Single().Expression.ShouldBeEmpty();
-		}
-
-		[Fact]
-		public void ExtractMethods_ValidRejectedBehaviourIn()
-		{
-			var reader = new StateReader();
-
-			var rejected = reader.ExtractData(FileText)
-				.Single(m => m.Name.Equals("Rejected"));
-
-			rejected.Behaviours.ShouldContain(b => b.Name.Equals("OnRejectedIn") && b.Type.Equals("In"));
-			rejected.Behaviours.Where(b => b.Name.Equals("OnRejectedIn")).Single().Expression.ShouldBeEmpty();
-		}
-
-		[Fact]
-		public void ExtractMethods_ValidRejectedBehaviourOut()
-		{
-			var reader = new StateReader();
-
-			var rejected = reader.ExtractData(FileText)
-				.Single(m => m.Name.Equals("Rejected"));
-
-			rejected.Behaviours.ShouldContain(b => b.Name.Equals("OnRejectedOut") && b.Type.Equals("Out"));
-			rejected.Behaviours.Where(b => b.Name.Equals("OnRejectedOut")).Single().Expression.ShouldBeEmpty();
 		}
 
 		[Fact]

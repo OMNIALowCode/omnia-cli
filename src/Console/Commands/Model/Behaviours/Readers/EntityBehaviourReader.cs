@@ -5,12 +5,13 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
 using Omnia.CLI.Commands.Model.Behaviours.Extensions;
-namespace Omnia.CLI.Commands.Model.Behaviours
+
+namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 {
-    public class BehaviourReader
+    public class EntityBehaviourReader
     {
         private const string BehaviourNamespacePrefix = "Omnia.Behaviours.";
-        private static string[] DefaultUsings = new string[]
+        private static readonly string[] DefaultUsings = new string[]
         {
             "System",
             "System.Collections.Generic",
@@ -54,8 +55,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                             .Where(HasExpression)
                             .ToList();
 
-            static bool HasExpression(EntityBehaviour m)
-                => !string.IsNullOrEmpty(m.Expression);
+            static bool HasExpression(EntityBehaviour behaviour)
+                => !string.IsNullOrEmpty(behaviour.Expression);
         }
 
         private static IList<string> ExtractUsings(CompilationUnitSyntax root)
@@ -80,7 +81,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var type = MapType(method);
             return new EntityBehaviour
             {
-                Expression = ExtractExpression(method),
+                Expression = method.ExtractExpression(),
                 Name = name ?? method.Identifier.ValueText,
                 Description = description,
                 Type = type,
@@ -90,31 +91,13 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static string GetAttribute(EntityBehaviourType type, string name)
         {
-            switch (type)
+            return type switch
             {
-                case EntityBehaviourType.Action:
-                    return name.Substring("On".Length, name.Length - "PropertyChange".Length - 2);
-                case EntityBehaviourType.Formula:
-                    return name.Substring("Get".Length, name.Length - 3);
-                case EntityBehaviourType.BeforeCollectionEntityInitialize:
-                    return name.Substring("OnBefore".Length, name.Length - "EntityInitialize".Length - 8);
-                default:
-                    break;
-            }
-
-            return null;
-
-        }
-
-        private static string ExtractExpression(MethodDeclarationSyntax method)
-        {
-            var blockText = method.Body?.ToFullString();
-            return WithoutLeadingAndTrailingBraces(blockText).Trim();
-
-            static string WithoutLeadingAndTrailingBraces(string blockText)
-                => blockText
-                    .Substring(0, blockText.LastIndexOf('}'))
-                      .Substring(blockText.IndexOf('{') + 1);
+                EntityBehaviourType.Action => name.Substring("On".Length, name.Length - "PropertyChange".Length - 2),
+                EntityBehaviourType.Formula => name.Substring("Get".Length, name.Length - 3),
+                EntityBehaviourType.BeforeCollectionEntityInitialize => name.Substring("OnBefore".Length, name.Length - "EntityInitialize".Length - 8),
+                _ => null,
+            };
         }
 
         private static EntityBehaviourType MapType(MethodDeclarationSyntax method)

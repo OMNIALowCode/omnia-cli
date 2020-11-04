@@ -7,6 +7,17 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Extensions
 {
     public static class MethodInfoExtension
     {
+        public static string ExtractExpression(this MethodDeclarationSyntax method)
+        {
+            var blockText = method.Body?.ToFullString();
+            return WithoutLeadingAndTrailingBraces(blockText).Trim();
+
+            static string WithoutLeadingAndTrailingBraces(string blockText)
+                => blockText
+                    .Substring(0, blockText.LastIndexOf('}'))
+                      .Substring(blockText.IndexOf('{') + 1);
+        }
+
         public static (string name, string description) ExtractDataFromComment(this MethodDeclarationSyntax method)
         {
             var comments = method.GetLeadingTrivia();

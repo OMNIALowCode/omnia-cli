@@ -1,6 +1,5 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours;
+﻿using Omnia.CLI.Commands.Model.Behaviours.Readers;
 using Shouldly;
-using System;
 using System.Linq;
 using Xunit;
 
@@ -25,11 +24,11 @@ namespace Omnia.Behaviours.T99.Internal.System
 }
 ";
         [Fact]
-        public void ExtractData_Successfully()
+        public void ExtractCodeDependencies_Successfully()
         {
             var reader = new DependencyReader();
 
-            var data = reader.ExtractData(FileText);
+            var data = reader.ExtractCodeDependencies(FileText);
 
             data.Expression.ShouldNotBeNull();
             data.Expression.ShouldBe(@"using MyCompany;
@@ -44,11 +43,11 @@ namespace Omnia.Behaviours.T99.Internal.System
 
 
         [Fact]
-        public void ExtractData_NamespaceMatch()
+        public void ExtractCodeDependencies_NamespaceMatch()
         {
             var reader = new DependencyReader();
 
-            var dependency = reader.ExtractData(FileText);
+            var dependency = reader.ExtractCodeDependencies(FileText);
 
             dependency.Namespace.ShouldBe("Omnia.Behaviours.T99.Internal.System");
         }

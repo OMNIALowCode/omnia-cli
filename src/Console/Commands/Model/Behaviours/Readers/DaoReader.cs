@@ -6,12 +6,12 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
 using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 
-namespace Omnia.CLI.Commands.Model.Behaviours
+namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 {
     public class DaoReader
     {
         private const string BehaviourNamespacePrefix = "Omnia.Behaviours.";
-        private static string[] DefaultUsings = new string[]
+        private static readonly string[] DefaultUsings = new string[]
         {
             "System",
             "System.Collections.Generic",
@@ -78,23 +78,11 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             return new DataBehaviour
             {
-                Expression = ExtractExpression(method),
+                Expression = method.ExtractExpression(),
                 Name = name ?? GetMethodName(method),
                 Type = MapType(method),
                 Description = description
             };
-        }
-
-        private static string ExtractExpression(MethodDeclarationSyntax method)
-        {
-            var blockText = method.Body?.ToFullString();
-            return RemoveWithoutLeadingAndTrailingBraces(blockText).Trim();
-
-            static string RemoveWithoutLeadingAndTrailingBraces(string blockText)
-                => blockText
-                    .Substring(0, blockText.LastIndexOf('}'))
-                      .Substring(blockText.IndexOf('{') + 1);
-
         }
 
         private static DataBehaviourType MapType(MethodDeclarationSyntax method)
@@ -114,7 +102,6 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             catch (NotSupportedException) {
                 throw;
             }
-            
         }
 
         private static string GetMethodName(MethodDeclarationSyntax method)

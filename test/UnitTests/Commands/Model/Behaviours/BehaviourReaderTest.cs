@@ -1,4 +1,5 @@
 ﻿using Omnia.CLI.Commands.Model.Behaviours;
+using Omnia.CLI.Commands.Model.Behaviours.Readers;
 using Shouldly;
 using System;
 using System.Linq;
@@ -117,7 +118,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_Successfully()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var entity = reader.ExtractData(FileText);
 
@@ -128,7 +129,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_EmptyMethodsAreIgnored()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var entity = reader.ExtractData(FileText);
 
@@ -138,7 +139,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_HasInitialize()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var entity = reader.ExtractData(FileText);
 
@@ -148,7 +149,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -160,7 +161,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_UsesCommentName()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -172,7 +173,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_UsesCommentDescription()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -184,7 +185,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -196,7 +197,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithPropertyChange_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -208,7 +209,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithPropertyChange_CorrectAttribute()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -220,7 +221,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithFormula_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var formula = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -232,7 +233,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithFormula_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var formula = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -244,7 +245,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithFormula_CorrectAttribute()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var formula = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -256,7 +257,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeCollectionEntityInitialize_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var intialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -268,7 +269,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeCollectionEntityInitialize_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var intialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -280,7 +281,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeCollectionEntityInitialize_CorrectAttribute()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var intialize = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -292,7 +293,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithAfterChange_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var afterChange = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -304,7 +305,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithAfterChange_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var afterChange = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -316,7 +317,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeChange_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var beforeChange = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -328,7 +329,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeChange_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var beforeChange = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -339,7 +340,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeSave_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var beforeSave = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -351,7 +352,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithBeforeSave_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var beforeSave = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -362,7 +363,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithAfterSave_ValidType()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var afterSave = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -374,7 +375,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_WithAfterSave_ValidExpression()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var afterSave = reader.ExtractData(FileText)
                 .EntityBehaviours
@@ -385,7 +386,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_SuccessfullyExtractUsings()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var entity = reader.ExtractData(FileText);
 
@@ -397,7 +398,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         [Fact]
         public void ExtractData_NamespaceMatch()
         {
-            var reader = new BehaviourReader();
+            var reader = new EntityBehaviourReader();
 
             var entity = reader.ExtractData(FileText);
 

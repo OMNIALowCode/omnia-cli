@@ -6,12 +6,12 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
 using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 
-namespace Omnia.CLI.Commands.Model.Behaviours
+namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 {
     public class ApplicationBehaviourReader
     {
         private const string BehaviourNamespacePrefix = "Omnia.Behaviours.";
-        private static string[] DefaultUsings = new string[]
+        private static readonly string[] DefaultUsings = new string[]
         {
             "System",
             "System.Collections.Generic",
@@ -32,15 +32,16 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var root = tree.GetCompilationUnitRoot();
 
             var method = root.DescendantNodes(null, false)
-                            .OfType<MethodDeclarationSyntax>();
+                            .OfType<MethodDeclarationSyntax>()
+                            .SingleOrDefault();
 
-            var (name, description) = method.First().ExtractDataFromComment();
+            var (name, description) = method.ExtractDataFromComment();
 
             return new ApplicationBehaviour(
                 name,
                 description,
                 ExtractNamespace(root),
-                ExtractExpression(root),
+                method.ExtractExpression(),
                 ExtractUsings(root));
         }
 
@@ -64,20 +65,6 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             static bool IsNotDefaultUsing(string usingDirective)
                 => !DefaultUsings.Contains(usingDirective) && !usingDirective.StartsWith(BehaviourNamespacePrefix);
-        }
-
-        private static string ExtractExpression(CompilationUnitSyntax root)
-        {
-            var method = root.DescendantNodes(null, false).OfType<MethodDeclarationSyntax>().SingleOrDefault();
-            if(method == null) return null;
-
-            var blockText = method.Body.ToFullString();
-            return WithoutLeadingAndTrailingBraces(blockText).Trim();
-
-            static string WithoutLeadingAndTrailingBraces(string blockText)
-                => blockText
-                    .Substring(0, blockText.LastIndexOf('}'))
-                      .Substring(blockText.IndexOf('{') + 1);
         }
     }
 }

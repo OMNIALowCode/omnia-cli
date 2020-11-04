@@ -1,5 +1,5 @@
 ﻿using Omnia.CLI.Commands.Model.Behaviours;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
+using Omnia.CLI.Commands.Model.Behaviours.Readers;
 using Shouldly;
 using System.Linq;
 using Xunit;
@@ -189,7 +189,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 }";
 
 		[Fact]
-		public void ExtractMethods_Successfully()
+		public void ExtractData_Successfully()
 		{
 			var reader = new StateReader();
 
@@ -200,7 +200,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_HasName()
+		public void ExtractData_HasName()
 		{
 			var reader = new StateReader();
 
@@ -210,7 +210,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_InitialHasTransitions()
+		public void ExtractData_InitialHasTransitions()
 		{
 			var reader = new StateReader();
 
@@ -222,7 +222,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_AcceptedEmptyTransitions()
+		public void ExtractData_AcceptedEmptyTransitions()
 		{
 			var reader = new StateReader();
 
@@ -233,7 +233,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_RejectedEmptyTransitions()
+		public void ExtractData_RejectedEmptyTransitions()
 		{
 			var reader = new StateReader();
 
@@ -244,7 +244,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_InitialHasConfirmTransition()
+		public void ExtractData_InitialHasConfirmTransition()
 		{
 			var reader = new StateReader();
 
@@ -255,7 +255,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_InitialHasDeclineTransition()
+		public void ExtractData_InitialHasDeclineTransition()
 		{
 			var reader = new StateReader();
 
@@ -266,7 +266,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_InitialHasDraftTransition()
+		public void ExtractData_InitialHasDraftTransition()
 		{
 			var reader = new StateReader();
 
@@ -279,7 +279,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 
 
 		[Fact]
-		public void ExtractMethods_ValidInitialHasBehaviours()
+		public void ExtractData_ValidInitialHasBehaviours()
 		{
 			var reader = new StateReader();
 
@@ -290,7 +290,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidInitialBehaviourIn()
+		public void ExtractData_ValidInitialBehaviourIn()
 		{
 			var reader = new StateReader();
 
@@ -302,7 +302,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidInitialBehaviourOut()
+		public void ExtractData_ValidInitialBehaviourOut()
 		{
 			var reader = new StateReader();
 
@@ -314,7 +314,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidConfirmExpression()
+		public void ExtractData_ValidConfirmExpression()
 		{
 			var reader = new StateReader();
 
@@ -326,7 +326,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidDeclineExpression()
+		public void ExtractData_ValidDeclineExpression()
 		{
 			var reader = new StateReader();
 
@@ -338,7 +338,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidDraftExpression()
+		public void ExtractData_ValidDraftExpression()
 		{
 			var reader = new StateReader();
 
@@ -350,7 +350,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidInitialAssignToExpression()
+		public void ExtractData_ValidInitialAssignToExpression()
 		{
 			var reader = new StateReader();
 
@@ -361,7 +361,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidRejectedAssignToExpression()
+		public void ExtractData_ValidRejectedAssignToExpression()
 		{
 			var reader = new StateReader();
 
@@ -372,7 +372,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		}
 
 		[Fact]
-		public void ExtractMethods_ValidAcceptedAssignToExpression()
+		public void ExtractData_ValidAcceptedAssignToExpression()
 		{
 			var reader = new StateReader();
 

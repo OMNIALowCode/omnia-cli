@@ -1,4 +1,4 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours;
+﻿using Omnia.CLI.Commands.Model.Behaviours.Readers;
 using Shouldly;
 using System;
 using System.Linq;
@@ -10,9 +10,7 @@ namespace UnitTests.Commands.Model.Behaviours
     {
 
         private const string FileText =
-@"
-
-/***************************************************************
+@"/***************************************************************
 ****************************************************************
 	THIS CODE HAS BEEN AUTOMATICALLY GENERATED
 ****************************************************************
@@ -70,7 +68,6 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 	}
 }
 ";
-
 
         [Fact]
         public void ExtractData_Successfully()

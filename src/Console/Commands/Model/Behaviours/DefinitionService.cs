@@ -28,6 +28,10 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
 			patch.Replace("/expression", applicationBehaviourData.Expression);
 
+			if (applicationBehaviourData.Usings?.Count > 0)
+				patch.Replace("/behaviourNamespaces",
+					applicationBehaviourData.Usings.Select(u => MapToBehaviourNamespace(u, applicationBehaviourData.Namespace)));
+
 			var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
 
 			var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/ApplicationBehaviour/{entity}",

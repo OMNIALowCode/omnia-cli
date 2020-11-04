@@ -99,15 +99,22 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         private static DataBehaviourType MapType(MethodDeclarationSyntax method)
         {
-            return GetMethodName(method) switch
+            try
             {
-                var create when create.Equals("Create") => DataBehaviourType.Create,
-                var update when update.Equals("Update") => DataBehaviourType.Update,
-                var delete when delete.Equals("Delete") => DataBehaviourType.Delete,
-                var read when read.Equals("Read") => DataBehaviourType.Read,
-                var readList when readList.Equals("ReadList") => DataBehaviourType.ReadList,
-                _ => throw new NotSupportedException()
-            };
+                return GetMethodName(method) switch
+                {
+                    var create when create.Equals("Create") => DataBehaviourType.Create,
+                    var update when update.Equals("Update") => DataBehaviourType.Update,
+                    var delete when delete.Equals("Delete") => DataBehaviourType.Delete,
+                    var read when read.Equals("Read") => DataBehaviourType.Read,
+                    var readList when readList.Equals("ReadList") => DataBehaviourType.ReadList,
+                    _ => throw new NotSupportedException()
+                };
+            }
+            catch (NotSupportedException) {
+                throw;
+            }
+            
         }
 
         private static string GetMethodName(MethodDeclarationSyntax method)

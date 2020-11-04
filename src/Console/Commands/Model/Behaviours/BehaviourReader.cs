@@ -77,13 +77,33 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         {
             var (name, description) = method.ExtractDataFromComment();
 
+            var type = MapType(method);
             return new EntityBehaviour
             {
                 Expression = ExtractExpression(method),
                 Name = name ?? method.Identifier.ValueText,
                 Description = description,
-                Type = MapType(method)
+                Type = type,
+                Attribute = GetAttribute(type, method.Identifier.ValueText)
             };
+        }
+
+        private static string GetAttribute(EntityBehaviourType type, string name)
+        {
+            switch (type)
+            {
+                case EntityBehaviourType.Action:
+                    return name.Substring("On".Length, name.Length - "PropertyChange".Length - 2);
+                case EntityBehaviourType.Formula:
+                    return name.Substring("Get".Length, name.Length - 3);
+                case EntityBehaviourType.BeforeCollectionEntityInitialize:
+                    return name.Substring("OnBefore".Length, name.Length - "EntityInitialize".Length - 8);
+                default:
+                    break;
+            }
+
+            return null;
+
         }
 
         private static string ExtractExpression(MethodDeclarationSyntax method)

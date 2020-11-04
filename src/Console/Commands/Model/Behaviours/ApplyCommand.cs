@@ -29,6 +29,23 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 			_apiClient = apiClient;
 			_definitionService = new DefinitionService(_apiClient);
 		}
+    [Command(Name = "apply", Description = "Apply behaviours to model from source code.")]
+    [HelpOption("-h|--help")]
+    public class ApplyCommand
+    {
+        private readonly AppSettings _settings;
+        private readonly IApiClient _apiClient;
+        private readonly DefinitionService _definitionService;
+        private readonly BehaviourReader _entityBehaviourReader = new BehaviourReader();
+        private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
+        private readonly DaoReader _daoReader = new DaoReader();
+        private readonly DependencyReader _dependencyReader = new DependencyReader();
+        public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
+        {
+            _settings = options.Value;
+            _apiClient = apiClient;
+            _definitionService = new DefinitionService(_apiClient);
+        }
 
 		[Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
 		public string Subscription { get; set; }
@@ -100,8 +117,13 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 			await Task.WhenAll(applyApplicationBehaviourTasks).ConfigureAwait(false);
 			await Task.WhenAll(applyStateMachineTasks).ConfigureAwait(false);
 
-			if (Build)
-				await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
+
+            var codeDependencies = await ProcessCodeDependencies();
+            var fileDependencies = await ProcessFileDependencies();
+            await ApplyDependenciesChanges(codeDependencies, fileDependencies);
+
+            if (Build)
+                await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
 
 
 			Console.WriteLine($"Successfully applied behaviours to tenant \"{Tenant}\" model.");
@@ -139,10 +161,41 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 			return files.Select(ProcessDaoFile);
 		}
 
-		private async Task<(string name, Entity entity)> ProcessEntityBehavioursFile(string filepath)
-		{
-			Console.WriteLine($"Processing file {filepath}...");
-			var content = await ReadFile(filepath).ConfigureAwait(false);
+        private async Task<IDictionary<string, CodeDependency>> ProcessCodeDependencies()
+        {
+            var dependencies = new Dictionary<string, CodeDependency>();
+
+            string[] directories = Directory.GetDirectories(Path, "CodeDependencies", SearchOption.AllDirectories);
+            foreach (string directory in directories)
+            {
+                var files = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly);
+
+                var dependencyData = await Task.WhenAll(files.Select(ProcessCodeDependencyFile)).ConfigureAwait(false);
+
+                foreach (var (name, codeDependency) in dependencyData)
+                    dependencies.Add(name, codeDependency);
+            }
+            return dependencies;
+        }
+
+        private async Task<IDictionary<string, IList<FileDependency>>> ProcessFileDependencies()
+        {
+            var dependencies = new Dictionary<string, IList<FileDependency>>();
+
+            var files = Directory.GetFiles(Path, "*.csproj", SearchOption.AllDirectories);
+
+            var dependencyData = await Task.WhenAll(files.Select(ProcessFileDependencyFile)).ConfigureAwait(false);
+
+            foreach (var (name, fileDependencies) in dependencyData)
+                dependencies.Add(name, fileDependencies);
+
+            return dependencies;
+        }
+
+        private async Task<(string name, Entity entity)> ProcessEntityBehavioursFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
 
 			return (ExtractEntityNameFromFileName(filepath, ".Operations.cs"), _entityBehaviourReader.ExtractData(content));
 		}
@@ -171,12 +224,69 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 			return (ExtractEntityNameFromFileName(filepath, "Dao.cs"), _daoReader.ExtractData(content));
 		}
 
-		private async Task ApplyEntityChanges(string name, Entity entity)
-		{
-			if (entity.EntityBehaviours?.Count == 0 &&
-				entity.DataBehaviours?.Count == 0 &&
-				entity.Usings?.Count == 0)
-				return;
+        private async Task<(string name, CodeDependency codeDependency)> ProcessCodeDependencyFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (ExtractEntityNameFromFileName(filepath, ".cs"), _dependencyReader.ExtractData(content));
+        }
+
+        private async Task<(string name, IList<FileDependency> fileDependencies)> ProcessFileDependencyFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (ExtractEntityNameFromFileName(filepath, ".csproj"), _dependencyReader.ExtractFileDependencies(content));
+        }
+
+        private async Task ApplyDependenciesChanges(IDictionary<string, CodeDependency> codeDependencies, IDictionary<string, IList<FileDependency>> fileDependencies)
+        {
+            var dataPerDataSource = new Dictionary<string, (IDictionary<string, CodeDependency> codeDependencies, IList<(string,FileDependency)> fileDependencies)>();
+
+            foreach(var codeDependency in codeDependencies)
+            {
+                var dataSource = codeDependency.Value.Namespace.Split('.')[4];
+
+                if(!dataPerDataSource.ContainsKey(dataSource))
+                    dataPerDataSource.Add(dataSource, (new Dictionary<string, CodeDependency>(), new List<(string, FileDependency)>()));
+
+                dataPerDataSource[dataSource].codeDependencies.Add(codeDependency.Key, codeDependency.Value);                
+            }
+
+            foreach (var fileDependencyData in fileDependencies)
+            {
+                var nameParts = fileDependencyData.Key.Split('.');
+                var dataSource = nameParts[2];
+                var location = nameParts[1];
+
+                if (!dataPerDataSource.ContainsKey(dataSource))
+                    dataPerDataSource.Add(dataSource, (new Dictionary<string, CodeDependency>(), new List<(string, FileDependency)>()));
+
+                foreach(var fileDependency in fileDependencyData.Value)
+                    dataPerDataSource[dataSource].fileDependencies.Add((location, fileDependency));
+            }
+
+            foreach (var dataSource in dataPerDataSource)
+            {
+                var applySuccessfully = await _definitionService.ReplaceDependencies(Tenant, Environment,
+                    dataSource.Key,
+                            dataSource.Value.codeDependencies,
+                            dataSource.Value.fileDependencies
+                            ).ConfigureAwait(false);
+
+                if (!applySuccessfully)
+                    Console.WriteLine($"Failed to apply dependencies to Data Source {dataSource.Key}.");
+
+            }
+        }
+
+        private async Task ApplyEntityChanges(string name, Entity entity)
+        {
+            if (entity.EntityBehaviours?.Count == 0 &&
+                entity.DataBehaviours?.Count == 0 &&
+                entity.Usings?.Count == 0)
+                return;
 
 			var applySuccessfully = await ReplaceData(name, entity).ConfigureAwait(false);
 			if (!applySuccessfully)

@@ -34,7 +34,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
+        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to import.")]
         public string Tenant { get; set; }
         [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to import.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;

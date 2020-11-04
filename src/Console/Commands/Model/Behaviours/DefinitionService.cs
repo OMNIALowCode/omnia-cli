@@ -122,17 +122,12 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 					var state = states.Where(s => s.Name.Equals(metadataStates[sn]["name"].Value<string>())).FirstOrDefault();
 					if (state != null)
 					{
-						patch.Replace($"/states/{sn}/expression", state.AssignToExpression);
+						patch.Replace($"/states/{sn}/assignToExpression", state.AssignToExpression);
 
 						if (state.Behaviours.Count > 0)
 						{
 							var behaviours = metadataStates[sn]["behaviours"];
-							for (int bn = 0; bn < behaviours.Count(); bn++)
-							{
-								var behaviour = state.Behaviours.Where(b => b.Name.Equals(behaviours[bn]["name"].Value<string>())).FirstOrDefault();
-								if(behaviour != null)
-									patch.Replace($"/states/{sn}/behaviours/{bn}/expression", behaviour.Expression);
-							}
+							patch.Replace($"/states/{sn}/behaviours", state.Behaviours.ToArray());
 						}
 
 						if(state.Transitions.Count > 0)

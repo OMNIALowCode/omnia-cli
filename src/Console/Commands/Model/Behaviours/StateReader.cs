@@ -12,7 +12,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 	public class StateReader
 	{
 
-		public IList<State> ExtractMethods(string text)
+		public IList<State> ExtractData(string text)
 		{
 			var tree = CSharpSyntaxTree.ParseText(text);
 			var root = tree.GetCompilationUnitRoot();
@@ -69,7 +69,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
 		private string ExtractAssignTo(IEnumerable<StateMethod> methods) => methods.Where(m => m.Type.Equals("Assign")).Select(m => m.Expression).Single();
 
-		private List<StateBehaviour> ExtractBehaviours(string stateName, IEnumerable<StateMethod> methods) => methods.Where(m => m.Type.Equals($"On{stateName}In") || m.Type.Equals($"On{stateName}Out")).Select(m => new StateBehaviour { Expression = m.Expression, Name = m.Type, Type = m.Type.Substring($"On{stateName}".Length) }).ToList();
+		private List<StateBehaviour> ExtractBehaviours(string stateName, IEnumerable<StateMethod> methods) => methods.Where(m => m.Type.Equals($"On{stateName}In") || m.Type.Equals($"On{stateName}Out")).Select(m => new StateBehaviour { Expression = m.Expression, Name = m.Type, Type = m.Type.Substring($"On{stateName}".Length) }).Where(BehaviourHasExpression).ToList();
 
 		private List<string> ExtractTransitionNames(string stateName, IEnumerable<StateMethod> methods) => methods.Where(m => m.Type.Equals("Transition")).Select(m => m.State.Substring($"{stateName}_".Length)).ToList();
 
@@ -81,6 +81,12 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 				Name = d,
 				Expression = method.Expression,
 			};
-		}).ToList();
+		}).Where(TransitionHasExpression).ToList();
+
+		private static bool BehaviourHasExpression(StateBehaviour stateBehaviour)
+				=> !string.IsNullOrEmpty(stateBehaviour.Expression);
+
+		private static bool TransitionHasExpression(Transition transition)
+				=> !string.IsNullOrEmpty(transition.Expression);
 	}
 }

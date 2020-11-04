@@ -193,7 +193,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var states = reader.ExtractMethods(FileText);
+			var states = reader.ExtractData(FileText);
 
 			states.ShouldNotBeNull();
 			states.Count.ShouldBe(3);
@@ -204,7 +204,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var states = reader.ExtractMethods(FileText);
+			var states = reader.ExtractData(FileText);
 
 			states.ShouldNotContain(s => string.IsNullOrEmpty(s.Name));
 		}
@@ -214,7 +214,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Transitions.ShouldNotBeEmpty();
@@ -226,7 +226,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var accepted = reader.ExtractMethods(FileText)
+			var accepted = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Accepted"));
 
 			accepted.Transitions.ShouldBeEmpty();
@@ -237,7 +237,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var rejected = reader.ExtractMethods(FileText)
+			var rejected = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Rejected"));
 
 			rejected.Transitions.ShouldBeEmpty();
@@ -248,7 +248,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Transitions.ShouldContain(t => t.Name.Equals("Confirm"));
@@ -259,7 +259,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Transitions.ShouldContain(t => t.Name.Equals("Decline"));
@@ -270,7 +270,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Transitions.ShouldContain(t => t.Name.Equals("Draft"));
@@ -283,7 +283,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Behaviours.Count.ShouldBe(2);
@@ -294,7 +294,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var accepted = reader.ExtractMethods(FileText)
+			var accepted = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Accepted"));
 
 			accepted.Behaviours.Count.ShouldBe(2);
@@ -305,7 +305,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var rejected = reader.ExtractMethods(FileText)
+			var rejected = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Rejected"));
 
 			rejected.Behaviours.Count.ShouldBe(2);
@@ -316,7 +316,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialIn") && b.Type.Equals("In"));
@@ -328,7 +328,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialOut") && b.Type.Equals("Out"));
@@ -340,7 +340,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var accepted = reader.ExtractMethods(FileText)
+			var accepted = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Accepted"));
 
 			accepted.Behaviours.ShouldContain(b => b.Name.Equals("OnAcceptedIn") && b.Type.Equals("In"));
@@ -352,7 +352,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var accepted = reader.ExtractMethods(FileText)
+			var accepted = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Accepted"));
 
 			accepted.Behaviours.ShouldContain(b => b.Name.Equals("OnAcceptedOut") && b.Type.Equals("Out"));
@@ -364,7 +364,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var rejected = reader.ExtractMethods(FileText)
+			var rejected = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Rejected"));
 
 			rejected.Behaviours.ShouldContain(b => b.Name.Equals("OnRejectedIn") && b.Type.Equals("In"));
@@ -376,7 +376,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var rejected = reader.ExtractMethods(FileText)
+			var rejected = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Rejected"));
 
 			rejected.Behaviours.ShouldContain(b => b.Name.Equals("OnRejectedOut") && b.Type.Equals("Out"));
@@ -388,7 +388,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var confirm = reader.ExtractMethods(FileText)
+			var confirm = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"))
 				.Transitions.Single(t => t.Name.Equals("Confirm"));
 
@@ -400,7 +400,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var decline = reader.ExtractMethods(FileText)
+			var decline = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"))
 				.Transitions.Single(t => t.Name.Equals("Decline"));
 
@@ -412,7 +412,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var draft = reader.ExtractMethods(FileText)
+			var draft = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"))
 				.Transitions.Single(t => t.Name.Equals("Draft"));
 
@@ -424,7 +424,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var initial = reader.ExtractMethods(FileText)
+			var initial = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.AssignToExpression.ShouldBe("return null;");
@@ -435,7 +435,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var rejected = reader.ExtractMethods(FileText)
+			var rejected = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Rejected"));
 
 			rejected.AssignToExpression.ShouldBe("return null;");
@@ -446,7 +446,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 		{
 			var reader = new StateReader();
 
-			var accepted = reader.ExtractMethods(FileText)
+			var accepted = reader.ExtractData(FileText)
 				.Single(m => m.Name.Equals("Accepted"));
 
 			accepted.AssignToExpression.ShouldBe("return null;");

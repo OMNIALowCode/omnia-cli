@@ -1,8 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Subscriptions

@@ -1,6 +1,5 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using System;
-using System.Diagnostics;
 
 namespace Omnia.CLI.Commands.Model.Behaviours
 {

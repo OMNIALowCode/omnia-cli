@@ -1,7 +1,3 @@
-using System;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json.Converters;
-
 namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
     public enum EntityBehaviourType
@@ -23,6 +19,5 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Data
         public string Attribute { get; set; }
         public EntityBehaviourType Type { get; set; }
         public string Expression { get; set; }
-
     }
 }

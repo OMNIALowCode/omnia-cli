@@ -1,5 +1,4 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours;
-using Omnia.CLI.Commands.Model.Behaviours.Readers;
+﻿using Omnia.CLI.Commands.Model.Behaviours.Readers;
 using Shouldly;
 using System;
 using System.Linq;

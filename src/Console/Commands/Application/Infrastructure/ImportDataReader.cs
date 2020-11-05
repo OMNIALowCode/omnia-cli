@@ -43,18 +43,10 @@ namespace Omnia.CLI.Commands.Application.Infrastructure
 
                 var activeWorksheet = workbook.GetSheetAt(workbook.GetSheetIndex(sheet.Sheet));
                 var entityName = sheet.Entity;
-                var dataSource = string.IsNullOrEmpty(sheet.DataSource) ? "Default" : sheet.DataSource;  //GetDataSource(namingParts);
+                var dataSource = string.IsNullOrEmpty(sheet.DataSource) ? "Default" : sheet.DataSource; 
 
-                List<(int RowNum, IDictionary<string, object> Data)> lines;
-
-                if (_sheets.Any(s => s.Entity.StartsWith($"{entityName}.")))
-                {
-                    lines = ProcessCollectionSheet(workbook, entityName);
-                }
-                else
-                {
-                    lines = ProcessSimpleSheet(activeWorksheet);
-                }
+                var lines = _sheets.Any(s => s.Entity != null && s.Entity.StartsWith($"{entityName}.")) ? 
+                    ProcessCollectionSheet(workbook, entityName) : ProcessSimpleSheet(activeWorksheet);
 
                 _data.Add(new ImportData(entityName, dataSource, lines));
 

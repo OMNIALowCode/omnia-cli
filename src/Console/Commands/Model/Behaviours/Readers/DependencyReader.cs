@@ -31,7 +31,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
             var result = new List<FileDependency>();
             foreach (var reference in references)
             {
-                var assemblyName = reference.Attribute("Include").Value;
+                var assemblyName = reference.Attribute("Include")?.Value;
                 var path = reference.Descendants("HintPath").FirstOrDefault()?.Value;
 
                 result.Add(new FileDependency
@@ -46,20 +46,19 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
         }
         private static string ExtractNamespace(CompilationUnitSyntax root)
         {
-            var namespaceDeclaration = root.DescendantNodes(null, false)
+            var namespaceDeclaration = root.DescendantNodes()
                 .OfType<NamespaceDeclarationSyntax>();
             return namespaceDeclaration.First().Name.ToString();
         }
         private static string ExtractNamespaceBody(CompilationUnitSyntax root, string text)
         {
-            var namespaceDeclaration = root.DescendantNodes(null, false)
+            var namespaceDeclaration = root.DescendantNodes()
                 .OfType<NamespaceDeclarationSyntax>().First();
 
             var textSlice = text.AsSpan(start: namespaceDeclaration.OpenBraceToken.SpanStart + 1,
                 namespaceDeclaration.CloseBraceToken.SpanStart - namespaceDeclaration.OpenBraceToken.SpanStart - 1);
 
             return textSlice.ToString().Trim();
-
         }
     }
 }

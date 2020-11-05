@@ -38,8 +38,8 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         public string Tenant { get; set; }
         [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to import.")]
         public string Environment { get; set; } = Constants.DefaultEnvironment;
-        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the ZIP file.")]
-        public string Path { get; set; }
+        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the source code directory.")]
+        public string Path { get; set; } = ".";
         [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after the importation.")]
         public bool Build { get; set; }
 
@@ -67,12 +67,12 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 );
             var entities = await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
-            IEnumerable<Task<(string name, ApplicationBehaviour entity)>> processApplicationBehaviourFileTasks =
+            var processApplicationBehaviourFileTasks =
                 ProcessApplicationBehaviours();
 
             var applicationBehaviours = await Task.WhenAll(processApplicationBehaviourFileTasks).ConfigureAwait(false);
 
-            IEnumerable<Task<(string name, List<State> entity)>> processStateMachineFileTasks =
+            var processStateMachineFileTasks =
                 ProcessStates();
 
             var stateMachines = await Task.WhenAll(processStateMachineFileTasks).ConfigureAwait(false);
@@ -81,9 +81,9 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 .Select(g =>
                     ApplyEntityChanges(g.Key,
                         new Entity(g.First().entity.Namespace,
-                        g.SelectMany(e => e.entity.EntityBehaviours).ToList(),
-                        g.SelectMany(e => e.entity.DataBehaviours).ToList(),
-                        g.SelectMany(e => e.entity.Usings).ToList())
+                        g.SelectMany(e => e.entity?.EntityBehaviours).ToList(),
+                        g.SelectMany(e => e.entity?.DataBehaviours).ToList(),
+                        g.SelectMany(e => e.entity?.Usings).ToList())
                     )
                 );
 
@@ -292,7 +292,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         => await _definitionService.ReplaceApplicationBehaviourData(Tenant, Environment,
                             ExtractEntityNameFromFileName(filepath, string.Empty), entity).ConfigureAwait(false);
 
-        private async Task<bool> ReplaceData(string name, Data.Entity entity)
+        private async Task<bool> ReplaceData(string name, Entity entity)
             => await _definitionService.ReplaceData(Tenant, Environment,
                             name, entity).ConfigureAwait(false);
 

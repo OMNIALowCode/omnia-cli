@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -42,7 +42,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 patch.Replace("/behaviourNamespaces",
                     applicationBehaviourData.Usings.Select(u => MapToBehaviourNamespace(u, applicationBehaviourData.Namespace)));
 
-            var dataAsString = JsonConvert.SerializeObject(patch, new Newtonsoft.Json.Converters.StringEnumConverter());
+            var dataAsString = JsonConvert.SerializeObject(patch, _serializeSettings);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/ApplicationBehaviour/{entity}",
                 new StringContent(dataAsString,
@@ -115,7 +115,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             }));
 
             var patch = new JsonPatchDocument();
-            patch.Replace("/behaviourDependencies", dependencies.ToArray());
+            patch.Replace("/behaviourDependencies", dependencies?.ToArray() ?? Array.Empty<Dependency>());
 
             var dataAsString = JsonConvert.SerializeObject(patch, _serializeSettings);
 
@@ -154,38 +154,33 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             return null;
         }
 
-		private JsonPatchDocument PatchStatesToReplace(JsonPatchDocument patch, JObject metadata, List<State> states)
+		private static JsonPatchDocument PatchStatesToReplace(JsonPatchDocument patch, JObject metadata, IList<State> states)
 		{
-			if (metadata.TryGetValue("states", out var metadataStates))
-			{
-				for (int sn = 0; sn < metadataStates.Count(); sn++)
-				{
-					var state = states.Where(s => s.Name.Equals(metadataStates[sn]["name"].Value<string>())).FirstOrDefault();
-					if (state != null)
-					{
-						patch.Replace($"/states/{sn}/assignToExpression", state.AssignToExpression);
+            if (!metadata.TryGetValue("states", out var metadataStates)) return null;
+            
+            for (var sn = 0; sn < metadataStates.Count(); sn++)
+            {
+                var state = states.FirstOrDefault(s => s.Name.Equals(metadataStates[sn]["name"].Value<string>()));
+                if (state == null) continue;
+                
+                patch.Replace($"/states/{sn}/assignToExpression", state.AssignToExpression);
 
-						if (state.Behaviours.Count > 0)
-						{
-							var behaviours = metadataStates[sn]["behaviours"];
-							patch.Replace($"/states/{sn}/behaviours", state.Behaviours.ToArray());
-						}
-
-                        if (state.Transitions.Count > 0)
-                        {
-                            var transitions = metadataStates[sn]["transitions"];
-                            for (int tn = 0; tn < transitions.Count(); tn++)
-                            {
-                                var transition = state.Transitions.Where(t => t.Name.Equals(transitions[tn]["name"].Value<string>())).FirstOrDefault();
-                                if (transition != null)
-                                    patch.Replace($"/states/{sn}/transitions/{tn}/expression", transition.Expression);
-                            }
-                        }
-                    }
+                if (state.Behaviours.Count > 0)
+                {
+                    patch.Replace($"/states/{sn}/behaviours", state.Behaviours.ToArray());
                 }
-                return patch;
+
+                if (state.Transitions.Count <= 0) continue;
+                
+                var transitions = metadataStates[sn]["transitions"];
+                for (var tn = 0; tn < transitions.Count(); tn++)
+                {
+                    var transition = state.Transitions.FirstOrDefault(t => t.Name.Equals(transitions[tn]["name"].Value<string>()));
+                    if (transition != null)
+                        patch.Replace($"/states/{sn}/transitions/{tn}/expression", transition.Expression);
+                }
             }
-            return null;
+            return patch;
         }
 
         private static object MapToBehaviourNamespace(string usingDirective, string @namespace)

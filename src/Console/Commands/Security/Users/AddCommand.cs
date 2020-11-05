@@ -1,7 +1,6 @@
 ﻿using System;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Extensions;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;

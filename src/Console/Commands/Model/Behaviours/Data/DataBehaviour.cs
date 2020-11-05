@@ -1,7 +1,3 @@
-using System;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json.Converters;
-
 namespace Omnia.CLI.Commands.Model.Behaviours.Data
 {
     public enum DataBehaviourType

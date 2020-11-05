@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Omnia.CLI.Commands.Model.Behaviours.Data;
 using Omnia.CLI.Commands.Model.Behaviours.Extensions;
-using Omnia.CLI.Extensions;
 
 namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 {
@@ -23,17 +21,19 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 		private IList<State> ExtractStates(CompilationUnitSyntax root)
 		{
 
-			var methods = root.DescendantNodes(null, false)
+			var methods = root.DescendantNodes()
 				.OfType<MethodDeclarationSyntax>()
 				.Where(m => !m.Identifier.ToFullString().Equals("EvaluateStateTransitions"))
-				.Select(MapMethod);
+				.Select(MapMethod)
+                .ToList();
 
 			var stateNames = methods.Where(m => !m.Equals(null) && !m.Type.Equals("Transition")).Select(m => m.State).Distinct();
 
-			return stateNames.Select(n => MapState(n, methods.Where(m => m.State.Equals(n) || (m.Type.Equals("Transition") && m.State.StartsWith(n))))).ToList();
+			return stateNames.Select(n => MapState(n, 
+                methods.Where(m => m.State.Equals(n) || (m.Type.Equals("Transition") && m.State.StartsWith(n))).ToList())).ToList();
 		}
 
-		private StateMethod MapMethod(MethodDeclarationSyntax method)
+		private static StateMethod MapMethod(MethodDeclarationSyntax method)
 		{
 			return method.Identifier.ToFullString() switch
 			{
@@ -49,7 +49,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 			};
 		}
 
-		private State MapState(string stateName, IEnumerable<StateMethod> methods)
+		private State MapState(string stateName, IList<StateMethod> methods)
 		{
 			return new State
 			{

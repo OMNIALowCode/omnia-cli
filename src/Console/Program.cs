@@ -35,7 +35,17 @@ namespace Omnia.CLI
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();
 
-            return app.Execute(args);
+            try
+            {
+                return app.Execute(args);
+            }
+            catch (UnrecognizedCommandParsingException exception)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"{exception.Message}. Use --help to list the available options.");
+                Console.ResetColor();
+                return (int)StatusCodes.InvalidOperation;
+            }
         }
 
         private static IConfigurationRoot CreateConfigurationRoot()

@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
@@ -70,7 +71,7 @@ namespace Omnia.CLI.Commands.Subscriptions
                 }
             });
 
-            var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OMNIA", "CLI");
+            var directory = SettingsPathFactory.Path();
 
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);

@@ -2,10 +2,8 @@
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Text;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Management.Tenants
 {
@@ -13,12 +11,13 @@ namespace Omnia.CLI.Commands.Management.Tenants
     [HelpOption("-h|--help")]
     public class AddCommand
     {
+        private readonly IApiClient _apiClient;
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+
+        public AddCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
+            _apiClient = apiClient;
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
         }
     
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -54,34 +53,23 @@ namespace Omnia.CLI.Commands.Management.Tenants
 
             var sourceSettings = _settings.GetSubscription(Subscription);
 
-            await _httpClient.WithSubscription(sourceSettings);
+            await _apiClient.Authenticate(sourceSettings);
 
-            return await CreateTenant(_httpClient, Code, Name);
+            return await CreateTenant(_apiClient, Code, Name);
         }
 
-        private static async Task<int> CreateTenant(HttpClient httpClient, string tenantCode, string tenantName)
+        private static async Task<int> CreateTenant(IApiClient apiClient, string tenantCode, string tenantName)
         {
-            var response = await httpClient.PostAsJsonAsync($"/api/v1/management/tenants", new { Code = tenantCode, Name = tenantName });
-            if (response.IsSuccessStatusCode)
+            var response = await apiClient.Post($"/api/v1/management/tenants", new { Code = tenantCode, Name = tenantName }.ToHttpStringContent());
+            if (response.Success)
             {
                 Console.WriteLine($"Tenant \"{tenantName}\" ({tenantCode}) created successfully.");
                 return (int)StatusCodes.Success;
             }
 
-            var apiError = await GetErrorFromApiResponse(response);
-
-            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
+            Console.WriteLine($"{response.ErrorDetails.Code}: {response.ErrorDetails.Message}");
 
             return (int)StatusCodes.InvalidOperation;
-        }
-
-        private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
-            => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
-
-        private class ApiError
-        {
-            public string Code { get; set; }
-            public string Message { get; set; }
         }
     }
 }

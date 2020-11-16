@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
-using Omnia.CLI.Infrastructure;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,19 +28,6 @@ namespace Omnia.CLI.Extensions
         {
             var dataAsString = await content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<T>(dataAsString);
-        }
-
-        public static async Task WithSubscription(this HttpClient httpClient, AppSettings.Subscription subscription)
-        {
-            var authentication = new Authentication(subscription.IdentityServerUrl,
-                subscription.Client.Id,
-                subscription.Client.Secret);
-
-            var accessToken = await authentication.AuthenticateAsync();
-            var authValue = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            httpClient.DefaultRequestHeaders.Authorization = authValue;
-            httpClient.BaseAddress = subscription.ApiUrl;
         }
     }
 }

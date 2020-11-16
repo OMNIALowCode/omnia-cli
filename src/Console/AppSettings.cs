@@ -10,10 +10,22 @@ namespace Omnia.CLI
 
         internal Subscription GetSubscription(string name)
         {
-            var sourceSettings = Subscriptions.FirstOrDefault(s => s.Name.Equals(name));
+            if (SubscriptionNotProvidedAndOnlyOneConfigured())
+                return Subscriptions.Single();
+
+            if(!IsSubscriptionNameProvided())
+                throw new InvalidOperationException("A registered subscription name must be provided.");
+
+            var sourceSettings = Subscriptions.SingleOrDefault(s => s.Name.Equals(name));
             if (sourceSettings == null)
                 throw new InvalidOperationException($"Can't find subscription {name}");
             return sourceSettings;
+
+            bool SubscriptionNotProvidedAndOnlyOneConfigured()
+                => !IsSubscriptionNameProvided() && Subscriptions.Count == 1;
+
+            bool IsSubscriptionNameProvided()
+                => !string.IsNullOrEmpty(name);
         }
         internal bool Exists(string name)
             => Subscriptions.Any(s => s.Name.Equals(name));

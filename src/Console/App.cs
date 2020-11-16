@@ -6,11 +6,11 @@ namespace Omnia.CLI
 {
     [Command(Name = "omnia-cli", Description = "OMNIA Platform CLI")]
     [HelpOption("-h|--help")]
-    [Subcommand(typeof(Omnia.CLI.Commands.Subscriptions.BaseCommand))]
-    [Subcommand(typeof(Omnia.CLI.Commands.Model.BaseCommand))]
-    [Subcommand(typeof(Omnia.CLI.Commands.Security.BaseCommand))]
-    [Subcommand(typeof(Omnia.CLI.Commands.Management.BaseCommand))]
-    [Subcommand(typeof(Omnia.CLI.Commands.Application.BaseCommand))]
+    [Subcommand(typeof(Commands.Subscriptions.BaseCommand))]
+    [Subcommand(typeof(Commands.Model.BaseCommand))]
+    [Subcommand(typeof(Commands.Security.BaseCommand))]
+    [Subcommand(typeof(Commands.Management.BaseCommand))]
+    [Subcommand(typeof(Commands.Application.BaseCommand))]
     [VersionOptionFromMember(MemberName = nameof(GetVersion))]
 
     public class App
@@ -23,6 +23,6 @@ namespace Omnia.CLI
         private static string GetVersion() => typeof(Program)
             .Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            .InformationalVersion;
+            ?.InformationalVersion ?? "0.0.0";
     }
 }

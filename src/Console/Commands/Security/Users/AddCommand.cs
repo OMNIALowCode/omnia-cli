@@ -1,12 +1,12 @@
 ﻿using System;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Extensions;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
 using Microsoft.AspNetCore.JsonPatch;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Security.Users
 {
@@ -14,14 +14,14 @@ namespace Omnia.CLI.Commands.Security.Users
     [HelpOption("-h|--help")]
     public class AddCommand
     {
+        private readonly IApiClient _apiClient;
         private readonly AppSettings _settings;
-        private readonly HttpClient _httpClient;
-        public AddCommand(IOptions<AppSettings> options, IHttpClientFactory httpClientFactory)
+        public AddCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
+            _apiClient = apiClient;
             _settings = options.Value;
-            _httpClient = httpClientFactory.CreateClient();
         }
-    
+
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
         public string Subscription { get; set; }
         [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant code where the user will be associated.")]
@@ -73,39 +73,29 @@ namespace Omnia.CLI.Commands.Security.Users
             }
 
             var sourceSettings = _settings.GetSubscription(Subscription);
-            
-            await _httpClient.WithSubscription(sourceSettings);
 
-            return await AddUserToRole(_httpClient, Tenant, Username, Role, Environment);
+            await _apiClient.Authenticate(sourceSettings);
+
+            return await AddUserToRole(_apiClient, Tenant, Username, Role, Environment);
         }
 
-        private static async Task<int> AddUserToRole(HttpClient httpClient, string tenantCode, string _username, string role, string environment)
+        private static async Task<int> AddUserToRole(IApiClient apiClient, string tenantCode, string _username, string role, string environment)
         {
             var patch = new JsonPatchDocument().Add("/subjects/-", new { username = _username });
+            var dataAsString = JsonConvert.SerializeObject(patch);
 
-            var response = await httpClient.PatchAsJsonAsync($"/api/v1/{tenantCode}/{environment}/security/AuthorizationRole/{role}", patch);
+            var response = await apiClient.Patch($"/api/v1/{tenantCode}/{environment}/security/AuthorizationRole/{role}",
+                new StringContent(dataAsString, Encoding.UTF8, "application/json"));
 
-            if (response.IsSuccessStatusCode)
+            if (response.Success)
             {
                 Console.WriteLine($"User \"{_username}\" associated to {tenantCode} {role} role successfully.");
                 return (int)StatusCodes.Success;
             }
 
-            var apiError = await GetErrorFromApiResponse(response);
-
-            Console.WriteLine($"{apiError.Code}: {apiError.Message}");
+            Console.WriteLine($"{response.ErrorDetails.Code}: {response.ErrorDetails.Message}");
 
             return (int)StatusCodes.InvalidOperation;
         }
-
-        private static async Task<ApiError> GetErrorFromApiResponse(HttpResponseMessage response)
-            => JsonConvert.DeserializeObject<ApiError>(await response.Content.ReadAsStringAsync());
-
-        private class ApiError
-        {
-            public string Code { get; set; }
-            public string Message { get; set; }
-        }
     }
 }
- 

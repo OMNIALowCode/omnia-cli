@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI
 {
@@ -15,22 +16,36 @@ namespace Omnia.CLI
             var configuration = CreateConfigurationRoot();
 
             var services = new ServiceCollection()
-                .AddSingleton<IConsole>(PhysicalConsole.Singleton)
-                .Configure<AppSettings>(configuration)
-                .AddHttpClient()
-                .BuildServiceProvider();
+                .AddSingleton(PhysicalConsole.Singleton)
+                .AddScoped<IAuthenticationProvider, AuthenticationProvider>()
+                .Configure<AppSettings>(configuration);
+
+            services
+                .AddHttpClient<IApiClient, ApiClient>();
+
+            var serviceProvider = services.BuildServiceProvider();
 
             var app = new CommandLineApplication<App>();
             app.Conventions
                 .UseDefaultConventions()
-                .UseConstructorInjection(services);
+                .UseConstructorInjection(serviceProvider);
 
-            var subscriptions = GetConfiguredSubscriptions(services);
+            var subscriptions = GetConfiguredSubscriptions(serviceProvider);
 
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();
 
-            return app.Execute(args);
+            try
+            {
+                return app.Execute(args);
+            }
+            catch (UnrecognizedCommandParsingException exception)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"{exception.Message}. Use --help to list the available options.");
+                Console.ResetColor();
+                return (int)StatusCodes.InvalidOperation;
+            }
         }
 
         private static IConfigurationRoot CreateConfigurationRoot()
@@ -40,7 +55,7 @@ namespace Omnia.CLI
                     "OMNIA", "CLI", "appsettings.json"), true)
                 .Build();
 
-        private static IList<AppSettings.Subscription> GetConfiguredSubscriptions(ServiceProvider services)
+        private static IList<AppSettings.Subscription> GetConfiguredSubscriptions(IServiceProvider services)
             => services.GetService<IOptions<AppSettings>>().Value?.Subscriptions;
 
         private static void ShowWelcomeScreen()

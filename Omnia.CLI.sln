@@ -1,9 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.572
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Omnia.CLI", "src\Console\Omnia.CLI.csproj", "{9DC10F93-952F-463D-8782-1D851E1E13D0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{93B409F5-0379-4C91-89FE-77126C1E4BE0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{6FED1B5A-2FE5-4F39-BA53-C697412557D0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "test\UnitTests\UnitTests.csproj", "{D55481AB-D8EF-4FF9-841D-1481AB7719D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +21,17 @@ Global
 		{9DC10F93-952F-463D-8782-1D851E1E13D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DC10F93-952F-463D-8782-1D851E1E13D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DC10F93-952F-463D-8782-1D851E1E13D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D55481AB-D8EF-4FF9-841D-1481AB7719D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D55481AB-D8EF-4FF9-841D-1481AB7719D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D55481AB-D8EF-4FF9-841D-1481AB7719D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D55481AB-D8EF-4FF9-841D-1481AB7719D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9DC10F93-952F-463D-8782-1D851E1E13D0} = {93B409F5-0379-4C91-89FE-77126C1E4BE0}
+		{D55481AB-D8EF-4FF9-841D-1481AB7719D3} = {6FED1B5A-2FE5-4F39-BA53-C697412557D0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E8E2E3C2-F2C1-4F8B-93BA-689C81E6487D}

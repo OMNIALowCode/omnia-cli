@@ -1,0 +1,24 @@
+{
+		  "name":  "a",
+		  "dataSource": "System",
+		  "attributes": [
+{
+		      "name": "_code",
+		      "type": "Text",
+		      "isReadOnly": false,
+		      "description": "",
+		      "multiplicity": {
+		       				        "lower": 0,
+		       				        "upper": 1
+		       				   },
+		      "isSystem": false,
+		      "aggregationKind": "None",
+		      "isSensitiveData": false,
+		      "dependsOnAttribute": null
+		    }
+		  ],
+		  "description": "",
+		  "dataBehaviours": [],
+		  "entityBehaviours": [],
+		  "behaviourNamespaces": []
+}	

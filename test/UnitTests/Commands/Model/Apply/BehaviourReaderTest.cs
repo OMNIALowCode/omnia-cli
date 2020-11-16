@@ -1,10 +1,10 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers;
 using Shouldly;
 using System;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Behaviours
+namespace UnitTests.Commands.Model.Apply
 {
     public class BehaviourReaderTest
     {
@@ -152,7 +152,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
 
             initialize.Expression.ShouldBe("this._name = \"Hello World!\";");
         }
@@ -164,7 +164,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
 
             initialize.Name.ShouldBe("Initialize");
         }
@@ -176,7 +176,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
 
             initialize.Description.ShouldBe($"Set the name to:{Environment.NewLine}Hello World!");
         }
@@ -190,7 +190,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("Initialize"));
 
-            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Initialize);
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
         }
 
         [Fact]
@@ -202,7 +202,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("On_codePropertyChange"));
 
-            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Action);
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Action);
         }
 
         [Fact]
@@ -226,7 +226,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("Getname"));
 
-            formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.Formula);
+            formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Formula);
         }
 
         [Fact]
@@ -258,11 +258,11 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         {
             var reader = new EntityBehaviourReader();
 
-            var intialize = reader.ExtractData(FileText)
+            var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
-            intialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeCollectionEntityInitialize);
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.BeforeCollectionEntityInitialize);
         }
 
         [Fact]
@@ -270,11 +270,11 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         {
             var reader = new EntityBehaviourReader();
 
-            var intialize = reader.ExtractData(FileText)
+            var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
-            intialize.Expression.ShouldBe("entry._name = \"Child initialized\";");
+            initialize.Expression.ShouldBe("entry._name = \"Child initialized\";");
         }
 
         [Fact]
@@ -282,11 +282,11 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
         {
             var reader = new EntityBehaviourReader();
 
-            var intialize = reader.ExtractData(FileText)
+            var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
 
-            intialize.Attribute.ShouldBe("collection");
+            initialize.Attribute.ShouldBe("collection");
         }
 
         [Fact]
@@ -298,7 +298,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnAfterUpdate"));
 
-            afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.AfterChange);
+            afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.AfterChange);
         }
 
         [Fact]
@@ -322,7 +322,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforeUpdate"));
 
-            beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeChange);
+            beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.BeforeChange);
         }
 
         [Fact]
@@ -345,7 +345,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnBeforeSave"));
 
-            beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.BeforeSave);
+            beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.BeforeSave);
         }
 
         [Fact]
@@ -368,7 +368,7 @@ namespace Omnia.Behaviours.T99.Internal.System.Model
                 .EntityBehaviours
                 .First(m => m.Name.Equals("OnAfterSave"));
 
-            afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.EntityBehaviourType.AfterSave);
+            afterSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.AfterSave);
         }
 
         [Fact]

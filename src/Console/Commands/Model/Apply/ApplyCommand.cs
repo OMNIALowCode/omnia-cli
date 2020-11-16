@@ -1,7 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Commands.Model.Behaviours.Readers;
+using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Readers;
 using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
@@ -11,9 +11,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Omnia.CLI.Commands.Model.Behaviours
+namespace Omnia.CLI.Commands.Model.Apply
 {
-    [Command(Name = "apply", Description = "Apply behaviours to model from source code.")]
+    [Command(Name = "apply", Description = "Apply source code to model.")]
     [HelpOption("-h|--help")]
     public class ApplyCommand
     {
@@ -40,7 +40,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
         public string Environment { get; set; } = Constants.DefaultEnvironment;
         [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the source code directory.")]
         public string Path { get; set; } = ".";
-        [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after the importation.")]
+        [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after applying.")]
         public bool Build { get; set; }
 
         public async Task<int> OnExecute(CommandLineApplication cmd)
@@ -111,7 +111,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
 
 
-            Console.WriteLine($"Successfully applied behaviours to tenant \"{Tenant}\" model.");
+            Console.WriteLine($"Successfully applied to tenant \"{Tenant}\" model.");
             return (int)StatusCodes.Success;
         }
 

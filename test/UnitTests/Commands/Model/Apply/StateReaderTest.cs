@@ -1,12 +1,11 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours;
-using Omnia.CLI.Commands.Model.Behaviours.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers;
 using Shouldly;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Behaviours
+namespace UnitTests.Commands.Model.Apply
 {
-	public class StateReaderTest
+    public class StateReaderTest
 	{
 
 		private const string FileText =
@@ -298,7 +297,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialIn") && b.Type.Equals("In"));
-			initial.Behaviours.Where(b => b.Name.Equals("OnInitialIn")).Single().Expression.ShouldBe("this._name = \"Initial In Name\";");
+            initial.Behaviours.Single(b => b.Name.Equals("OnInitialIn")).Expression.ShouldBe("this._name = \"Initial In Name\";");
 		}
 
 		[Fact]
@@ -310,7 +309,7 @@ namespace Omnia.Behaviours.mvTesting3.Internal.System.Model
 				.Single(m => m.Name.Equals("Initial"));
 
 			initial.Behaviours.ShouldContain(b => b.Name.Equals("OnInitialOut") && b.Type.Equals("Out"));
-			initial.Behaviours.Where(b => b.Name.Equals("OnInitialOut")).Single().Expression.ShouldBe("this._name = \"Initial Out Name\";");
+            initial.Behaviours.Single(b => b.Name.Equals("OnInitialOut")).Expression.ShouldBe("this._name = \"Initial Out Name\";");
 		}
 
 		[Fact]

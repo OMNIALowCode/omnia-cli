@@ -1,18 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Commands.Model.Behaviours.Extensions;
+using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Extensions;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace Omnia.CLI.Commands.Model.Behaviours.Readers
+namespace Omnia.CLI.Commands.Model.Apply.Readers
 {
     public class ApplicationBehaviourReader
     {
         private const string BehaviourNamespacePrefix = "Omnia.Behaviours.";
-        private static readonly string[] DefaultUsings = new string[]
-        {
+        private static readonly string[] DefaultUsings = {
             "System",
             "System.Collections.Generic",
             "System.Linq",
@@ -31,7 +29,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
             var tree = CSharpSyntaxTree.ParseText(text);
             var root = tree.GetCompilationUnitRoot();
 
-            var method = root.DescendantNodes(null, false)
+            var method = root.DescendantNodes()
                             .OfType<MethodDeclarationSyntax>()
                             .SingleOrDefault();
 
@@ -47,14 +45,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 
         private static string ExtractNamespace(CompilationUnitSyntax root)
         {
-            var namespaceDeclaration = root.DescendantNodes(null, false)
+            var namespaceDeclaration = root.DescendantNodes()
                 .OfType<NamespaceDeclarationSyntax>();
             return namespaceDeclaration.Single().Name.ToString();
         }
 
         private static IList<string> ExtractUsings(CompilationUnitSyntax root)
         {
-            return root.DescendantNodes(null, false)
+            return root.DescendantNodes()
                 .OfType<UsingDirectiveSyntax>()
                 .Select(GetDirectiveName)
                 .Where(IsNotDefaultUsing)

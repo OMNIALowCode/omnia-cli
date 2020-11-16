@@ -1,15 +1,15 @@
 ﻿using Moq;
-using Omnia.CLI.Commands.Model.Behaviours;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
+using Omnia.CLI.Commands.Model.Apply;
+using Omnia.CLI.Commands.Model.Apply.Data;
 using Omnia.CLI.Infrastructure;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Behaviours
+namespace UnitTests.Commands.Model.Apply
 {
-	public class DefinitionServiceTest
+    public class DefinitionServiceTest
 	{
 		private const string Tenant = "Template";
 		private const string Environment = "PRD";

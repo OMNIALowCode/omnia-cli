@@ -8,15 +8,15 @@ using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
+using Omnia.CLI.Commands.Model.Apply.Data;
 using Omnia.CLI.Infrastructure;
 
-namespace Omnia.CLI.Commands.Model.Behaviours
+namespace Omnia.CLI.Commands.Model.Apply
 {
     public class DefinitionService
     {
         private readonly IApiClient _apiClient;
-        private static readonly JsonSerializerSettings _serializeSettings = new JsonSerializerSettings()
+        private static readonly JsonSerializerSettings SerializeSettings = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore,
             Converters = new List<JsonConverter>
@@ -42,7 +42,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 patch.Replace("/behaviourNamespaces",
                     applicationBehaviourData.Usings.Select(u => MapToBehaviourNamespace(u, applicationBehaviourData.Namespace)));
 
-            var dataAsString = JsonConvert.SerializeObject(patch, _serializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/ApplicationBehaviour/{entity}",
                 new StringContent(dataAsString,
@@ -62,7 +62,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             if (states.Count > 0)
                 patch = PatchStatesToReplace(patch, metadata, states);
 
-            var dataAsString = JsonConvert.SerializeObject(patch, _serializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/StateMachine/{entity}",
                 new StringContent(dataAsString,
@@ -86,7 +86,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
                 patch.Replace("/behaviourNamespaces",
                     entityData.Usings.Select(u => MapToBehaviourNamespace(u, entityData.Namespace)));
 
-            var dataAsString = JsonConvert.SerializeObject(patch, _serializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
                 new StringContent(dataAsString,
@@ -117,7 +117,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
             var patch = new JsonPatchDocument();
             patch.Replace("/behaviourDependencies", dependencies?.ToArray() ?? Array.Empty<Dependency>());
 
-            var dataAsString = JsonConvert.SerializeObject(patch, _serializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/datasource/{dataSource}",
                 new StringContent(dataAsString,
@@ -133,7 +133,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             if (!details.Success) return null;
 
-            var data = ((JObject)JsonConvert.DeserializeObject(content, _serializeSettings));
+            var data = ((JObject)JsonConvert.DeserializeObject(content, SerializeSettings));
 
             if (data.TryGetValue("instanceOf", out var definition))
                 return definition.ToString();
@@ -147,7 +147,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours
 
             if (!details.Success) return null;
 
-            var data = ((JObject)JsonConvert.DeserializeObject(content, _serializeSettings));
+            var data = ((JObject)JsonConvert.DeserializeObject(content, SerializeSettings));
 
             if (data.TryGetValue("name", out var definition) && definition.Value<string>().Equals(entity))
                 return data;

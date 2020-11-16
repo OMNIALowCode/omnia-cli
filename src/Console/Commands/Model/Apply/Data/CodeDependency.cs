@@ -1,4 +1,4 @@
-namespace Omnia.CLI.Commands.Model.Behaviours.Data
+namespace Omnia.CLI.Commands.Model.Apply.Data
 {
     public class CodeDependency
     {

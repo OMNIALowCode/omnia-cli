@@ -1,18 +1,18 @@
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 
-namespace Omnia.CLI.Commands.Model.Behaviours.Readers
+
+namespace Omnia.CLI.Commands.Model.Apply.Readers
 {
     public class EntityBehaviourReader
     {
         private const string BehaviourNamespacePrefix = "Omnia.Behaviours.";
-        private static readonly string[] DefaultUsings = new string[]
-        {
+        private static readonly string[] DefaultUsings = {
             "System",
             "System.Collections.Generic",
             "System.Linq",
@@ -42,14 +42,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 
         private static string ExtractNamespace(CompilationUnitSyntax root)
         {
-            var namespaceDeclaration = root.DescendantNodes(null, false)
+            var namespaceDeclaration = root.DescendantNodes()
                 .OfType<NamespaceDeclarationSyntax>();
             return namespaceDeclaration.Single().Name.ToString();
         }
 
         private static IList<EntityBehaviour> ExtractMethods(CompilationUnitSyntax root)
         {
-            return root.DescendantNodes(null, false)
+            return root.DescendantNodes()
                             .OfType<MethodDeclarationSyntax>()
                             .Select(MapMethod)
                             .Where(HasExpression)
@@ -61,7 +61,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 
         private static IList<string> ExtractUsings(CompilationUnitSyntax root)
         {
-            return root.DescendantNodes(null, false)
+            return root.DescendantNodes()
                 .OfType<UsingDirectiveSyntax>()
                 .Select(GetDirectiveName)
                 .Where(IsNotDefaultUsing)

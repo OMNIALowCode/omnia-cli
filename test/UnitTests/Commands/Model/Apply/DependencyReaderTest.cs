@@ -1,9 +1,9 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers;
 using Shouldly;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Behaviours
+namespace UnitTests.Commands.Model.Apply
 {
     public class DependencyReaderTest
     {

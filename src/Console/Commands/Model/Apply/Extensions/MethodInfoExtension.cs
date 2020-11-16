@@ -3,7 +3,7 @@ using Omnia.CLI.Extensions;
 using System;
 using System.Linq;
 
-namespace Omnia.CLI.Commands.Model.Behaviours.Extensions
+namespace Omnia.CLI.Commands.Model.Apply.Extensions
 {
     public static class MethodInfoExtension
     {

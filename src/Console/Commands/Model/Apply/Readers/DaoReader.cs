@@ -1,17 +1,17 @@
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 
-namespace Omnia.CLI.Commands.Model.Behaviours.Readers
+namespace Omnia.CLI.Commands.Model.Apply.Readers
 {
     public class DaoReader
     {
         private const string BehaviourNamespacePrefix = "Omnia.Behaviours.";
-        private static readonly string[] DefaultUsings = new string[]
+        private static readonly string[] DefaultUsings =
         {
             "System",
             "System.Collections.Generic",
@@ -40,14 +40,14 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 
         private static string ExtractNamespace(CompilationUnitSyntax root)
         {
-            var namespaceDeclaration = root.DescendantNodes(null, false)
+            var namespaceDeclaration = root.DescendantNodes()
                 .OfType<NamespaceDeclarationSyntax>();
             return namespaceDeclaration.Single().Name.ToString();
         }
 
         private static IList<DataBehaviour> ExtractMethods(CompilationUnitSyntax root)
         {
-            return root.DescendantNodes(null, false)
+            return root.DescendantNodes()
                             .OfType<MethodDeclarationSyntax>()
                             .Select(MapMethod)
                             .Where(HasExpression)
@@ -59,7 +59,7 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 
         private static IList<string> ExtractUsings(CompilationUnitSyntax root)
         {
-            return root.DescendantNodes(null, false)
+            return root.DescendantNodes()
                 .OfType<UsingDirectiveSyntax>()
                 .Select(GetDirectiveName)
                 .Where(IsNotDefaultUsing)
@@ -87,21 +87,16 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 
         private static DataBehaviourType MapType(MethodDeclarationSyntax method)
         {
-            try
+
+            return GetMethodName(method) switch
             {
-                return GetMethodName(method) switch
-                {
-                    var create when create.Equals("Create") => DataBehaviourType.Create,
-                    var update when update.Equals("Update") => DataBehaviourType.Update,
-                    var delete when delete.Equals("Delete") => DataBehaviourType.Delete,
-                    var read when read.Equals("Read") => DataBehaviourType.Read,
-                    var readList when readList.Equals("ReadList") => DataBehaviourType.ReadList,
-                    _ => throw new NotSupportedException()
-                };
-            }
-            catch (NotSupportedException) {
-                throw;
-            }
+                var create when create.Equals("Create") => DataBehaviourType.Create,
+                var update when update.Equals("Update") => DataBehaviourType.Update,
+                var delete when delete.Equals("Delete") => DataBehaviourType.Delete,
+                var read when read.Equals("Read") => DataBehaviourType.Read,
+                var readList when readList.Equals("ReadList") => DataBehaviourType.ReadList,
+                _ => throw new NotSupportedException()
+            };
         }
 
         private static string GetMethodName(MethodDeclarationSyntax method)

@@ -1,14 +1,14 @@
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
-using Omnia.CLI.Commands.Model.Behaviours.Extensions;
 
-namespace Omnia.CLI.Commands.Model.Behaviours.Readers
+namespace Omnia.CLI.Commands.Model.Apply.Readers
 {
-	public class StateReader
+    public class StateReader
 	{
 		public IList<State> ExtractData(string text)
 		{
@@ -60,15 +60,15 @@ namespace Omnia.CLI.Commands.Model.Behaviours.Readers
 			};
 		}
 
-		private string ExtractAssignTo(IEnumerable<StateMethod> methods) => methods.Where(m => m.Type.Equals("Assign")).Select(m => m.Expression).Single();
+		private static string ExtractAssignTo(IEnumerable<StateMethod> methods) => methods.Where(m => m.Type.Equals("Assign")).Select(m => m.Expression).Single();
 
-		private List<StateBehaviour> ExtractBehaviours(string stateName, IEnumerable<StateMethod> methods) 
+		private static List<StateBehaviour> ExtractBehaviours(string stateName, IEnumerable<StateMethod> methods) 
 			=> methods.Where(m => m.Type.Equals($"On{stateName}In") || m.Type.Equals($"On{stateName}Out")).Select(m => new StateBehaviour { Expression = m.Expression, Name = m.Type, Type = m.Type.Substring($"On{stateName}".Length) }).Where(BehaviourHasExpression).ToList();
 
-		private List<string> ExtractTransitionNames(string stateName, IEnumerable<StateMethod> methods) 
+		private static List<string> ExtractTransitionNames(string stateName, IEnumerable<StateMethod> methods) 
 			=> methods.Where(m => m.Type.Equals("Transition")).Select(m => m.State.Substring($"{stateName}_".Length)).ToList();
 
-		private List<Transition> ExtractTransitions(string stateName, IEnumerable<StateMethod> methods, List<string> decisions) 
+		private static List<Transition> ExtractTransitions(string stateName, IEnumerable<StateMethod> methods, List<string> decisions) 
 			=> decisions.Select(d =>
 			{
 				var method = methods.Single(m => m.State.Equals($"{stateName}_{d}"));

@@ -1,12 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Omnia.CLI.Commands.Model.Behaviours.Data;
+using Omnia.CLI.Commands.Model.Apply.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace Omnia.CLI.Commands.Model.Behaviours.Readers
+namespace Omnia.CLI.Commands.Model.Apply.Readers
 {
     public class DependencyReader
     {

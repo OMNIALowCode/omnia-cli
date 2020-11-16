@@ -1,9 +1,9 @@
-﻿using Omnia.CLI.Commands.Model.Behaviours.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers;
 using Shouldly;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Behaviours
+namespace UnitTests.Commands.Model.Apply
 {
     public class DaoReaderTest
     {
@@ -106,7 +106,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 
             var create = reader.ExtractData(FileText)
                 .DataBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.DataBehaviourType.Create);
 
             create.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
             {
@@ -127,7 +127,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
                 .DataBehaviours
                 .First(m => m.Name.Equals("Read"));
 
-            read.Type.ShouldBe(Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Read);
+            read.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.DataBehaviourType.Read);
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 
             var create = reader.ExtractData(FileText)
                 .DataBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Behaviours.Data.DataBehaviourType.Create);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.DataBehaviourType.Create);
 
             create.Description.ShouldBe("Create path.txt file");
         }

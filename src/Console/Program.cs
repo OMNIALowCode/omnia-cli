@@ -51,8 +51,7 @@ namespace Omnia.CLI
         private static IConfigurationRoot CreateConfigurationRoot()
             => new ConfigurationBuilder()
                 .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "OMNIA", "CLI", "appsettings.json"), true)
+                .AddJsonFile(Path.Combine(SettingsPathFactory.Path(), "appsettings.json"), true)
                 .Build();
 
         private static IList<AppSettings.Subscription> GetConfiguredSubscriptions(IServiceProvider services)

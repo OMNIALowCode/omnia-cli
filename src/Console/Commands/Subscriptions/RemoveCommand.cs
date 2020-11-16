@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
@@ -37,7 +38,7 @@ namespace Omnia.CLI.Commands.Subscriptions
             var subscription = _settings.GetSubscription(Name);
             _settings.Subscriptions.Remove(subscription);
 
-            var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OMNIA", "CLI");
+            var directory = SettingsPathFactory.Path();
 
             using (var file = File.CreateText(Path.Combine(directory, "appsettings.json")))
             {

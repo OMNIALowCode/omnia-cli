@@ -6,7 +6,7 @@ namespace Omnia.CLI.Infrastructure
     {
         public static string Path()
             => System.IO.Path.Combine(OperationSystemFolder(),
-                "OMNIA", "CLI");
+                "omnia", "cli");
 
         private static string OperationSystemFolder()
             => Environment.OSVersion.Platform == PlatformID.Unix ? Environment.GetEnvironmentVariable("HOME") : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);

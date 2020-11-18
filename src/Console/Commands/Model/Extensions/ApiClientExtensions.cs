@@ -11,7 +11,19 @@ namespace Omnia.CLI.Commands.Model.Extensions
     {
         public static async Task<int> BuildModel(this IApiClient apiClient, string tenantCode, string environmentCode)
         {
-            var requestContent = new StringContent(JsonConvert.SerializeObject(new { Clean = true }), Encoding.UTF8, "application/json");
+            return await InternalBuildModel(apiClient, tenantCode, environmentCode, false)
+                .ConfigureAwait(false);
+        }
+
+        public static async Task<int> CleanAndBuildModel(this IApiClient apiClient, string tenantCode, string environmentCode)
+        {
+            return await InternalBuildModel(apiClient, tenantCode, environmentCode, true)
+                .ConfigureAwait(false);
+        }
+
+        private static async Task<int> InternalBuildModel(IApiClient apiClient, string tenantCode, string environmentCode, bool clean = false)
+        {
+            var requestContent = new StringContent(JsonConvert.SerializeObject(new { Clean = clean }), Encoding.UTF8, "application/json");
 
             var response = await apiClient.Post($"/api/v1/{tenantCode}/{environmentCode}/model/builds", requestContent)
                 .ConfigureAwait(false);

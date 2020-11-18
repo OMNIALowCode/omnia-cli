@@ -21,7 +21,7 @@ namespace Omnia.CLI.Commands.Model.Import
         {
             await Import(tenant, environment, path);
 
-            return await _apiClient.BuildModel(tenant, environment);
+            return await _apiClient.CleanAndBuildModel(tenant, environment);
         }
 
 

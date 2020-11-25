@@ -1,0 +1,153 @@
+{
+  "name": "UserAForm",
+  "type": "Form",
+  "label": "User A",
+  "entity": "UserA",
+  "elements": [
+    {
+      "row": 1,
+      "name": "_code",
+      "size": 6,
+      "type": "Input",
+      "label": "Code",
+      "column": 1,
+      "elements": [],
+      "helpText": null,
+      "isHidden": false,
+      "attributes": [
+        {
+          "key": "aggregationKind",
+          "value": "None"
+        },
+        {
+          "key": "isReadOnly",
+          "value": "false"
+        },
+        {
+          "key": "max",
+          "value": "1"
+        },
+        {
+          "key": "min",
+          "value": "1"
+        },
+        {
+          "key": "formattingType",
+          "value": "Text"
+        }
+      ],
+      "behaviours": [],
+      "description": null
+    },
+    {
+      "row": 1,
+      "name": "_name",
+      "size": 6,
+      "type": "Input",
+      "label": "Name",
+      "column": 7,
+      "elements": [],
+      "helpText": null,
+      "isHidden": false,
+      "attributes": [
+        {
+          "key": "aggregationKind",
+          "value": "None"
+        },
+        {
+          "key": "isReadOnly",
+          "value": "false"
+        },
+        {
+          "key": "max",
+          "value": "1"
+        },
+        {
+          "key": "min",
+          "value": "1"
+        },
+        {
+          "key": "formattingType",
+          "value": "Text"
+        }
+      ],
+      "behaviours": [],
+      "description": null
+    },
+    {
+      "row": 2,
+      "name": "_description",
+      "size": 6,
+      "type": "Input",
+      "label": "Description",
+      "column": 1,
+      "elements": [],
+      "helpText": null,
+      "isHidden": false,
+      "attributes": [
+        {
+          "key": "aggregationKind",
+          "value": "None"
+        },
+        {
+          "key": "isReadOnly",
+          "value": "false"
+        },
+        {
+          "key": "max",
+          "value": "1"
+        },
+        {
+          "key": "min",
+          "value": "0"
+        },
+        {
+          "key": "formattingType",
+          "value": "Text"
+        }
+      ],
+      "behaviours": [],
+      "description": null
+    },
+    {
+      "row": 2,
+      "name": "_inactive",
+      "size": 6,
+      "type": "Input",
+      "label": "Inactive",
+      "column": 7,
+      "elements": [],
+      "helpText": null,
+      "isHidden": false,
+      "attributes": [
+        {
+          "key": "aggregationKind",
+          "value": "None"
+        },
+        {
+          "key": "isReadOnly",
+          "value": "false"
+        },
+        {
+          "key": "max",
+          "value": "1"
+        },
+        {
+          "key": "min",
+          "value": "1"
+        },
+        {
+          "key": "formattingType",
+          "value": "Boolean"
+        }
+      ],
+      "behaviours": [],
+      "description": null
+    }
+  ],
+  "helpText": null,
+  "attributes": [],
+  "behaviours": [],
+  "dataSource": "System",
+  "description": null
+}

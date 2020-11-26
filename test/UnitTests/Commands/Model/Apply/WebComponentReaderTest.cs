@@ -145,5 +145,16 @@ customElements.define('omnia-select', OmniaSelect);";
 			Assert.Throws<ArgumentException>(()=> reader.ExtractExpression("class OmniaSelect extends HTMLElement {}"));
 		}
 
+		[Theory]
+		[InlineData(null)]
+		[InlineData("")]
+		[InlineData(" ")]
+		public void ExtractExpression_WhenTextIsEmpty_ExceptionRaised(string text)
+		{
+			var reader = new WebComponentReader();
+
+			Assert.Throws<ArgumentNullException>(() => reader.ExtractExpression(text));
+		}
+
 	}
 }

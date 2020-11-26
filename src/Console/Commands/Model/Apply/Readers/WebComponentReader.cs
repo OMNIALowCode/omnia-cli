@@ -9,6 +9,8 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers
 
         public WebComponent ExtractExpression(string text)
         {
+            if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
+
             return new WebComponent
             {
                 Expression = text,

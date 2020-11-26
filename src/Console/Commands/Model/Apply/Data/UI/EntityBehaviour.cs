@@ -1,24 +1,20 @@
-namespace Omnia.CLI.Commands.Model.Apply.Data
+namespace Omnia.CLI.Commands.Model.Apply.Data.UI
 {
-
-    public enum EntityBehaviourType
+    public enum UIEntityBehaviourType
     {
         Action,
         AfterChange,
         BeforeChange,
-        Formula,
         BeforeSave,
-        AfterSave,
-        Initialize,
-        BeforeCollectionEntityInitialize
+        Initialize
     }
 
-    public class EntityBehaviour
+    public class UIEntityBehaviour
     {
         public string Name { get; set; }
         public string Description { get; set; }
         public string Attribute { get; set; }
-        public EntityBehaviourType Type { get; set; }
+        public UIEntityBehaviourType Type { get; set; }
         public string Expression { get; set; }
     }
 }

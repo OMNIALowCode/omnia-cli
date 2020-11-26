@@ -1,7 +1,9 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Omnia.CLI.Commands.Model.Apply.Data;
-using Omnia.CLI.Commands.Model.Apply.Readers;
+using Omnia.CLI.Commands.Model.Apply.Data.UI;
+using Omnia.CLI.Commands.Model.Apply.Readers.Server;
+using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Infrastructure;
 using System;
@@ -20,6 +22,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
         private readonly DefinitionService _definitionService;
+        private readonly UIEntityBehaviourReader _uiEntityBehaviourReader = new UIEntityBehaviourReader();
         private readonly EntityBehaviourReader _entityBehaviourReader = new EntityBehaviourReader();
         private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
         private readonly DaoReader _daoReader = new DaoReader();
@@ -60,6 +63,12 @@ namespace Omnia.CLI.Commands.Model.Apply
             var sourceSettings = _settings.GetSubscription(Subscription);
 
             await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
+
+            IEnumerable<Task<(string name, Form entityForm)>> processUIFileTasks =
+                ProcessUIEntityBehaviours();
+
+            var entitiesForm = await Task.WhenAll(processUIFileTasks).ConfigureAwait(false);
+
 
             IEnumerable<Task<(string name, Entity entity)>> processFileTasks =
                 ProcessEntityBehaviours().Union(
@@ -137,6 +146,13 @@ namespace Omnia.CLI.Commands.Model.Apply
             var files = Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories);
 
             return files.Select(ProcessEntityBehavioursFile);
+        }
+
+        private IEnumerable<Task<(string name, Form entityForm)>> ProcessUIEntityBehaviours()
+        {
+            var files = Directory.GetFiles(Path, "*Form.js", SearchOption.AllDirectories);
+
+            return files.Select(ProcessUIEntityBehavioursFile);
         }
 
         private IEnumerable<Task<(string name, Entity entity)>> ProcessDataBehaviours()
@@ -224,6 +240,14 @@ namespace Omnia.CLI.Commands.Model.Apply
             return (ExtractEntityNameFromFileName(filepath, ".csproj"), _dependencyReader.ExtractFileDependencies(content));
         }
 
+        private async Task<(string name, Form entity)> ProcessUIEntityBehavioursFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (ExtractEntityNameFromFileName(filepath, "Form.js"), _uiEntityBehaviourReader.ExtractData(content));
+        }
+
         private async Task ApplyDependenciesChanges(IDictionary<string, CodeDependency> codeDependencies, IDictionary<string, IList<FileDependency>> fileDependencies)
         {
             var dataPerDataSource = new Dictionary<string, (IDictionary<string, CodeDependency> codeDependencies, IList<(string, FileDependency)> fileDependencies)>();
@@ -296,7 +320,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             => await _definitionService.ReplaceData(Tenant, Environment,
                             name, entity).ConfigureAwait(false);
 
-        private async Task<bool> ReplaceStateMachineData(string name, List<State> entity) 
+        private async Task<bool> ReplaceStateMachineData(string name, List<State> entity)
             => await _definitionService.ReplaceStateData(Tenant, Environment, name, entity).ConfigureAwait(false);
 
         private static string ExtractEntityNameFromFileName(string filepath, string suffix)

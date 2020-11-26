@@ -1,10 +1,10 @@
-﻿using Omnia.CLI.Commands.Model.Apply.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Shouldly;
 using System;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Apply
+namespace UnitTests.Commands.Model.Apply.Server
 {
     public class BehaviourReaderTest
     {

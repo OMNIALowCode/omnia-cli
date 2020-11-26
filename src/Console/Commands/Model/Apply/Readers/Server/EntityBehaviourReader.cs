@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
-namespace Omnia.CLI.Commands.Model.Apply.Readers
+namespace Omnia.CLI.Commands.Model.Apply.Readers.Server
 {
     public class EntityBehaviourReader
     {

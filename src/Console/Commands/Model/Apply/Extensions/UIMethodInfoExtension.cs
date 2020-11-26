@@ -1,16 +1,17 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Esprima;
 using Omnia.CLI.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Omnia.CLI.Commands.Model.Apply.Extensions
 {
-    public static class MethodInfoExtension
+    public static class UIMethodInfoExtension
     {
-        public static string ExtractExpression(this MethodDeclarationSyntax method)
+        public static string ExtractExpression(string method)
         {
-            var blockText = method.Body?.ToFullString();
-            return WithoutLeadingAndTrailingBraces(blockText).Trim();
+            return WithoutLeadingAndTrailingBraces(method).Trim();
 
             static string WithoutLeadingAndTrailingBraces(string blockText)
                 => blockText
@@ -18,29 +19,28 @@ namespace Omnia.CLI.Commands.Model.Apply.Extensions
                       .Substring(blockText.IndexOf('{') + 1);
         }
 
-        public static (string name, string description) ExtractDataFromComment(this MethodDeclarationSyntax method)
+        public static (string name, string description) GetJavascriptCommentInfo(List<Comment> comments, int beginLine, string script)
         {
-            var comments = method.GetLeadingTrivia();
-            foreach (var comment in comments)
+            var comment = comments.FirstOrDefault(a => a.Loc.End.HasValue && a.Loc.End.Value.Line.Equals(beginLine));
+
+            if (comment != null)
             {
-                var xml = comment.GetStructure();
+                var commentSnippet = script[comment.Start..comment.End];
 
-                if (xml == null) continue;
-
-                return ParseXmlComment(xml.ToFullString());
+                return ParseJavascriptComment(commentSnippet);
             }
-
             return (null, null);
         }
 
-        private static (string name, string description) ParseXmlComment(string comment)
+
+        public static (string name, string description) ParseJavascriptComment(string comment)
         {
             var content = comment
                     .Split(Environment.NewLine)
                     .Select(WithoutSpaces)
                     .Select(WithoutComment)
                     .Select(WithoutSpaces)
-                    .Where(line => !IsSummaryTag(line) && !string.IsNullOrEmpty(line))
+                    .Where(line => !IsDelimiterTag(line) && !string.IsNullOrEmpty(line))
                     .ToArray();
 
             if (content.Length == 0) return (null, null);
@@ -54,10 +54,11 @@ namespace Omnia.CLI.Commands.Model.Apply.Extensions
                 => text.Trim();
 
             static string WithoutComment(string text)
-                => text.TrimStart("///");
+                => text.TrimStart("*");
 
-            static bool IsSummaryTag(string text)
-                => text.Equals("<summary>") || text.Equals("</summary>");
+            static bool IsDelimiterTag(string text)
+                => text.Equals("/**") || text.Equals("/");
+
         }
     }
 }

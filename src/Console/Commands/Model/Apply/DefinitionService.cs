@@ -110,7 +110,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                 AssemblyName = c.dependency.AssemblyName,
                 Path = c.dependency.Path,
                 Type = "File",
-                Name = c.dependency.AssemblyName,
+                Name = c.dependency.AssemblyName.Replace(".", ""),
                 ExecutionLocation = c.location
             }));
 

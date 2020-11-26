@@ -148,18 +148,22 @@ namespace Omnia.CLI.Commands.Model.Apply
             return files.Select(ProcessDaoFile);
         }
 
-        private async Task<IDictionary<string, CodeDependency>> ProcessCodeDependencies()
+        private async Task<Dictionary<string, IDictionary<string, CodeDependency>>> ProcessCodeDependencies()
         {
-            var dependencies = new Dictionary<string, CodeDependency>();
-
+            var dependencies = new Dictionary<string, IDictionary<string, CodeDependency>>();
+            
             foreach (string directory in Directory.GetDirectories(Path, "CodeDependencies", SearchOption.AllDirectories))
             {
                 var files = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly);
 
                 var dependencyData = await Task.WhenAll(files.Select(ProcessCodeDependencyFile)).ConfigureAwait(false);
 
-                foreach (var (name, codeDependency) in dependencyData)
-                    dependencies.Add(name, codeDependency);
+                foreach (var (name, codeDependency) in dependencyData) {
+                    var dataSource = codeDependency.Namespace.Split('.')[4];
+                    if (!dependencies.ContainsKey(dataSource))
+                        dependencies.Add(dataSource, new Dictionary<string, CodeDependency>());
+                    dependencies[dataSource].Add(name, codeDependency);
+                }   
             }
             return dependencies;
         }
@@ -247,18 +251,14 @@ namespace Omnia.CLI.Commands.Model.Apply
                 => GetFileName(GetDirectoryName(filepath));
         }
 
-        private async Task ApplyDependenciesChanges(IDictionary<string, CodeDependency> codeDependencies, IDictionary<string, IList<FileDependency>> fileDependencies)
+        private async Task ApplyDependenciesChanges(IDictionary<string, IDictionary<string, CodeDependency>> dataSourceCodeDependencies, IDictionary<string, IList<FileDependency>> fileDependencies)
         {
             var dataPerDataSource = new Dictionary<string, (IDictionary<string, CodeDependency> codeDependencies, IList<(string, FileDependency)> fileDependencies)>();
 
-            foreach (var codeDependency in codeDependencies)
+            foreach (var dataSourceDependency in dataSourceCodeDependencies)
             {
-                var dataSource = codeDependency.Value.Namespace.Split('.')[4];
-
-                if (!dataPerDataSource.ContainsKey(dataSource))
-                    dataPerDataSource.Add(dataSource, (new Dictionary<string, CodeDependency>(), new List<(string, FileDependency)>()));
-
-                dataPerDataSource[dataSource].codeDependencies.Add(codeDependency.Key, codeDependency.Value);
+                var dataSource = dataSourceDependency.Key;
+                dataPerDataSource.Add(dataSource, (dataSourceDependency.Value, new List<(string, FileDependency)>()));
             }
 
             foreach (var fileDependencyData in fileDependencies)

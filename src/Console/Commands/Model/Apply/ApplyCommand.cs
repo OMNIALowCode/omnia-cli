@@ -71,17 +71,13 @@ namespace Omnia.CLI.Commands.Model.Apply
                 );
             var entities = await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
-            var processApplicationBehaviourFileTasks =
-                ProcessApplicationBehaviours();
+            var applicationBehaviours = await Task.WhenAll(ProcessApplicationBehaviours()).ConfigureAwait(false);
 
-            var applicationBehaviours = await Task.WhenAll(processApplicationBehaviourFileTasks).ConfigureAwait(false);
+            var stateMachines = await Task.WhenAll(ProcessStates()).ConfigureAwait(false);
 
-            var processStateMachineFileTasks =
-                ProcessStates();
+            var webComponents = await Task.WhenAll(ProcessWebComponents()).ConfigureAwait(false);
 
-            var stateMachines = await Task.WhenAll(processStateMachineFileTasks).ConfigureAwait(false);
-
-            var applyTasks = entities.GroupBy(g => g.name)
+            var tasks = entities.GroupBy(g => g.name)
                 .Select(g =>
                     ApplyEntityChanges(g.Key,
                         new Entity(g.First().entity.Namespace,
@@ -89,33 +85,26 @@ namespace Omnia.CLI.Commands.Model.Apply
                         g.SelectMany(e => e.entity?.DataBehaviours).ToList(),
                         g.SelectMany(e => e.entity?.Usings).ToList())
                     )
-                );
+                ).ToList();
 
-            var applyApplicationBehaviourTasks = applicationBehaviours
+            tasks.AddRange(applicationBehaviours
                 .Select(g =>
                     ApplyApplicationBehaviourChanges(g.name, g.entity)
-                );
+                ));
 
-            var applyStateMachineTasks = stateMachines
+            tasks.AddRange(stateMachines
                 .Select(st =>
                     ApplyStateMachineChanges(st.name, st.entity)
-                );
+                ));
 
-
-            var webComponents = await Task.WhenAll(ProcessWebComponents()).ConfigureAwait(false);
-
-            var applyWebComponentTasks = webComponents
+            tasks.AddRange(webComponents
               .Select(g =>
                   ApplyWebComponentChanges(g.name, g.entity)
-              );
+              ));
 
 
-            await Task.WhenAll(applyTasks).ConfigureAwait(false);
-            await Task.WhenAll(applyApplicationBehaviourTasks).ConfigureAwait(false);
-            await Task.WhenAll(applyStateMachineTasks).ConfigureAwait(false);
-            await Task.WhenAll(applyWebComponentTasks).ConfigureAwait(false);
-
-
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+            
             var codeDependencies = await ProcessCodeDependencies().ConfigureAwait(false);
             var fileDependencies = await ProcessFileDependencies().ConfigureAwait(false);
             await ApplyDependenciesChanges(codeDependencies, fileDependencies).ConfigureAwait(false);
@@ -344,7 +333,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private static string ExtractEntityNameFromFileName(string filepath, string suffix)
         {
-            var filename = System.IO.Path.GetFileName(filepath);
+            var filename = GetFileName(filepath);
             return filename.Substring(0, filename.Length - suffix.Length);
         }
 

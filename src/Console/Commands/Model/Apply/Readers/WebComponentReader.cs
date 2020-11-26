@@ -7,7 +7,7 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers
     {
         private const string CustomElementDefinition = "customElements.define('";
 
-        public WebComponent ExtractExpression(string text)
+        public WebComponent ExtractData(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) throw new ArgumentNullException(nameof(text));
 

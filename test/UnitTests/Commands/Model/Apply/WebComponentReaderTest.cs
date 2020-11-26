@@ -115,45 +115,46 @@ class OmniaSelect extends HTMLElement {
 }
 
 customElements.define('omnia-select', OmniaSelect);";
+
         [Fact]
-        public void ExtractExpression_ExpressionSuccessfully()
+        public void ExtractData_ExpressionSuccessfully()
         {
             var reader = new WebComponentReader();
 
-            var component = reader.ExtractExpression(FileText);
+            var component = reader.ExtractData(FileText);
 
             component.Expression.ShouldNotBeNull();
             component.Expression.ShouldBe(FileText);
         }
 
         [Fact]
-        public void ExtractExpression_CustomElementSuccessfully()
+        public void ExtractData_CustomElementSuccessfully()
         {
             var reader = new WebComponentReader();
 
-            var component = reader.ExtractExpression(FileText);
+            var component = reader.ExtractData(FileText);
 
             component.CustomElement.ShouldNotBeNull();
             component.CustomElement.ShouldBe("omnia-select");
         }
 
 		[Fact]
-		public void ExtractExpression_WhenCustomElementMissing_ExceptionRaised()
+		public void ExtractData_WhenCustomElementMissing_ExceptionRaised()
 		{
 			var reader = new WebComponentReader();
 
-			Assert.Throws<ArgumentException>(()=> reader.ExtractExpression("class OmniaSelect extends HTMLElement {}"));
+			Assert.Throws<ArgumentException>(()=> reader.ExtractData("class OmniaSelect extends HTMLElement {}"));
 		}
 
 		[Theory]
 		[InlineData(null)]
 		[InlineData("")]
 		[InlineData(" ")]
-		public void ExtractExpression_WhenTextIsEmpty_ExceptionRaised(string text)
+		public void ExtractData_WhenTextIsEmpty_ExceptionRaised(string text)
 		{
 			var reader = new WebComponentReader();
 
-			Assert.Throws<ArgumentNullException>(() => reader.ExtractExpression(text));
+			Assert.Throws<ArgumentNullException>(() => reader.ExtractData(text));
 		}
 
 	}

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using Omnia.CLI.Commands.Model.Apply.Data;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Infrastructure;
 
@@ -34,7 +33,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                     string entity,
                     UIEntity data)
         {
-            var definition = await GetMetadataForEntity(tenant, environment, entity).ConfigureAwait(false);
+            var definition = await GetDefinitionForEntity(tenant, environment, entity).ConfigureAwait(false);
             var patch = new JsonPatchDocument()
                 .Replace("/behaviours", data.EntityBehaviours.ToArray());
 
@@ -48,8 +47,10 @@ namespace Omnia.CLI.Commands.Model.Apply
         }
 
 
-        private async Task<string> GetMetadataForEntity(string tenant, string environment, string entity)
+        private async Task<string> GetDefinitionForEntity(string tenant, string environment, string entity)
         {
+            if(entity.Equals("DefaultApplicationMenu")) return "ApplicationMenu";
+
             var (details, content) = await _apiClient.Get($"/api/v1/{tenant}/{environment}/model/output/metadata/{entity}")
                 .ConfigureAwait(false);
 

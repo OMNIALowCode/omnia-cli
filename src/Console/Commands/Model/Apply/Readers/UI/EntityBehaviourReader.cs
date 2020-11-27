@@ -81,7 +81,7 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
                 Name = GetFunctionName(name, className, functionName, type.Value.Equals(UIBehaviourType.Change)),
                 Description = description,
                 Type = type.Value,
-                Element = GetElement(type.Value, functionName)
+                Element = GetElement(type.Value, functionName, className)
             };
         }
 
@@ -116,11 +116,13 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
             };
         }
 
-        private static string GetElement(UIBehaviourType type, string name)
+        private static string GetElement(UIBehaviourType type, string name, string className)
         {
+            className = !className.Contains("Form") ? $"{className}." : "";
+
             return type switch
             {
-                UIBehaviourType.Change => name.Substring("onChange_".Length, name.Length - 9),
+                UIBehaviourType.Change => $"{className}{name.Substring("onChange_".Length, name.Length - 9)}",
                 _ => null
             };
         }

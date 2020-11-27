@@ -357,5 +357,17 @@ WarehouseForm;
                 .First(m => m.Name.Equals("OnBeforeSave"));
             beforeSave.Expression.ShouldBe("_name = \"tst\";");
         }
+
+        [Fact]
+        public void ExtractData_WithPropertyChange_CorrectAttributeOnChild()
+        {
+            var reader = new UIEntityBehaviourReader();
+
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("warehouseBuildings_onChange__code"));
+
+            initialize.Element.ShouldBe("warehouseBuildings._code");
+        }
     }
 }

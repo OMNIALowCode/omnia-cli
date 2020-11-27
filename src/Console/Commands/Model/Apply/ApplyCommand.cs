@@ -345,7 +345,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         private async Task ApplyWebComponentChanges(string name, WebComponent entity)
         {
             var applySuccessfully = await _webComponentApplyService.ReplaceData(Tenant, Environment,
-                            ExtractEntityNameFromFileName(name, string.Empty), entity).ConfigureAwait(false);
+                            name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply WebComponent {name}.");
@@ -354,7 +354,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         private async Task ApplyThemeChanges(string name, Theme entity)
         {
             var applySuccessfully = await _themeApplyService.ReplaceData(Tenant, Environment,
-                            ExtractEntityNameFromFileName(name, string.Empty), entity).ConfigureAwait(false);
+                            name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply Theme {name}.");

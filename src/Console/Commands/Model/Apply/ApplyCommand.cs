@@ -22,18 +22,21 @@ namespace Omnia.CLI.Commands.Model.Apply
         private readonly IApiClient _apiClient;
         private readonly DefinitionService _definitionService;
         private readonly WebComponentApplyService _webComponentApplyService;
+        private readonly ThemeApplyService _themeApplyService;
         private readonly EntityBehaviourReader _entityBehaviourReader = new EntityBehaviourReader();
         private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
         private readonly DaoReader _daoReader = new DaoReader();
         private readonly DependencyReader _dependencyReader = new DependencyReader();
         private readonly StateReader _stateReader = new StateReader();
         private readonly WebComponentReader _webComponentReader = new WebComponentReader();
+        private readonly ThemeReader _themeReader = new ThemeReader();
         public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
             _settings = options.Value;
             _apiClient = apiClient;
             _definitionService = new DefinitionService(_apiClient);
             _webComponentApplyService = new WebComponentApplyService(_apiClient);
+            _themeApplyService = new ThemeApplyService(_apiClient);
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -77,6 +80,8 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             var webComponents = await Task.WhenAll(ProcessWebComponents()).ConfigureAwait(false);
 
+            var themes = await Task.WhenAll(ProcessThemes()).ConfigureAwait(false);
+
             var tasks = entities.GroupBy(g => g.name)
                 .Select(g =>
                     ApplyEntityChanges(g.Key,
@@ -100,6 +105,11 @@ namespace Omnia.CLI.Commands.Model.Apply
             tasks.AddRange(webComponents
               .Select(g =>
                   ApplyWebComponentChanges(g.name, g.entity)
+              ));
+
+            tasks.AddRange(themes
+              .Select(g =>
+                  ApplyThemeChanges(g.name, g.entity)
               ));
 
 
@@ -192,6 +202,16 @@ namespace Omnia.CLI.Commands.Model.Apply
             return files.Select(ProcessWebComponentFile);
         }
 
+        private IEnumerable<Task<(string name, Theme entity)>> ProcessThemes()
+        {
+            var themePathRegex = new Regex(@"\\Themes\\[^\\]+\\variables\.scss$");
+            var files = Directory.GetFiles(Path, "variables.scss", SearchOption.AllDirectories)
+                .Where(path => themePathRegex.IsMatch(path))
+                .ToList();
+
+            return files.Select(ProcessThemeFile);
+        }
+
         private async Task<(string name, Entity entity)> ProcessEntityBehavioursFile(string filepath)
         {
             Console.WriteLine($"Processing file {filepath}...");
@@ -246,6 +266,17 @@ namespace Omnia.CLI.Commands.Model.Apply
             var content = await ReadFile(filepath).ConfigureAwait(false);
 
             return (Name(), _webComponentReader.ExtractData(content));
+
+            string Name()
+                => GetFileName(GetDirectoryName(filepath));
+        }
+
+        private async Task<(string name, Theme entity)> ProcessThemeFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (Name(), _themeReader.ExtractData(content));
 
             string Name()
                 => GetFileName(GetDirectoryName(filepath));
@@ -318,6 +349,15 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply WebComponent {name}.");
+        }
+
+        private async Task ApplyThemeChanges(string name, Theme entity)
+        {
+            var applySuccessfully = await _themeApplyService.ReplaceData(Tenant, Environment,
+                            ExtractEntityNameFromFileName(name, string.Empty), entity).ConfigureAwait(false);
+
+            if (!applySuccessfully)
+                Console.WriteLine($"Failed to apply Theme {name}.");
         }
 
         private async Task<bool> ReplaceApplicationBehaviourData(string filepath, ApplicationBehaviour entity)

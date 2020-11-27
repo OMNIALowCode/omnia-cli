@@ -1,8 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
-using Omnia.CLI.Commands.Model.Apply.Readers;
 using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;

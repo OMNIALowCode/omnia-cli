@@ -1,4 +1,4 @@
-﻿using Omnia.CLI.Commands.Model.Apply.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Shouldly;
 using System;
 using Xunit;

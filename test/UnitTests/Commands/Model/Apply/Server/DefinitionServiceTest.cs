@@ -1,6 +1,6 @@
 ﻿using Moq;
 using Omnia.CLI.Commands.Model.Apply;
-using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Infrastructure;
 using System.Collections.Generic;
 using System.Net.Http;

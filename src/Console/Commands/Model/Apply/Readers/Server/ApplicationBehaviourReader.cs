@@ -1,6 +1,6 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Commands.Model.Apply.Extensions;
 using System.Collections.Generic;
 using System.Linq;

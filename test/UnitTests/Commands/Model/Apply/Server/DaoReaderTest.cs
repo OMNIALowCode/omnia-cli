@@ -106,7 +106,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 
             var create = reader.ExtractData(FileText)
                 .DataBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.DataBehaviourType.Create);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.Server.DataBehaviourType.Create);
 
             create.Expression.ShouldBe(@"using (StreamWriter file = File.CreateText(@""D:\path.txt""))
             {
@@ -127,7 +127,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
                 .DataBehaviours
                 .First(m => m.Name.Equals("Read"));
 
-            read.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.DataBehaviourType.Read);
+            read.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.Server.DataBehaviourType.Read);
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace Omnia.Behaviours.T99.External.LocalSys.Daos
 
             var create = reader.ExtractData(FileText)
                 .DataBehaviours
-                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.DataBehaviourType.Create);
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.Server.DataBehaviourType.Create);
 
             create.Description.ShouldBe("Create path.txt file");
         }

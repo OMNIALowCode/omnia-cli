@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Omnia.CLI.Commands.Model.Apply.Data
+namespace Omnia.CLI.Commands.Model.Apply.Data.Server
 {
     public class Entity
     {

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model.Apply

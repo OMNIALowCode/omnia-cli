@@ -3,7 +3,6 @@ using Omnia.CLI.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Omnia.CLI.Commands.Model.Apply.Extensions
 {
@@ -60,5 +59,6 @@ namespace Omnia.CLI.Commands.Model.Apply.Extensions
                 => text.Equals("/**") || text.Equals("/");
 
         }
+
     }
 }

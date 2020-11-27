@@ -17,245 +17,171 @@ namespace UnitTests.Commands.Model.Apply.UI
 ****************************************************************
 ****************************************************************/
 
-class employeeERPConfiguration {
-	
-	constructor(metadata, context) {
-		this._metadata = metadata;
-		this._context = context;
-		
-		this._inactive = null;
-		this.company = '';
-		this.costCenter = null;
-		this.erpCode = null;
-		this.primavera = '';
-		this.vehicle = null;
-	}
-
-	
-	initialize(){
-		
-	}
-	
-	
-	onChange__inactive(oldValue, newValue){
-		
-	}
-
-	
-	onChange_company(oldValue, newValue){
-		
-	}
-
-	
-	onChange_costCenter(oldValue, newValue){
-		
-	}
-
-	
-	onChange_erpCode(oldValue, newValue){
-		
-	}
-
-	
-	onChange_primavera(oldValue, newValue){
-		
-	}
-
-	
-	onChange_vehicle(oldValue, newValue){
-		
-	}
-
-
-	
-	beforeChange(){
-	
-		
-	}
-
-	
-	afterChange(){
-	
-		
-	}
-
-	
-	beforeSave(){
-	
-		
-	}
-
-
-	
-}
-
-class EmployeeForm {
+class warehouseBuildings {
 	
 	constructor(metadata, context) {
 		this._metadata = metadata;
 		this._context = context;
 		
 		this._code = null;
+		this._description = null;
 		this._inactive = null;
 		this._name = null;
-		this.contactEmail = null;
-		this.defaultCompany = '';
-		this.organizationalUnit = null;
-		this.outOfOffice = null;
-		this.outOfOfficeSubstitute = null;
-		this.username = null;
-		this.employeeERPConfiguration = [];
 	}
 
     /**
      * Initializer
-     * Behaviour executed on form entry to 
-     * Change visible attributes 
-     * hide options 
-	 */	
+     * Initialize description 
+	 */		
 	initialize(){
-		if(!(this._context.authentication.userIsInRole('Approver') || 
-        this._context.authentication.userIsInRole('Administration') ||
-        this._context.authentication.userIsInRole('HRApprover')) && 
-        this._context.authentication.userIsInRole('Contributor')){
-    // Hide and disable all elements
-    for(const el of Object.values(this._metadata.elements)){
-        el.isHidden = true;
-        el.attributes.isReadOnly = true;
+        this._description = 'Hello World!';
     }
-    
-    // Show Code and Name
-    this._metadata.elements._code.isHidden = false;
-    this._metadata.elements._name.isHidden = false;
-    
-    // Show and enable OutOfOffice and Substitute
-    this._metadata.elements.outOfOffice.isHidden = false;
-    this._metadata.elements.outOfOffice.attributes.isReadOnly = false;
-    this._metadata.elements.outOfOfficeSubstitute.isHidden = false;
-    this._metadata.elements.outOfOfficeSubstitute.attributes.isReadOnly = false;
-}
-
-for(const configuration of this.employeeERPConfiguration){
-    configuration._metadata.attributes.removeEntry = 'hidden';
-}
-}
-
-
-onChange__code(oldValue, newValue)
-{
-
-}
-
-
-onChange__inactive(oldValue, newValue)
-{
-
-}
-
-
-onChange__name(oldValue, newValue)
-{
-
-}
-
-
-onChange_contactEmail(oldValue, newValue)
-{
-
-}
-
-
-onChange_defaultCompany(oldValue, newValue)
-{
-
-}
-
-
-onChange_organizationalUnit(oldValue, newValue)
-{
-
-}
-
-/**
- * OnChange_OutOfOffice
- */
-onChange_outOfOffice(oldValue, newValue)
-{
-    if (this.outOfOffice === true)
-    {
-        this._metadata.elements.outOfOfficeSubstitute.attributes.min = 1;
-    }
-    else
-    {
-        this._metadata.elements.outOfOfficeSubstitute.attributes.min = 0;
-    }
-
-
-}
-
-
-onChange_outOfOfficeSubstitute(oldValue, newValue)
-{
-
-}
-
-
-onChange_username(oldValue, newValue)
-{
-
-}
-
-
-
-beforeChange()
-{
-    for (let i = 0; i < this.employeeERPConfiguration.length; i++)
-    {
-        this.employeeERPConfiguration[i].beforeChange && this.employeeERPConfiguration[i].beforeChange();
-    }
-
-
-}
-
-
-afterChange()
-{
-    for (let i = 0; i < this.employeeERPConfiguration.length; i++)
-    {
-        this.employeeERPConfiguration[i].afterChange && this.employeeERPConfiguration[i].afterChange();
-    }
-
-
-}
-
-
-beforeSave()
-{
-    for (let i = 0; i < this.employeeERPConfiguration.length; i++)
-    {
-        this.employeeERPConfiguration[i].beforeSave && this.employeeERPConfiguration[i].beforeSave();
-    }
-
-
-}
-
-
-addTo_employeeERPConfiguration(metadata)
-{
-    const value = new employeeERPConfiguration(metadata, this._context);
-    this.employeeERPConfiguration.push(value);
-    return value;
-}
-
-removeFrom_employeeERPConfiguration(index)
-{
-    this.employeeERPConfiguration.splice(index, 1);
-}
 	
+	
+	onChange__code(oldValue, newValue){
+		this._code = 'Hello world 2!';
+
+    }
+
+
+    onChange__description(oldValue, newValue)
+    {
+        this._code = 'Hello world 3!';
+    }
+
+
+    onChange__inactive(oldValue, newValue)
+    {
+
+    }
+
+
+    onChange__name(oldValue, newValue)
+    {
+
+    }
+
+
+
+    beforeChange()
+    {
+
+
+    }
+
+
+    afterChange()
+    {
+
+
+    }
+
+
+    beforeSave()
+    {
+
+
+    }
+
+
+
+}
+
+class WarehouseForm
+{
+
+    constructor(metadata, context)
+    {
+        this._metadata = metadata;
+        this._context = context;
+
+        this._code = null;
+        this._description = null;
+        this._inactive = null;
+        this._name = null;
+        this.warehouseBuildings = [];
+    }
+
+    initialize()
+    {
+        this._description = 'Hello world 4!';
+    }
+
+
+    onChange__code(oldValue, newValue)
+    {
+        this._description = 'Hello world 5!';
+    }
+
+
+    onChange__description(oldValue, newValue)
+    {
+
+    }
+
+
+    onChange__inactive(oldValue, newValue)
+    {
+
+    }
+
+
+    onChange__name(oldValue, newValue)
+    {
+
+    }
+
+
+
+    beforeChange()
+    {
+        for (let i = 0; i < this.warehouseBuildings.length; i++)
+        {
+            this.warehouseBuildings[i].beforeChange && this.warehouseBuildings[i].beforeChange();
+        }
+
+
+    }
+
+
+    afterChange()
+    {
+        for (let i = 0; i < this.warehouseBuildings.length; i++)
+        {
+            this.warehouseBuildings[i].afterChange && this.warehouseBuildings[i].afterChange();
+        }
+
+
+    }
+
+
+    beforeSave()
+    {
+        for (let i = 0; i < this.warehouseBuildings.length; i++)
+        {
+            this.warehouseBuildings[i].beforeSave && this.warehouseBuildings[i].beforeSave();
+        }
+
+
+    }
+
+
+    addTo_warehouseBuildings(metadata)
+    {
+        const value = new warehouseBuildings(metadata, this._context);
+        this.warehouseBuildings.push(value);
+        return value;
+    }
+
+    removeFrom_warehouseBuildings(index)
+    {
+        this.warehouseBuildings.splice(index, 1);
+    }
+
 }
 
 
-EmployeeForm;
+WarehouseForm;
 ";
 
 
@@ -264,220 +190,173 @@ EmployeeForm;
         {
             var reader = new UIEntityBehaviourReader();
 
-            reader.ExtractData(FileText);
+            var entity = reader.ExtractData(FileText);
 
-            //entity.EntityBehaviours.ShouldNotBeNull();
-            //entity.EntityBehaviours.Count.ShouldBe(8);
+            entity.EntityBehaviours.ShouldNotBeNull();
+            entity.EntityBehaviours.Count.ShouldBe(8);
         }
 
-        //[Fact]
-        //public void ExtractData_EmptyMethodsAreIgnored()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_EmptyMethodsAreIgnored()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var entity = reader.ExtractData(FileText);
+            var entity = reader.ExtractData(FileText);
 
-        //    entity.EntityBehaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
-        //}
+            entity.EntityBehaviours.ShouldNotContain(m => string.IsNullOrEmpty(m.Expression));
+        }
 
-        //[Fact]
-        //public void ExtractData_HasInitialize()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_HasInitialize()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var entity = reader.ExtractData(FileText);
+            var entity = reader.ExtractData(FileText);
 
-        //    entity.EntityBehaviours.ShouldContain(m => m.Name.Equals("Initialize"));
-        //}
+            entity.EntityBehaviours.ShouldContain(m => m.Name.Equals("initialize"));
+        }
 
-        //[Fact]
-        //public void ExtractData_ValidExpression()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_ValidExpression()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
 
-        //    initialize.Expression.ShouldBe("this._name = \"Hello World!\";");
-        //}
+            initialize.Expression.ShouldBe("this._description = 'Hello World!';");
+        }
 
-        //[Fact]
-        //public void ExtractData_UsesCommentName()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_UsesCommentName()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
 
-        //    initialize.Name.ShouldBe("Initialize");
-        //}
+            initialize.Name.ShouldBe("Initializer");
+        }
 
-        //[Fact]
-        //public void ExtractData_UsesCommentDescription()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_UsesCommentDescription()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
 
-        //    initialize.Description.ShouldBe($"Set the name to:{Environment.NewLine}Hello World!");
-        //}
+            initialize.Description.ShouldBe($"Initialize description");
+        }
 
-        //[Fact]
-        //public void ExtractData_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_ValidType()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("Initialize"));
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("initialize"));
 
-        //    initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Initialize);
-        //}
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
+        }
 
-        //[Fact]
-        //public void ExtractData_WithPropertyChange_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_WithPropertyChange_ValidType()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("On_codePropertyChange"));
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("WarehouseForm_onChange__code"));
 
-        //    initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Action);
-        //}
+            initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Change);
+        }
 
-        //[Fact]
-        //public void ExtractData_WithPropertyChange_CorrectAttribute()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_WithPropertyChange_CorrectAttribute()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("On_codePropertyChange"));
+            var initialize = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("WarehouseForm_onChange__code"));
 
-        //    initialize.Attribute.ShouldBe("_code");
-        //}
+            initialize.Element.ShouldBe("_code");
+        }
 
-        //[Fact]
-        //public void ExtractData_WithFormula_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
 
-        //    var formula = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("Getname"));
+        [Fact]
+        public void ExtractData_WithAfterChange_ValidType()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    formula.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.Formula);
-        //}
+            var afterChange = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("afterChange"));
 
-        //[Fact]
-        //public void ExtractData_WithFormula_ValidExpression()
-        //{
-        //    var reader = new EntityBehaviourReader();
+            afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.AfterChange);
+        }
 
-        //    var formula = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("Getname"));
+        [Fact]
+        public void ExtractData_WithAfterChange_ValidExpression()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    formula.Expression.ShouldBe("return \"New Name\";");
-        //}
+            var afterChange = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("afterChange"));
+            afterChange.Expression.ShouldBe(@"this._name = ""Hello World 3!"";
+            this._name = ""Hello World 4!"";");
+        }
 
-        //[Fact]
-        //public void ExtractData_WithFormula_CorrectAttribute()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_WithBeforeChange_ValidType()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var formula = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("Getname"));
+            var beforeChange = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("beforeChange"));
 
-        //    formula.Attribute.ShouldBe("name");
-        //}
+            beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.BeforeChange);
+        }
 
-        //[Fact]
-        //public void ExtractData_WithBeforeCollectionEntityInitialize_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
+        [Fact]
+        public void ExtractData_WithBeforeChange_ValidExpression()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //    var initialize = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnBeforecollectionEntityInitialize"));
+            var beforeChange = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("beforeChange"));
+            beforeChange.Expression.ShouldBe("this._name = \"Hello World 2!\";");
+        }
 
-        //    initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.BeforeCollectionEntityInitialize);
-        //}
+        [Fact]
+        public void ExtractData_WithBeforeSave_ValidType()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //[Fact]
-        //public void ExtractData_WithAfterChange_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
+            var beforeSave = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("beforeSave"));
 
-        //    var afterChange = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnAfterUpdate"));
+            beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.BeforeSave);
+        }
 
-        //    afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.AfterChange);
-        //}
+        [Fact]
+        public void ExtractData_WithBeforeSave_ValidExpression()
+        {
+            var reader = new UIEntityBehaviourReader();
 
-        //[Fact]
-        //public void ExtractData_WithAfterChange_ValidExpression()
-        //{
-        //    var reader = new EntityBehaviourReader();
-
-        //    var afterChange = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnAfterUpdate"));
-        //    afterChange.Expression.ShouldBe(@"this._name = ""Hello World 3!"";
-        //    this._name = ""Hello World 4!"";");
-        //}
-
-        //[Fact]
-        //public void ExtractData_WithBeforeChange_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
-
-        //    var beforeChange = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnBeforeUpdate"));
-
-        //    beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.BeforeChange);
-        //}
-
-        //[Fact]
-        //public void ExtractData_WithBeforeChange_ValidExpression()
-        //{
-        //    var reader = new EntityBehaviourReader();
-
-        //    var beforeChange = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnBeforeUpdate"));
-        //    beforeChange.Expression.ShouldBe("this._name = \"Hello World 2!\";");
-        //}
-
-        //[Fact]
-        //public void ExtractData_WithBeforeSave_ValidType()
-        //{
-        //    var reader = new EntityBehaviourReader();
-
-        //    var beforeSave = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnBeforeSave"));
-
-        //    beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.EntityBehaviourType.BeforeSave);
-        //}
-
-        //[Fact]
-        //public void ExtractData_WithBeforeSave_ValidExpression()
-        //{
-        //    var reader = new EntityBehaviourReader();
-
-        //    var beforeSave = reader.ExtractData(FileText)
-        //        .EntityBehaviours
-        //        .First(m => m.Name.Equals("OnBeforeSave"));
-        //    beforeSave.Expression.ShouldBe("_name = \"tst\";");
-        //}
+            var beforeSave = reader.ExtractData(FileText)
+                .EntityBehaviours
+                .First(m => m.Name.Equals("OnBeforeSave"));
+            beforeSave.Expression.ShouldBe("_name = \"tst\";");
+        }
     }
 }

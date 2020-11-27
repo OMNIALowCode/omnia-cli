@@ -10,14 +10,14 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 {
     public class UIEntityBehaviourReader
     {
-        public Form ExtractData(string text)
+        public UIEntity ExtractData(string text)
         {
-            return new Form(ExtractEntityBehaviours(text));
+            return new UIEntity(ExtractEntityBehaviours(text));
         }
 
-        private List<UIEntityBehaviour> ExtractEntityBehaviours(string script)
+        private List<UIBehaviour> ExtractEntityBehaviours(string script)
         {
-            List<UIEntityBehaviour> entityBehaviours = new List<UIEntityBehaviour>();
+            List<UIBehaviour> entityBehaviours = new List<UIBehaviour>();
 
             var parserOptions = new ParserOptions()
             {
@@ -38,9 +38,11 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
             return entityBehaviours;
         }
 
-        private List<UIEntityBehaviour> ExtractClassMethods(string script, ClassDeclaration @class, List<Comment> comments)
+        private List<UIBehaviour> ExtractClassMethods(string script, ClassDeclaration @class, List<Comment> comments)
         {
-            List<UIEntityBehaviour> entityBehaviours = new List<UIEntityBehaviour>();
+            List<UIBehaviour> entityBehaviours = new List<UIBehaviour>();
+            
+            string className = @class.Id?.Name;
 
             foreach (var method in @class.Body.ChildNodes.OfType<MethodDefinition>())
             {
@@ -50,18 +52,18 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
                 if (function != null)
                 {
-                    var entityBehaviour = MapFunction(functionName, script, function, comments);
+                    var entityBehaviour = MapFunction(className, functionName, script, function, comments);
                     if (IsValid(entityBehaviour))
                         entityBehaviours.Add(entityBehaviour);
                 }
             }
             return entityBehaviours;
 
-            static bool IsValid(UIEntityBehaviour behaviour)
+            static bool IsValid(UIBehaviour behaviour)
                 => behaviour != null && !string.IsNullOrEmpty(behaviour.Expression);
         }
 
-        private static UIEntityBehaviour MapFunction(string functionName, string script, FunctionExpression function, List<Comment> comments)
+        private static UIBehaviour MapFunction(string className, string functionName, string script, FunctionExpression function, List<Comment> comments)
         {
             var functionBody = function.Body;
 
@@ -73,15 +75,18 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
             var type = MapType(functionName);
 
-            if (type.HasValue)
-                return new UIEntityBehaviour
+            if (type.HasValue) {
+                string behaviourName = GetFunctionName(name, className, functionName, type.Value.Equals(UIBehaviourType.Change));
+                return new UIBehaviour
                 {
                     Expression = UIMethodInfoExtension.ExtractExpression(functionSnippet),
-                    Name = name ?? functionName,
+                    Name = behaviourName,
                     Description = description,
                     Type = type.Value,
-                    Attribute = GetAttribute(type.Value, functionName)
+                    Element = GetElement(type.Value, functionName)
                 };
+            }
+
 
             return null;
         }
@@ -102,28 +107,32 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
             return comments;
         }
 
-        private static UIEntityBehaviourType? MapType(string methodName)
+        private static UIBehaviourType? MapType(string methodName)
         {
             return methodName switch
             {
-                var initialize when initialize.Equals("initialize") => UIEntityBehaviourType.Initialize,
-                var change when change.StartsWith("onChange_") => UIEntityBehaviourType.Action,
+                var initialize when initialize.Equals("initialize") => UIBehaviourType.Initialize,
+                var change when change.StartsWith("onChange_") => UIBehaviourType.Change,
 
-                var afterChange when afterChange.Equals("afterChange") => UIEntityBehaviourType.AfterChange,
-                var beforeChange when beforeChange.Equals("beforeChange") => UIEntityBehaviourType.BeforeChange,
-                var beforeSave when beforeSave.Equals("beforeSave") => UIEntityBehaviourType.BeforeSave,
+                var afterChange when afterChange.Equals("afterChange") => UIBehaviourType.AfterChange,
+                var beforeChange when beforeChange.Equals("beforeChange") => UIBehaviourType.BeforeChange,
+                var beforeSave when beforeSave.Equals("beforeSave") => UIBehaviourType.BeforeSave,
 
                 _ => null
             };
         }
 
-        private static string GetAttribute(UIEntityBehaviourType type, string name)
+        private static string GetElement(UIBehaviourType type, string name)
         {
             return type switch
             {
-                UIEntityBehaviourType.Action => name.Substring("onChange_".Length, name.Length -9),
+                UIBehaviourType.Change => name.Substring("onChange_".Length, name.Length -9),
                 _ => null
             };
+        }
+
+        private static string GetFunctionName(string name, string className, string functionName, bool isAction) {
+            return name ?? (isAction ? string.Format("{0}_{1}", className, functionName) : functionName);
         }
     }
 }

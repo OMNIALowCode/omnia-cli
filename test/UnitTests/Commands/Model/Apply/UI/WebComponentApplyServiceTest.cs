@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Apply
+namespace UnitTests.Commands.Model.Apply.UI
 {
 	public class WebComponentApplyServiceTest
 	{

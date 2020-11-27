@@ -2,7 +2,6 @@
 using Esprima.Ast;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Commands.Model.Apply.Extensions;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,8 +16,6 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
         private List<UIBehaviour> ExtractEntityBehaviours(string script)
         {
-            List<UIBehaviour> entityBehaviours = new List<UIBehaviour>();
-
             var parserOptions = new ParserOptions()
             {
                 Loc = true,
@@ -32,6 +29,7 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
             var parsedScript = parser.ParseScript();
 
+            var entityBehaviours = new List<UIBehaviour>();
             foreach (var @class in parsedScript.Body.Where(body => body is ClassDeclaration))
                 entityBehaviours.AddRange(ExtractClassMethods(script, @class.As<ClassDeclaration>(), comments));
 
@@ -40,26 +38,25 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
         private List<UIBehaviour> ExtractClassMethods(string script, ClassDeclaration @class, List<Comment> comments)
         {
-            List<UIBehaviour> entityBehaviours = new List<UIBehaviour>();
-            
-            string className = @class.Id?.Name;
+            var entityBehaviours = new List<UIBehaviour>();
+
+            var className = @class.Id?.Name;
 
             foreach (var method in @class.Body.ChildNodes.OfType<MethodDefinition>())
             {
-                var function = method.ChildNodes.OfType<FunctionExpression>().FirstOrDefault();
+                var function = method.ChildNodes.OfType<FunctionExpression>().SingleOrDefault();
 
-                string functionName = ((Esprima.Ast.Identifier)method.Key).Name;
+                if (function == null) continue;
 
-                if (function != null)
-                {
-                    var entityBehaviour = MapFunction(className, functionName, script, function, comments);
-                    if (IsValid(entityBehaviour))
-                        entityBehaviours.Add(entityBehaviour);
-                }
+                var functionName = ((Identifier)method.Key).Name;
+
+                var entityBehaviour = MapFunction(className, functionName, script, function, comments);
+                if (IsValidBehaviour(entityBehaviour))
+                    entityBehaviours.Add(entityBehaviour);
             }
             return entityBehaviours;
 
-            static bool IsValid(UIBehaviour behaviour)
+            static bool IsValidBehaviour(UIBehaviour behaviour)
                 => behaviour != null && !string.IsNullOrEmpty(behaviour.Expression);
         }
 
@@ -75,20 +72,17 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
             var type = MapType(functionName);
 
-            if (type.HasValue) {
-                string behaviourName = GetFunctionName(name, className, functionName, type.Value.Equals(UIBehaviourType.Change));
-                return new UIBehaviour
-                {
-                    Expression = UIMethodInfoExtension.ExtractExpression(functionSnippet),
-                    Name = behaviourName,
-                    Description = description,
-                    Type = type.Value,
-                    Element = GetElement(type.Value, functionName)
-                };
-            }
+            if (!type.HasValue)
+                return null;
 
-
-            return null;
+            return new UIBehaviour
+            {
+                Expression = UIMethodInfoExtension.ExtractExpression(functionSnippet),
+                Name = GetFunctionName(name, className, functionName, type.Value.Equals(UIBehaviourType.Change)),
+                Description = description,
+                Type = type.Value,
+                Element = GetElement(type.Value, functionName)
+            };
         }
 
         private List<Comment> GetFileComments(string script, ParserOptions parserOptions)
@@ -126,12 +120,13 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
         {
             return type switch
             {
-                UIBehaviourType.Change => name.Substring("onChange_".Length, name.Length -9),
+                UIBehaviourType.Change => name.Substring("onChange_".Length, name.Length - 9),
                 _ => null
             };
         }
 
-        private static string GetFunctionName(string name, string className, string functionName, bool isAction) {
+        private static string GetFunctionName(string name, string className, string functionName, bool isAction)
+        {
             return name ?? (isAction ? string.Format("{0}_{1}", className, functionName) : functionName);
         }
     }

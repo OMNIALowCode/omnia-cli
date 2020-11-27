@@ -3,7 +3,7 @@ using Shouldly;
 using System;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Apply
+namespace UnitTests.Commands.Model.Apply.UI
 {
     public class WebComponentReaderTest
     {

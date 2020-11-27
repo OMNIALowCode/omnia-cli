@@ -1,6 +1,5 @@
 ﻿using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Shouldly;
-using System;
 using System.Linq;
 using Xunit;
 

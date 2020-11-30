@@ -1,4 +1,4 @@
-namespace Omnia.CLI.Commands.Model.Apply.Data
+namespace Omnia.CLI.Commands.Model.Apply.Data.UI
 {
     public class Theme
     {

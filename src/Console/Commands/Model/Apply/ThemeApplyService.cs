@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model.Apply

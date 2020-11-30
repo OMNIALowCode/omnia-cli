@@ -1,12 +1,12 @@
 ﻿using Moq;
 using Omnia.CLI.Commands.Model.Apply;
-using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Infrastructure;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Apply
+namespace UnitTests.Commands.Model.Apply.UI
 {
 	public class ThemeApplyServiceTest
 	{

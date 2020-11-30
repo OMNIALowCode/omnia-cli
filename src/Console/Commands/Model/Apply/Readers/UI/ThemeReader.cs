@@ -1,7 +1,8 @@
 ﻿using Omnia.CLI.Commands.Model.Apply.Data;
+using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using System;
 
-namespace Omnia.CLI.Commands.Model.Apply.Readers
+namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 {
     public class ThemeReader
     {

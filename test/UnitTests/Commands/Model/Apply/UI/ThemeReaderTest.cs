@@ -1,9 +1,9 @@
-﻿using Omnia.CLI.Commands.Model.Apply.Readers;
+﻿using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Shouldly;
 using System;
 using Xunit;
 
-namespace UnitTests.Commands.Model.Apply
+namespace UnitTests.Commands.Model.Apply.UI
 {
     public class ThemeReaderTest
     {

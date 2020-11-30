@@ -27,21 +27,11 @@ class warehouseBuildings {
 		this._inactive = null;
 		this._name = null;
 	}
-
-    /**
-     * Initializer
-     * Initialize description 
-	 */		
-	onInitialize(){
-        this._description = 'Hello World!';
-    }
-	
 	
 	onChange__code(oldValue, newValue){
 		this._code = 'Hello world 2!';
 
     }
-
 
     onChange__description(oldValue, newValue)
     {
@@ -54,34 +44,10 @@ class warehouseBuildings {
 
     }
 
-
     onChange__name(oldValue, newValue)
     {
 
     }
-
-
-
-    onBeforeChange()
-    {
-
-
-    }
-
-
-    onAfterChange()
-    {
-
-
-    }
-
-
-    onBeforeSave()
-    {
-
-
-    }
-
 }
 
 class WarehouseForm
@@ -99,12 +65,15 @@ class WarehouseForm
         this.warehouseBuildings = [];
     }
 
-    onInitialize()
-    {
+    /**
+     * Initializer
+     * Initialize description 
+	 */	
+    onInitialize(){
         this._description = 'Hello world 4!';
     }
 
-
+    
     onChange__code(oldValue, newValue)
     {
         this._description = 'Hello world 5!';
@@ -132,34 +101,52 @@ class WarehouseForm
 
     onBeforeChange()
     {
-        for (let i = 0; i < this.warehouseBuildings.length; i++)
-        {
-            this.warehouseBuildings[i].beforeChange && this.warehouseBuildings[i].beforeChange();
-        }
-
-
+        this._description = 'Hello world 10!';
     }
 
 
     onAfterChange()
     {
-        for (let i = 0; i < this.warehouseBuildings.length; i++)
-        {
-            this.warehouseBuildings[i].afterChange && this.warehouseBuildings[i].afterChange();
-        }
-
-
+        this._description = 'Hello world 8!';
     }
 
 
     onBeforeSave()
     {
-        for (let i = 0; i < this.warehouseBuildings.length; i++)
-        {
-            this.warehouseBuildings[i].beforeSave && this.warehouseBuildings[i].beforeSave();
-        }
+        this._description = 'Hello world 9!';
+    }
+
+    /**
+     * Before Change 
+     * Generated Code - Do not edit.
+     */
+    beforeChange(){
+		return this.onBeforeChange();
+	}
+
+    /**
+     * After Change
+     * Generated Code - Do not edit.
+     */
+    afterChange(){
+	    return this.onAfterChange();
+	}
+
+    /**
+     * Before Save
+     * Generated Code - Do not edit.
+     */
+    beforeSave(){
+	    return this.onBeforeSave();
+	}
 
 
+    /**
+     * Initialize
+     * Generated Code - Do not edit.
+     */
+    initialize(){
+	    return this.onInitialize();
     }
 
 
@@ -190,7 +177,7 @@ WarehouseForm;
             var entity = reader.ExtractData(FileText);
 
             entity.EntityBehaviours.ShouldNotBeNull();
-            entity.EntityBehaviours.Count.ShouldBe(8);
+            entity.EntityBehaviours.Count.ShouldBe(7);
         }
 
         [Fact]
@@ -210,7 +197,7 @@ WarehouseForm;
 
             var entity = reader.ExtractData(FileText);
 
-            entity.EntityBehaviours.ShouldContain(m => m.Name.Equals("onInitialize"));
+            entity.EntityBehaviours.ShouldContain(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
         }
 
         [Fact]
@@ -222,7 +209,7 @@ WarehouseForm;
                 .EntityBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
 
-            initialize.Expression.ShouldBe("this._description = 'Hello World!';");
+            initialize.Expression.ShouldBe("this._description = 'Hello world 4!';");
         }
 
         [Fact]
@@ -233,6 +220,9 @@ WarehouseForm;
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
+
+            var tst = reader.ExtractData(FileText)
+                .EntityBehaviours;
 
             initialize.Name.ShouldBe("Initializer");
         }
@@ -256,7 +246,7 @@ WarehouseForm;
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("onInitialize"));
+                .First(m => m.Name.Equals("Initializer"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
         }
@@ -303,11 +293,11 @@ WarehouseForm;
         {
             var reader = new UIEntityBehaviourReader();
 
-            var afterChange = reader.ExtractData(FileText)
-                .EntityBehaviours
+			var afterChange = reader.ExtractData(FileText)
+				.EntityBehaviours
                 .First(m => m.Name.Equals("onAfterChange"));
-            afterChange.Expression.ShouldBe(@"this._name = ""Hello World 3!"";
-            this._name = ""Hello World 4!"";");
+
+            afterChange.Expression.ShouldBe("this._description = 'Hello world 8!';");
         }
 
         [Fact]
@@ -330,7 +320,8 @@ WarehouseForm;
             var beforeChange = reader.ExtractData(FileText)
                 .EntityBehaviours
                 .First(m => m.Name.Equals("onBeforeChange"));
-            beforeChange.Expression.ShouldBe("this._name = \"Hello World 2!\";");
+
+            beforeChange.Expression.ShouldBe("this._description = 'Hello world 10!';");
         }
 
         [Fact]
@@ -352,8 +343,9 @@ WarehouseForm;
 
             var beforeSave = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("OnBeforeSave"));
-            beforeSave.Expression.ShouldBe("_name = \"tst\";");
+                .First(m => m.Name.Equals("onBeforeSave"));
+
+            beforeSave.Expression.ShouldBe("this._description = 'Hello world 9!';");
         }
 
         [Fact]

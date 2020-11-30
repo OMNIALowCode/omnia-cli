@@ -6,49 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model.Apply
 {
-    public class DefinitionService
+    public class DefinitionApplyService
     {
         private readonly IApiClient _apiClient;
-        private static readonly JsonSerializerSettings SerializeSettings = new JsonSerializerSettings()
-        {
-            NullValueHandling = NullValueHandling.Ignore,
-            Converters = new List<JsonConverter>
-                {
-                    new StringEnumConverter()
-                }
-        };
 
-        public DefinitionService(IApiClient apiClient)
+        public DefinitionApplyService(IApiClient apiClient)
         {
             _apiClient = apiClient;
-        }
-
-        public async Task<bool> ReplaceApplicationBehaviourData(string tenant, string environment,
-                    string entity,
-                    ApplicationBehaviour applicationBehaviourData)
-        {
-            var patch = new JsonPatchDocument();
-
-            patch.Replace("/expression", applicationBehaviourData.Expression);
-
-            if (applicationBehaviourData.Usings?.Count > 0)
-                patch.Replace("/behaviourNamespaces",
-                    applicationBehaviourData.Usings.Select(u => MapToBehaviourNamespace(u, applicationBehaviourData.Namespace)));
-
-            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
-
-            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/ApplicationBehaviour/{entity}",
-                new StringContent(dataAsString,
-                                Encoding.UTF8,
-                                "application/json")).ConfigureAwait(false);
-            return response.Success;
         }
 
         public async Task<bool> ReplaceStateData(string tenant, string environment,
@@ -62,7 +32,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             if (states.Count > 0)
                 patch = PatchStatesToReplace(patch, metadata, states);
 
-            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/StateMachine/{entity}",
                 new StringContent(dataAsString,
@@ -86,7 +56,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                 patch.Replace("/behaviourNamespaces",
                     entityData.Usings.Select(u => MapToBehaviourNamespace(u, entityData.Namespace)));
 
-            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
                 new StringContent(dataAsString,
@@ -117,7 +87,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             var patch = new JsonPatchDocument();
             patch.Replace("/behaviourDependencies", dependencies?.ToArray() ?? Array.Empty<Dependency>());
 
-            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/datasource/{dataSource}",
                 new StringContent(dataAsString,
@@ -133,7 +103,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             if (!details.Success) return null;
 
-            var data = ((JObject)JsonConvert.DeserializeObject(content, SerializeSettings));
+            var data = ((JObject)JsonConvert.DeserializeObject(content));
 
             if (data.TryGetValue("instanceOf", out var definition))
                 return definition.ToString();
@@ -148,22 +118,22 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             if (!details.Success) return null;
 
-            var data = ((JObject)JsonConvert.DeserializeObject(content, SerializeSettings));
+            var data = ((JObject)JsonConvert.DeserializeObject(content));
 
             if (data.TryGetValue("name", out var definition) && definition.Value<string>().Equals(entity))
                 return data;
             return null;
         }
 
-		private static JsonPatchDocument PatchStatesToReplace(JsonPatchDocument patch, JObject metadata, IList<State> states)
-		{
+        private static JsonPatchDocument PatchStatesToReplace(JsonPatchDocument patch, JObject metadata, IList<State> states)
+        {
             if (!metadata.TryGetValue("states", out var metadataStates)) return null;
-            
+
             for (var sn = 0; sn < metadataStates.Count(); sn++)
             {
                 var state = states.FirstOrDefault(s => s.Name.Equals(metadataStates[sn]["name"].Value<string>()));
                 if (state == null) continue;
-                
+
                 patch.Replace($"/states/{sn}/assignToExpression", state.AssignToExpression);
 
                 if (state.Behaviours.Count > 0)
@@ -172,7 +142,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                 }
 
                 if (state.Transitions.Count <= 0) continue;
-                
+
                 var transitions = metadataStates[sn]["transitions"];
                 for (var tn = 0; tn < transitions.Count(); tn++)
                 {

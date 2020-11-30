@@ -1,11 +1,9 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Infrastructure;
@@ -15,15 +13,6 @@ namespace Omnia.CLI.Commands.Model.Apply
     public class UIBehavioursApplyService
     {
         private readonly IApiClient _apiClient;
-        private static readonly JsonSerializerSettings SerializeSettings = new JsonSerializerSettings()
-        {
-            NullValueHandling = NullValueHandling.Ignore,
-            Converters = new List<JsonConverter>
-                {
-                    new StringEnumConverter()
-                }
-        };
-
         public UIBehavioursApplyService(IApiClient apiClient)
         {
             _apiClient = apiClient;
@@ -37,7 +26,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             var patch = new JsonPatchDocument()
                 .Replace("/behaviours", data.EntityBehaviours.ToArray());
 
-            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}",
                 new StringContent(dataAsString,
@@ -56,7 +45,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             if (!details.Success) return null;
 
-            var data = ((JObject)JsonConvert.DeserializeObject(content, SerializeSettings));
+            var data = ((JObject)JsonConvert.DeserializeObject(content));
 
             if (data.TryGetValue("type", out var definition))
                 return definition.ToString();

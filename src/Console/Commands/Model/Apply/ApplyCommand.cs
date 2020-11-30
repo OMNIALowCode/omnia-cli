@@ -1,9 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
-using Omnia.CLI.Commands.Model.Apply.Data;
 using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
-using Omnia.CLI.Commands.Model.Apply.Readers;
 using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
@@ -24,7 +22,8 @@ namespace Omnia.CLI.Commands.Model.Apply
     {
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
-        private readonly DefinitionService _definitionService;
+        private readonly DefinitionApplyService _definitionService;
+        private readonly ApplicationBehaviourApplyService _applicationBehaviourApplyService;
         private readonly WebComponentApplyService _webComponentApplyService;
         private readonly UIBehavioursApplyService _uiBehavioursApplyService;
         private readonly UIEntityBehaviourReader _uiEntityBehaviourReader = new UIEntityBehaviourReader();
@@ -40,10 +39,11 @@ namespace Omnia.CLI.Commands.Model.Apply
         {
             _settings = options.Value;
             _apiClient = apiClient;
-            _definitionService = new DefinitionService(_apiClient);
+            _definitionService = new DefinitionApplyService(_apiClient);
             _webComponentApplyService = new WebComponentApplyService(_apiClient);
             _uiBehavioursApplyService = new UIBehavioursApplyService(_apiClient);
             _themeApplyService = new ThemeApplyService(_apiClient);
+            _applicationBehaviourApplyService = new ApplicationBehaviourApplyService(_apiClient);
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -403,7 +403,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         }
 
         private async Task<bool> ReplaceApplicationBehaviourData(string filepath, ApplicationBehaviour entity)
-        => await _definitionService.ReplaceApplicationBehaviourData(Tenant, Environment,
+        => await _applicationBehaviourApplyService.ReplaceData(Tenant, Environment,
                             ExtractEntityNameFromFileName(filepath, string.Empty), entity).ConfigureAwait(false);
 
         private async Task<bool> ReplaceData(string name, Entity entity)

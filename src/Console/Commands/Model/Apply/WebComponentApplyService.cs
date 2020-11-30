@@ -1,10 +1,8 @@
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Infrastructure;
 
@@ -13,15 +11,7 @@ namespace Omnia.CLI.Commands.Model.Apply
     public class WebComponentApplyService
     {
         private readonly IApiClient _apiClient;
-        private static readonly JsonSerializerSettings SerializeSettings = new JsonSerializerSettings()
-        {
-            NullValueHandling = NullValueHandling.Ignore,
-            Converters = new List<JsonConverter>
-                {
-                    new StringEnumConverter()
-                }
-        };
-
+        
         public WebComponentApplyService(IApiClient apiClient)
         {
             _apiClient = apiClient;
@@ -35,7 +25,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                 .Replace("/expression", data.Expression)
                 .Replace("/customElementName", data.CustomElement);
 
-            var dataAsString = JsonConvert.SerializeObject(patch, SerializeSettings);
+            var dataAsString = JsonConvert.SerializeObject(patch);
 
             var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/webcomponent/{entity}",
                 new StringContent(dataAsString,

@@ -105,12 +105,12 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
         {
             return methodName switch
             {
-                var initialize when initialize.Equals("initialize") => UIBehaviourType.Initialize,
+                var initialize when initialize.Equals("onInitialize") => UIBehaviourType.Initialize,
                 var change when change.StartsWith("onChange_") => UIBehaviourType.Change,
 
-                var afterChange when afterChange.Equals("afterChange") => UIBehaviourType.AfterChange,
-                var beforeChange when beforeChange.Equals("beforeChange") => UIBehaviourType.BeforeChange,
-                var beforeSave when beforeSave.Equals("beforeSave") => UIBehaviourType.BeforeSave,
+                var afterChange when afterChange.Equals("onAfterChange") => UIBehaviourType.AfterChange,
+                var beforeChange when beforeChange.Equals("onBeforeChange") => UIBehaviourType.BeforeChange,
+                var beforeSave when beforeSave.Equals("onBeforeSave") => UIBehaviourType.BeforeSave,
 
                 _ => null
             };

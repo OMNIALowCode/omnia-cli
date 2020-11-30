@@ -32,7 +32,7 @@ class warehouseBuildings {
      * Initializer
      * Initialize description 
 	 */		
-	initialize(){
+	onInitialize(){
         this._description = 'Hello World!';
     }
 	
@@ -62,27 +62,25 @@ class warehouseBuildings {
 
 
 
-    beforeChange()
+    onBeforeChange()
     {
 
 
     }
 
 
-    afterChange()
+    onAfterChange()
     {
 
 
     }
 
 
-    beforeSave()
+    onBeforeSave()
     {
 
 
     }
-
-
 
 }
 
@@ -101,7 +99,7 @@ class WarehouseForm
         this.warehouseBuildings = [];
     }
 
-    initialize()
+    onInitialize()
     {
         this._description = 'Hello world 4!';
     }
@@ -132,7 +130,7 @@ class WarehouseForm
 
 
 
-    beforeChange()
+    onBeforeChange()
     {
         for (let i = 0; i < this.warehouseBuildings.length; i++)
         {
@@ -143,7 +141,7 @@ class WarehouseForm
     }
 
 
-    afterChange()
+    onAfterChange()
     {
         for (let i = 0; i < this.warehouseBuildings.length; i++)
         {
@@ -154,7 +152,7 @@ class WarehouseForm
     }
 
 
-    beforeSave()
+    onBeforeSave()
     {
         for (let i = 0; i < this.warehouseBuildings.length; i++)
         {
@@ -212,7 +210,7 @@ WarehouseForm;
 
             var entity = reader.ExtractData(FileText);
 
-            entity.EntityBehaviours.ShouldContain(m => m.Name.Equals("initialize"));
+            entity.EntityBehaviours.ShouldContain(m => m.Name.Equals("onInitialize"));
         }
 
         [Fact]
@@ -258,7 +256,7 @@ WarehouseForm;
 
             var initialize = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("initialize"));
+                .First(m => m.Name.Equals("onInitialize"));
 
             initialize.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
         }
@@ -295,7 +293,7 @@ WarehouseForm;
 
             var afterChange = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("afterChange"));
+                .First(m => m.Name.Equals("onAfterChange"));
 
             afterChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.AfterChange);
         }
@@ -307,7 +305,7 @@ WarehouseForm;
 
             var afterChange = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("afterChange"));
+                .First(m => m.Name.Equals("onAfterChange"));
             afterChange.Expression.ShouldBe(@"this._name = ""Hello World 3!"";
             this._name = ""Hello World 4!"";");
         }
@@ -319,7 +317,7 @@ WarehouseForm;
 
             var beforeChange = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("beforeChange"));
+                .First(m => m.Name.Equals("onBeforeChange"));
 
             beforeChange.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.BeforeChange);
         }
@@ -331,7 +329,7 @@ WarehouseForm;
 
             var beforeChange = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("beforeChange"));
+                .First(m => m.Name.Equals("onBeforeChange"));
             beforeChange.Expression.ShouldBe("this._name = \"Hello World 2!\";");
         }
 
@@ -342,7 +340,7 @@ WarehouseForm;
 
             var beforeSave = reader.ExtractData(FileText)
                 .EntityBehaviours
-                .First(m => m.Name.Equals("beforeSave"));
+                .First(m => m.Name.Equals("onBeforeSave"));
 
             beforeSave.Type.ShouldBe(Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.BeforeSave);
         }

@@ -1,7 +1,9 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
+using Omnia.CLI.Commands.Model.Apply.Data;
 using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
+using Omnia.CLI.Commands.Model.Apply.Readers;
 using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
@@ -26,12 +28,14 @@ namespace Omnia.CLI.Commands.Model.Apply
         private readonly WebComponentApplyService _webComponentApplyService;
         private readonly UIBehavioursApplyService _uiBehavioursApplyService;
         private readonly UIEntityBehaviourReader _uiEntityBehaviourReader = new UIEntityBehaviourReader();
+        private readonly ThemeApplyService _themeApplyService;
         private readonly EntityBehaviourReader _entityBehaviourReader = new EntityBehaviourReader();
         private readonly ApplicationBehaviourReader _applicationReader = new ApplicationBehaviourReader();
         private readonly DaoReader _daoReader = new DaoReader();
         private readonly DependencyReader _dependencyReader = new DependencyReader();
         private readonly StateReader _stateReader = new StateReader();
         private readonly WebComponentReader _webComponentReader = new WebComponentReader();
+        private readonly ThemeReader _themeReader = new ThemeReader();
         public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
             _settings = options.Value;
@@ -39,6 +43,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             _definitionService = new DefinitionService(_apiClient);
             _webComponentApplyService = new WebComponentApplyService(_apiClient);
             _uiBehavioursApplyService = new UIBehavioursApplyService(_apiClient);
+            _themeApplyService = new ThemeApplyService(_apiClient);
         }
 
         [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
@@ -84,6 +89,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             var webComponents = await Task.WhenAll(ProcessWebComponents()).ConfigureAwait(false);
 
             var uiBehaviours = await Task.WhenAll(ProcessUIBehaviours()).ConfigureAwait(false);
+            var themes = await Task.WhenAll(ProcessThemes()).ConfigureAwait(false);
 
             var tasks = entities.GroupBy(g => g.name)
                 .Select(g =>
@@ -114,6 +120,10 @@ namespace Omnia.CLI.Commands.Model.Apply
           .Select(g =>
               ApplyUIBehavioursChanges(g.name, g.entity)
           ));
+            tasks.AddRange(themes
+              .Select(g =>
+                  ApplyThemeChanges(g.name, g.entity)
+              ));
 
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -216,6 +226,16 @@ namespace Omnia.CLI.Commands.Model.Apply
             return files.Select(ProcessWebComponentFile);
         }
 
+        private IEnumerable<Task<(string name, Theme entity)>> ProcessThemes()
+        {
+            var themePathRegex = new Regex(@"\\Themes\\[^\\]+\\variables\.scss$");
+            var files = Directory.GetFiles(Path, "variables.scss", SearchOption.AllDirectories)
+                .Where(path => themePathRegex.IsMatch(path))
+                .ToList();
+
+            return files.Select(ProcessThemeFile);
+        }
+
         private async Task<(string name, Entity entity)> ProcessEntityBehavioursFile(string filepath)
         {
             Console.WriteLine($"Processing file {filepath}...");
@@ -284,6 +304,17 @@ namespace Omnia.CLI.Commands.Model.Apply
             return (ExtractEntityNameFromFileName(filepath, ".js"), _uiEntityBehaviourReader.ExtractData(content));
         }
 
+        private async Task<(string name, Theme entity)> ProcessThemeFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (Name(), _themeReader.ExtractData(content));
+
+            string Name()
+                => GetFileName(GetDirectoryName(filepath));
+        }
+
         private async Task ApplyDependenciesChanges(IDictionary<string, IDictionary<string, CodeDependency>> dataSourceCodeDependencies, IDictionary<string, IList<FileDependency>> fileDependencies)
         {
             var dataPerDataSource = new Dictionary<string, (IDictionary<string, CodeDependency> codeDependencies, IList<(string, FileDependency)> fileDependencies)>();
@@ -347,7 +378,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         private async Task ApplyWebComponentChanges(string name, WebComponent entity)
         {
             var applySuccessfully = await _webComponentApplyService.ReplaceData(Tenant, Environment,
-                            ExtractEntityNameFromFileName(name, string.Empty), entity).ConfigureAwait(false);
+                            name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply WebComponent {name}.");
@@ -360,6 +391,15 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply WebComponent {name}.");
+        }
+
+        private async Task ApplyThemeChanges(string name, Theme entity)
+        {
+            var applySuccessfully = await _themeApplyService.ReplaceData(Tenant, Environment,
+                            name, entity).ConfigureAwait(false);
+
+            if (!applySuccessfully)
+                Console.WriteLine($"Failed to apply Theme {name}.");
         }
 
         private async Task<bool> ReplaceApplicationBehaviourData(string filepath, ApplicationBehaviour entity)

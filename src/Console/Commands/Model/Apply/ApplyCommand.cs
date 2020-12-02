@@ -386,11 +386,12 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private async Task ApplyUIBehavioursChanges(string name, UIEntity entity)
         {
+            var entityName = ExtractEntityNameFromFileName(name, string.Empty);
             var applySuccessfully = await _uiBehavioursApplyService.ReplaceData(Tenant, Environment,
-                            ExtractEntityNameFromFileName(name, string.Empty), entity).ConfigureAwait(false);
+                            entityName, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply WebComponent {name}.");
+                Console.WriteLine($"Failed to apply Behaviours to entity {entityName}.");
         }
 
         private async Task ApplyThemeChanges(string name, Theme entity)

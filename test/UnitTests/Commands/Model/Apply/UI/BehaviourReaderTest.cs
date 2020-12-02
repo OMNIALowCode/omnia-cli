@@ -221,9 +221,6 @@ WarehouseForm;
                 .EntityBehaviours
                 .First(m => m.Type == Omnia.CLI.Commands.Model.Apply.Data.UI.UIBehaviourType.Initialize);
 
-            var tst = reader.ExtractData(FileText)
-                .EntityBehaviours;
-
             initialize.Name.ShouldBe("Initializer");
         }
 

@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Omnia.CLI.Infrastructure;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Omnia.CLI
 {
@@ -22,6 +24,16 @@ namespace Omnia.CLI
 
             services
                 .AddHttpClient<IApiClient, ApiClient>();
+
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                Converters = new List<JsonConverter>
+                {
+                    new StringEnumConverter()
+                }
+            };
+
 
             var serviceProvider = services.BuildServiceProvider();
 

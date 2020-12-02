@@ -33,7 +33,6 @@ namespace Omnia.CLI.Commands.Model.Apply.Extensions
             return (null, null);
         }
 
-
         private static (string name, string description) ParseXmlComment(string comment)
         {
             var content = comment

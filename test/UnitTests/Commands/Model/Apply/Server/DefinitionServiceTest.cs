@@ -39,7 +39,7 @@ namespace UnitTests.Commands.Model.Apply.Server
 			apiClientMock.Setup(r => r.Patch(It.IsAny<string>(), It.IsAny<HttpContent>()))
 				.ReturnsAsync((new ApiResponse(true)));
 
-			var service = new DefinitionService(apiClientMock.Object);
+			var service = new DefinitionApplyService(apiClientMock.Object);
 
 			await service.ReplaceData(Tenant, Environment, Entity, entityData)
 				.ConfigureAwait(false);
@@ -104,7 +104,7 @@ namespace UnitTests.Commands.Model.Apply.Server
 				.ReturnsAsync((new ApiResponse(true)));
 
 
-			var service = new DefinitionService(apiClientMock.Object);
+			var service = new DefinitionApplyService(apiClientMock.Object);
 			await service.ReplaceStateData(Tenant, Environment, StateMachineEntity, states)
 				.ConfigureAwait(false);
 

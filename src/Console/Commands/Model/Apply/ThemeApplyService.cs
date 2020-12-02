@@ -8,26 +8,25 @@ using Omnia.CLI.Infrastructure;
 
 namespace Omnia.CLI.Commands.Model.Apply
 {
-    public class WebComponentApplyService
+    public class ThemeApplyService
     {
         private readonly IApiClient _apiClient;
         
-        public WebComponentApplyService(IApiClient apiClient)
+        public ThemeApplyService(IApiClient apiClient)
         {
             _apiClient = apiClient;
         }
 
         public async Task<bool> ReplaceData(string tenant, string environment,
                     string entity,
-                    WebComponent data)
+                    Theme data)
         {
             var patch = new JsonPatchDocument()
-                .Replace("/expression", data.Expression)
-                .Replace("/customElementName", data.CustomElement);
+                .Replace("/expression", data.Expression);
 
             var dataAsString = JsonConvert.SerializeObject(patch);
 
-            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/webcomponent/{entity}",
+            var response = await _apiClient.Patch($"/api/v1/{tenant}/{environment}/model/theme/{entity}",
                 new StringContent(dataAsString,
                                 Encoding.UTF8,
                                 "application/json")).ConfigureAwait(false);

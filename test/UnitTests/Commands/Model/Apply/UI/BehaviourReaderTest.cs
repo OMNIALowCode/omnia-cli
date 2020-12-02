@@ -68,8 +68,9 @@ class WarehouseForm
     /**
      * Initializer
      * Initialize description 
-	 */	
-    onInitialize(){
+	 */
+    onInitialize()
+    {
         this._description = 'Hello world 4!';
     }
 

@@ -66,7 +66,7 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
             var blockStartLine = functionBody.Location.Start.Line;
 
-            var (name, description) = UIMethodInfoExtension.GetJavascriptCommentInfo(comments, blockStartLine - 1, script);
+            var (name, description) = UIMethodInfoExtension.GetJavascriptCommentInfo(comments, blockStartLine - 1, script, functionName);
 
             var functionSnippet = script[functionBody.Range.Start..functionBody.Range.End];
 

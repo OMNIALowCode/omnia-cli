@@ -1,5 +1,4 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Spectre.Cli;
+﻿using Spectre.Cli;
 using System.ComponentModel;
 using System.IO;
 

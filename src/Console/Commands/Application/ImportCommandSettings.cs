@@ -1,5 +1,4 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Spectre.Cli;
 
 namespace Omnia.CLI.Commands.Application

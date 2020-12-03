@@ -1,5 +1,4 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
@@ -21,7 +20,6 @@ namespace Omnia.CLI
             var configuration = CreateConfigurationRoot();
 
             var services = new ServiceCollection()
-                .AddSingleton(PhysicalConsole.Singleton)
                 .AddScoped<IAuthenticationProvider, AuthenticationProvider>()
                 .Configure<AppSettings>(configuration);
 
@@ -42,6 +40,7 @@ namespace Omnia.CLI
             var registrar = new TypeRegistrar(services);
 
             var app = new CommandApp(registrar);
+            app.SetDefaultCommand<Commands.AppCommand>();
             app.Configure(config =>
             {
                 config.AddBranch("subscriptions", subscription =>
@@ -95,17 +94,7 @@ namespace Omnia.CLI
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();
 
-            try
-            {
-                return app.Run(args);
-            }
-            catch (UnrecognizedCommandParsingException exception)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"{exception.Message}. Use --help to list the available options.");
-                Console.ResetColor();
-                return (int)StatusCodes.InvalidOperation;
-            }
+            return app.Run(args);
         }
 
         private static IConfigurationRoot CreateConfigurationRoot()

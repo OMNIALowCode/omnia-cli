@@ -1,5 +1,4 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Omnia.CLI.Commands.Application.Infrastructure;
 using Omnia.CLI.Infrastructure;
 using ShellProgressBar;
@@ -9,12 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Omnia.CLI.Extensions;
+using System.ComponentModel;
+using Spectre.Cli;
 
 namespace Omnia.CLI.Commands.Application
 {
-    [Command(Name = "import", Description = "Import application data.")]
-    [HelpOption("-h|--help")]
-    public class ImportCommand
+    [Description("Import application data.")]
+    public sealed class ImportCommand : AsyncCommand<ImportCommandSettings>
     {
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
@@ -25,46 +25,36 @@ namespace Omnia.CLI.Commands.Application
             _settings = options.Value;
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
-        public string Subscription { get; set; }
-
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
-        public string Tenant { get; set; }
-
-        [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
-        public string Environment { get; set; } = Constants.DefaultEnvironment;
-
-        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the file.")]
-        public string Path { get; set; }
-
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, ImportCommandSettings settings)
         {
-            if (string.IsNullOrEmpty(Path))
+            if (string.IsNullOrEmpty(settings.Path))
             {
-                Console.WriteLine($"{nameof(Path)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Path)} is required");
             }
 
-            if (!File.Exists(Path))
+            if (!File.Exists(settings.Path))
             {
-                Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid file.");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"The value of --path parameters \"{settings.Path}\" is not a valid file.");
             }
+            return base.Validate(context, settings);
+        }
 
-            var sourceSettings = _settings.GetSubscription(Subscription);
+        public override async Task<int> ExecuteAsync(CommandContext context, ImportCommandSettings settings)
+        {
+            var sourceSettings = _settings.GetSubscription(settings.Subscription);
 
-            await _apiClient.Authenticate(sourceSettings);
+            await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
 
             var reader = new ImportDataReader();
             try
             {
-                var data = reader.ReadExcel(this.Path);
+                var data = reader.ReadExcel(settings.Path);
 
-                var success = await ProcessDefinitions(data);
+                var success = await ProcessDefinitions(settings.Tenant, settings.Environment, data).ConfigureAwait(false);
 
                 if (!success) return (int)StatusCodes.UnknownError;
 
-                Console.WriteLine($"Successfully imported data to tenant \"{Tenant}\".");
+                Console.WriteLine($"Successfully imported data to tenant \"{settings.Tenant}\".");
                 return (int)StatusCodes.Success;
             }
             catch (Exception ex)
@@ -74,7 +64,7 @@ namespace Omnia.CLI.Commands.Application
             }
         }
 
-        private async Task<bool> ProcessDefinitions(ICollection<ImportData> data)
+        private async Task<bool> ProcessDefinitions(string tenant, string environment, ICollection<ImportData> data)
         {
             var failed = new List<string>();
             var options = new ProgressBarOptions
@@ -89,7 +79,8 @@ namespace Omnia.CLI.Commands.Application
                 foreach (var dataEntry in data)
                 {
                     var (success, messages) =
-                        await CreateEntities(progressBar, _apiClient, Tenant, Environment, dataEntry.Definition, dataEntry.DataSource, dataEntry.Data);
+                        await CreateEntities(progressBar, _apiClient, tenant, environment, dataEntry.Definition, dataEntry.DataSource, dataEntry.Data)
+                            .ConfigureAwait(false);
                     progressBar.Tick();
 
                     if (success)
@@ -106,7 +97,7 @@ namespace Omnia.CLI.Commands.Application
             return !failed.Any();
         }
 
-        private static async Task<(bool Success, string[] Messages)> CreateEntities(ProgressBarBase progressBar, 
+        private static async Task<(bool Success, string[] Messages)> CreateEntities(ProgressBarBase progressBar,
             IApiClient apiClient,
             string tenantCode,
             string environmentCode,
@@ -120,7 +111,8 @@ namespace Omnia.CLI.Commands.Application
             {
                 foreach (var (rowNumber, values) in data)
                 {
-                    var (statusCode, errors) = await CreateEntity(apiClient, tenantCode, environmentCode, definition, dataSource, values);
+                    var (statusCode, errors) = await CreateEntity(apiClient, tenantCode, environmentCode, definition, dataSource, values)
+                        .ConfigureAwait(false);
 
                     child.Tick(statusCode == (int)StatusCodes.Success ? null : $"Error creating entity for {dataSource} {definition}");
 
@@ -140,7 +132,7 @@ namespace Omnia.CLI.Commands.Application
                     => errors.Errors != null ? JoinErrors(errors) : $" \n\r {errors.Code} - {errors.Message}";
 
             static string JoinErrors(ApiError errors)
-                => string.Join("", errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}"));
+                => string.Concat(errors.Errors.Select(c => $"\n\r {c.Name} - {c.Message}"));
         }
 
         private static async Task<(int statusCode, ApiError errors)> CreateEntity(IApiClient apiClient,
@@ -150,8 +142,9 @@ namespace Omnia.CLI.Commands.Application
             string dataSource,
             IDictionary<string, object> data)
         {
-            var response = await apiClient.Post($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data.ToHttpStringContent());
-            
+            var response = await apiClient.Post($"/api/v1/{tenantCode}/{environmentCode}/application/{definition}/{dataSource}", data.ToHttpStringContent())
+                .ConfigureAwait(false);
+
             return response.Success ? ((int)StatusCodes.Success, null) : ((int)StatusCodes.InvalidOperation, response.ErrorDetails);
         }
     }

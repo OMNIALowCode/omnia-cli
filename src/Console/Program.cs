@@ -44,12 +44,23 @@ namespace Omnia.CLI
             var app = new CommandApp(registrar);
             app.Configure(config =>
             {
-                config.AddBranch("subscriptions", sub =>
+                config.AddBranch("subscriptions", subscription =>
                 {
-                    sub.SetDescription("Commands to configure subscriptions.");
-                    sub.AddCommand<AddCommand>("add");
-                    sub.AddCommand<ListCommand>("list");
-                    sub.AddCommand<RemoveCommand>("remove");
+                    subscription.SetDescription("Commands to configure subscriptions.");
+                    subscription.AddCommand<AddCommand>("add");
+                    subscription.AddCommand<ListCommand>("list");
+                    subscription.AddCommand<RemoveCommand>("remove");
+                });
+
+                config.AddBranch("security", security =>
+                {
+                    security.SetDescription("Commands related to Tenant Security.");
+                    security.AddBranch("users", users =>
+                    {
+                        users.SetDescription("Commands related to Tenant Users security.");
+                        users.AddCommand<Commands.Security.Users.AddCommand>("add");
+                        users.AddCommand<Commands.Security.Users.ImportCommand>("import");
+                    });
                 });
 
             });

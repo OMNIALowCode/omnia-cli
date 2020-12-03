@@ -48,7 +48,7 @@ namespace Omnia.CLI.Commands.Subscriptions
             return base.Validate(context, settings);
         }
 
-        public override async Task<int> ExecuteAsync(CommandContext context, AddCommandSettings settings)
+        public override Task<int> ExecuteAsync(CommandContext context, AddCommandSettings settings)
         {
             _settings.Subscriptions.Add(new AppSettings.Subscription()
             {
@@ -73,8 +73,7 @@ namespace Omnia.CLI.Commands.Subscriptions
             }
 
             Console.WriteLine($"Configuration successfully added to subscription \"{settings.Name}\".");
-            return (int)StatusCodes.Success;
+            return Task.FromResult((int)StatusCodes.Success);
         }
-
     }
 }

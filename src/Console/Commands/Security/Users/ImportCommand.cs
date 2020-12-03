@@ -1,11 +1,12 @@
 ﻿using CsvHelper;
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Omnia.CLI.Infrastructure;
+using Spectre.Cli;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -15,8 +16,7 @@ using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Security.Users
 {
-    [Command(Name = "import",
-        Description = @"Import a CSV to assign users to a given tenant role. CSV example:
+    [Description(@"Import a CSV to assign users to a given tenant role. CSV example:
 
 ---
         username,role
@@ -24,8 +24,7 @@ namespace Omnia.CLI.Commands.Security.Users
         admin@domain.com,Administration
 ---
 ")]
-    [HelpOption("-h|--help")]
-    public class ImportCommand
+    public sealed class ImportCommand : AsyncCommand<ImportCommandSettings>
     {
         private readonly IApiClient _apiClient;
         private readonly AppSettings _settings;
@@ -36,63 +35,51 @@ namespace Omnia.CLI.Commands.Security.Users
             _settings = options.Value;
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
-        public string Subscription { get; set; }
-
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Import CSV data to the Tenant.")]
-        public string Tenant { get; set; }
-
-        [Option("--environment", CommandOptionType.SingleValue, Description = "Tenant Environment.")]
-        public string Environment { get; set; } = Constants.DefaultEnvironment;
-
-        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the CSV file.")]
-        public string Path { get; set; }
-
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, ImportCommandSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(Subscription))
+            if (string.IsNullOrWhiteSpace(settings.Subscription))
             {
-                Console.WriteLine($"{nameof(Subscription)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Subscription)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Tenant))
+            if (string.IsNullOrWhiteSpace(settings.Tenant))
             {
-                Console.WriteLine($"{nameof(Tenant)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Tenant)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Environment))
+            if (string.IsNullOrWhiteSpace(settings.Environment))
             {
-                Console.WriteLine($"{nameof(Environment)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Environment)} is required");
             }
 
-            if (!_settings.Exists(Subscription))
+            if (!_settings.Exists(settings.Subscription))
             {
-                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
-                return (int)StatusCodes.InvalidOperation;
+                return ValidationResult.Error($"Subscription \"{settings.Subscription}\" can't be found.");
             }
+            return base.Validate(context, settings);
+        }
 
-            var entries = ParseFile(Path);
+        public override async Task<int> ExecuteAsync(CommandContext context, ImportCommandSettings settings)
+        {
+            var entries = ParseFile(settings.Path);
 
-            var sourceSettings = _settings.GetSubscription(Subscription);
+            var sourceSettings = _settings.GetSubscription(settings.Subscription);
 
-            await _apiClient.Authenticate(sourceSettings);
+            await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
 
             var tasks = entries
                 .GroupBy(r => r.Role, StringComparer.InvariantCultureIgnoreCase)
                 .Select(role =>
-                    UpdateRole(_apiClient, role.Key, role.Select(c => c.Username).ToList())
+                    UpdateRole(_apiClient, role.Key, role.Select(c => c.Username).ToList(), settings.Tenant, settings.Environment)
                     );
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            Console.WriteLine($"Users imported to tenant \"{Tenant}\" successfully.");
+            Console.WriteLine($"Users imported to tenant \"{settings.Tenant}\" successfully.");
             return (int)StatusCodes.Success;
         }
 
-        private async Task UpdateRole(IApiClient apiClient, string role, IEnumerable<string> usernames)
+        private async Task UpdateRole(IApiClient apiClient, string role, IEnumerable<string> usernames, string tenant, string environment)
         {
             var patch = new JsonPatchDocument();
 
@@ -101,9 +88,9 @@ namespace Omnia.CLI.Commands.Security.Users
 
             var dataAsString = JsonConvert.SerializeObject(patch);
 
-            await apiClient.Patch($"/api/v1/{Tenant}/{Environment}/security/AuthorizationRole/{role}",
-                new StringContent(dataAsString, Encoding.UTF8, "application/json"));
-            
+            await apiClient.Patch($"/api/v1/{tenant}/{environment}/security/AuthorizationRole/{role}",
+                new StringContent(dataAsString, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+
         }
 
         private static IEnumerable<CsvEntry> ParseFile(string path)
@@ -113,7 +100,7 @@ namespace Omnia.CLI.Commands.Security.Users
             csv.Configuration.Delimiter = ",";
 
             // Ignore header case.
-            csv.Configuration.PrepareHeaderForMatch = (header, index) => header.ToLower();
+            csv.Configuration.PrepareHeaderForMatch = (header, _) => header.ToLower();
             return csv.GetRecords<CsvEntry>().ToList();
         }
 

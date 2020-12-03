@@ -1,10 +1,5 @@
 ﻿using Spectre.Cli;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
-using System.IO;
-using System.Threading.Tasks;
-using Omnia.CLI.Infrastructure;
 using System.ComponentModel;
 
 namespace Omnia.CLI.Commands.Subscriptions
@@ -27,7 +22,4 @@ namespace Omnia.CLI.Commands.Subscriptions
         [Description("API Client - Secret.")]
         public string ClientSecret { get; set; }
     }
-
-
-
 }

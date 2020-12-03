@@ -6,9 +6,9 @@ namespace Omnia.CLI
 {
     [Command(Name = "omnia-cli", Description = "OMNIA Platform CLI")]
     [HelpOption("-h|--help")]
-    [Subcommand(typeof(Commands.Subscriptions.BaseCommand))]
+    //[Subcommand(typeof(Commands.Subscriptions.BaseCommand))]
     [Subcommand(typeof(Commands.Model.BaseCommand))]
-    [Subcommand(typeof(Commands.Security.BaseCommand))]
+    //[Subcommand(typeof(Commands.Security.BaseCommand))]
     [Subcommand(typeof(Commands.Management.BaseCommand))]
     [Subcommand(typeof(Commands.Application.BaseCommand))]
     [VersionOptionFromMember(MemberName = nameof(GetVersion))]

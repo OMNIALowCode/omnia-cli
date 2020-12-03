@@ -1,13 +1,12 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
+using Spectre.Cli;
 using System;
-using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
-    [Command(Name = "list", Description = "List the subscriptions configured.")]
-    [HelpOption("-h|--help")]
-    public class ListCommand
+    [Description("List the subscriptions configured.")]
+    public sealed class ListCommand : Command
     {
         private readonly AppSettings _settings;
         public ListCommand(IOptions<AppSettings> options)
@@ -15,15 +14,14 @@ namespace Omnia.CLI.Commands.Subscriptions
             _settings = options.Value;
         }
 
-        public Task<int> OnExecute(CommandLineApplication cmd)
+        public override int Execute(CommandContext context)
         {
             foreach (var subscription in _settings.Subscriptions)
             {
                 Console.WriteLine($"{subscription.Name} ({subscription.Endpoint})");
             }
 
-            return Task.FromResult((int)StatusCodes.Success);
+            return (int)StatusCodes.Success;
         }
-
     }
 }

@@ -1,16 +1,16 @@
-﻿using McMaster.Extensions.CommandLineUtils;
+﻿using Spectre.Cli;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 using Omnia.CLI.Infrastructure;
+using System.ComponentModel;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
-    [Command(Name = "add", Description = "Add the configuration to a given subscription.")]
-    [HelpOption("-h|--help")]
-    public class AddCommand
+    [Description("Add the configuration to a given subscription.")]
+    public sealed class AddCommand : AsyncCommand<AddCommandSettings>
     {
         private readonly AppSettings _settings;
         public AddCommand(IOptions<AppSettings> options)
@@ -18,56 +18,46 @@ namespace Omnia.CLI.Commands.Subscriptions
             _settings = options.Value;
         }
 
-        [Option("--name", CommandOptionType.SingleValue, Description = "Name to reference this subscription configuration when using the CLI.")]
-        public string Name { get; set; }
-        [Option("--endpoint", CommandOptionType.SingleValue, Description = "Subscription endpoint. Example: https://platform.omnialowcode.com")]
-        public Uri Endpoint { get; set; }
-        [Option("--client-id", CommandOptionType.SingleValue, Description = "API Client - Id.")]
-        public string ClientId { get; set; }
-        [Option("--client-secret", CommandOptionType.SingleValue, Description = "API Client - Secret.")]
-        public string ClientSecret { get; set; }
-
-
-        public Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, AddCommandSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(Name))
+            if (string.IsNullOrWhiteSpace(settings.Name))
             {
-                Console.WriteLine($"{nameof(Name)} is required");
-                return Task.FromResult((int)StatusCodes.InvalidArgument);
+                return ValidationResult.Error($"{nameof(settings.Name)} is required");
             }
 
-            if (Endpoint == null)
+            if (settings.Endpoint == null)
             {
-                Console.WriteLine($"{nameof(Endpoint)} is required");
-                return Task.FromResult((int)StatusCodes.InvalidArgument);
+                return ValidationResult.Error($"{nameof(settings.Endpoint)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(ClientId))
+            if (string.IsNullOrWhiteSpace(settings.ClientId))
             {
-                Console.WriteLine($"{nameof(ClientId)} is required");
-                return Task.FromResult((int)StatusCodes.InvalidArgument);
+                return ValidationResult.Error($"{nameof(settings.ClientId)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(ClientSecret))
+            if (string.IsNullOrWhiteSpace(settings.ClientSecret))
             {
-                Console.WriteLine($"{nameof(ClientSecret)} is required");
-                return Task.FromResult((int)StatusCodes.InvalidArgument);
-            }
-            
-            if (_settings.Exists(Name))
-            {
-                Console.WriteLine($"Subscription \"{Name}\" already exists.");
-                return Task.FromResult((int)StatusCodes.InvalidOperation);
+                return ValidationResult.Error($"{nameof(settings.ClientSecret)} is required");
             }
 
+            if (_settings.Exists(settings.Name))
+            {
+                return ValidationResult.Error($"Subscription \"{settings.Name}\" already exists.");
+            }
+
+            return base.Validate(context, settings);
+        }
+
+        public override async Task<int> ExecuteAsync(CommandContext context, AddCommandSettings settings)
+        {
             _settings.Subscriptions.Add(new AppSettings.Subscription()
             {
-                Name = Name,
-                Endpoint = Endpoint,
+                Name = settings.Name,
+                Endpoint = settings.Endpoint,
                 Client = new AppSettings.Client()
                 {
-                    Id = ClientId,
-                    Secret = ClientSecret
+                    Id = settings.ClientId,
+                    Secret = settings.ClientSecret
                 }
             });
 
@@ -82,8 +72,8 @@ namespace Omnia.CLI.Commands.Subscriptions
                 serializer.Serialize(file, _settings);
             }
 
-            Console.WriteLine($"Configuration successfully added to subscription \"{Name}\".");
-            return Task.FromResult((int)StatusCodes.Success);
+            Console.WriteLine($"Configuration successfully added to subscription \"{settings.Name}\".");
+            return (int)StatusCodes.Success;
         }
 
     }

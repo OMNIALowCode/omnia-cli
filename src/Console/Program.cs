@@ -8,6 +8,9 @@ using System.IO;
 using Omnia.CLI.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Spectre.Cli;
+using Omnia.CLI.Commands.Subscriptions;
+
 
 namespace Omnia.CLI
 {
@@ -34,13 +37,23 @@ namespace Omnia.CLI
                 }
             };
 
-
             var serviceProvider = services.BuildServiceProvider();
 
-            var app = new CommandLineApplication<App>();
-            app.Conventions
-                .UseDefaultConventions()
-                .UseConstructorInjection(serviceProvider);
+            var registrar = new TypeRegistrar(services);
+
+            var app = new CommandApp(registrar);
+            app.Configure(config =>
+            {
+                config.AddBranch("subscriptions", sub =>
+                {
+                    sub.SetDescription("Commands to configure subscriptions.");
+                    sub.AddCommand<AddCommand>("add");
+                    sub.AddCommand<ListCommand>("list");
+                    sub.AddCommand<RemoveCommand>("remove");
+                });
+
+            });
+
 
             var subscriptions = GetConfiguredSubscriptions(serviceProvider);
 
@@ -49,7 +62,7 @@ namespace Omnia.CLI
 
             try
             {
-                return app.Execute(args);
+                return app.Run(args);
             }
             catch (UnrecognizedCommandParsingException exception)
             {

@@ -62,13 +62,11 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
         private static UIBehaviour MapFunction(string className, string functionName, string script, FunctionExpression function, List<Comment> comments)
         {
-            var functionBody = function.Body;
+            var blockStartLine = function.Location.Start.Line;
 
-            var blockStartLine = functionBody.Location.Start.Line;
+            var (name, description) = UIMethodInfoExtension.GetJavaScriptCommentInfo(comments, blockStartLine - 1, script, functionName);
 
-            var (name, description) = UIMethodInfoExtension.GetJavascriptCommentInfo(comments, blockStartLine - 1, script, functionName);
-
-            var functionSnippet = script[functionBody.Range.Start..functionBody.Range.End];
+            var functionSnippet = script[function.Body.Range.Start..function.Body.Range.End];
 
             var type = MapType(functionName);
 

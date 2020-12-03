@@ -1,13 +1,14 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
 using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Infrastructure;
+using Spectre.Cli;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -16,9 +17,8 @@ using static System.IO.Path;
 
 namespace Omnia.CLI.Commands.Model.Apply
 {
-    [Command(Name = "apply", Description = "Apply source code to model.")]
-    [HelpOption("-h|--help")]
-    public class ApplyCommand
+    [Description("Apply source code to model.")]
+    public sealed class ApplyCommand : AsyncCommand<ApplyCommandSettings>
     {
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
@@ -46,54 +46,45 @@ namespace Omnia.CLI.Commands.Model.Apply
             _applicationBehaviourApplyService = new ApplicationBehaviourApplyService(_apiClient);
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
-        public string Subscription { get; set; }
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to import.")]
-        public string Tenant { get; set; }
-        [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to import.")]
-        public string Environment { get; set; } = Constants.DefaultEnvironment;
-        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path to the source code directory.")]
-        public string Path { get; set; } = ".";
-        [Option("--build", CommandOptionType.NoValue, Description = "Perform a model build after applying.")]
-        public bool Build { get; set; }
-
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, ApplyCommandSettings settings)
         {
-            if (string.IsNullOrEmpty(Path))
+            if (string.IsNullOrEmpty(settings.Path))
             {
-                Console.WriteLine($"{nameof(Path)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Path)} is required");
             }
 
-            if (!Directory.Exists(Path))
+            if (!Directory.Exists(settings.Path))
             {
-                Console.WriteLine($"The value of --path parameters \"{Path}\" is not a valid directory.");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"The value of --path parameters \"{settings.Path}\" is not a valid directory.");
             }
+            return base.Validate(context, settings);
+        }
 
-            var sourceSettings = _settings.GetSubscription(Subscription);
+        public override async Task<int> ExecuteAsync(CommandContext context, ApplyCommandSettings settings)
+        {
+            var sourceSettings = _settings.GetSubscription(settings.Subscription);
 
             await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
 
             IEnumerable<Task<(string name, Entity entity)>> processFileTasks =
-                ProcessEntityBehaviours().Union(
-                    ProcessDataBehaviours()
+                ProcessEntityBehaviours(settings.Path).Union(
+                    ProcessDataBehaviours(settings.Path)
                 );
 
             var entities = await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
-            var applicationBehaviours = await Task.WhenAll(ProcessApplicationBehaviours()).ConfigureAwait(false);
+            var applicationBehaviours = await Task.WhenAll(ProcessApplicationBehaviours(settings.Path)).ConfigureAwait(false);
 
-            var stateMachines = await Task.WhenAll(ProcessStates()).ConfigureAwait(false);
+            var stateMachines = await Task.WhenAll(ProcessStates(settings.Path)).ConfigureAwait(false);
 
-            var webComponents = await Task.WhenAll(ProcessWebComponents()).ConfigureAwait(false);
+            var webComponents = await Task.WhenAll(ProcessWebComponents(settings.Path)).ConfigureAwait(false);
 
-            var uiBehaviours = await Task.WhenAll(ProcessUIBehaviours()).ConfigureAwait(false);
-            var themes = await Task.WhenAll(ProcessThemes()).ConfigureAwait(false);
+            var uiBehaviours = await Task.WhenAll(ProcessUIBehaviours(settings.Path)).ConfigureAwait(false);
+            var themes = await Task.WhenAll(ProcessThemes(settings.Path)).ConfigureAwait(false);
 
             var tasks = entities.GroupBy(g => g.name)
                 .Select(g =>
-                    ApplyEntityChanges(g.Key,
+                    ApplyEntityChanges(settings.Tenant, settings.Environment, g.Key,
                         new Entity(g.First().entity.Namespace,
                         g.SelectMany(e => e.entity?.EntityBehaviours).ToList(),
                         g.SelectMany(e => e.entity?.DataBehaviours).ToList(),
@@ -103,89 +94,87 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             tasks.AddRange(applicationBehaviours
                 .Select(g =>
-                    ApplyApplicationBehaviourChanges(g.name, g.entity)
+                    ApplyApplicationBehaviourChanges(settings.Tenant, settings.Environment, g.name, g.entity)
                 ));
 
             tasks.AddRange(stateMachines
                 .Select(st =>
-                    ApplyStateMachineChanges(st.name, st.entity)
+                    ApplyStateMachineChanges(settings.Tenant, settings.Environment, st.name, st.entity)
                 ));
 
             tasks.AddRange(webComponents
               .Select(g =>
-                  ApplyWebComponentChanges(g.name, g.entity)
+                  ApplyWebComponentChanges(settings.Tenant, settings.Environment, g.name, g.entity)
               ));
 
             tasks.AddRange(uiBehaviours
           .Select(g =>
-              ApplyUIBehavioursChanges(g.name, g.entity)
+              ApplyUIBehavioursChanges(settings.Tenant, settings.Environment, g.name, g.entity)
           ));
             tasks.AddRange(themes
               .Select(g =>
-                  ApplyThemeChanges(g.name, g.entity)
+                  ApplyThemeChanges(settings.Tenant, settings.Environment, g.name, g.entity)
               ));
-
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            var codeDependencies = await ProcessCodeDependencies().ConfigureAwait(false);
-            var fileDependencies = await ProcessFileDependencies().ConfigureAwait(false);
-            await ApplyDependenciesChanges(codeDependencies, fileDependencies).ConfigureAwait(false);
+            var codeDependencies = await ProcessCodeDependencies(settings.Path).ConfigureAwait(false);
+            var fileDependencies = await ProcessFileDependencies(settings.Path).ConfigureAwait(false);
+            await ApplyDependenciesChanges(settings.Tenant, settings.Environment, codeDependencies, fileDependencies).ConfigureAwait(false);
 
-            if (Build)
-                await _apiClient.BuildModel(Tenant, Environment).ConfigureAwait(false);
+            if (settings.Build)
+                await _apiClient.BuildModel(settings.Tenant, settings.Environment).ConfigureAwait(false);
 
-
-            Console.WriteLine($"Successfully applied to tenant \"{Tenant}\" model.");
+            Console.WriteLine($"Successfully applied to tenant \"{settings.Tenant}\" model.");
             return (int)StatusCodes.Success;
         }
 
-        private IEnumerable<Task<(string name, List<State> entity)>> ProcessStates()
+        private IEnumerable<Task<(string name, List<State> entity)>> ProcessStates(string path)
         {
-            var files = Directory.GetFiles(Path, "*.StateMachine.cs", SearchOption.AllDirectories);
+            var files = Directory.GetFiles(path, "*.StateMachine.cs", SearchOption.AllDirectories);
 
             return files.Select(ProcessStateMachineFile);
         }
 
-        private IEnumerable<Task<(string name, ApplicationBehaviour entity)>> ProcessApplicationBehaviours()
+        private IEnumerable<Task<(string name, ApplicationBehaviour entity)>> ProcessApplicationBehaviours(string path)
         {
             Regex reg = new Regex(@"\\Application\\[^\\]+\.cs$");
-            var files = Directory.GetFiles(Path, "*.cs", SearchOption.AllDirectories)
-                .Where(path => reg.IsMatch(path))
+            var files = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories)
+                .Where(p => reg.IsMatch(p))
                 .ToList();
 
             return files.Select(ProcessApplicationBehavioursFile);
         }
 
-        private IEnumerable<Task<(string name, Entity entity)>> ProcessEntityBehaviours()
+        private IEnumerable<Task<(string name, Entity entity)>> ProcessEntityBehaviours(string path)
         {
-            var files = Directory.GetFiles(Path, "*.Operations.cs", SearchOption.AllDirectories);
+            var files = Directory.GetFiles(path, "*.Operations.cs", SearchOption.AllDirectories);
 
             return files.Select(ProcessEntityBehavioursFile);
         }
 
-        private IEnumerable<Task<(string name, UIEntity entity)>> ProcessUIBehaviours()
+        private IEnumerable<Task<(string name, UIEntity entity)>> ProcessUIBehaviours(string path)
         {
             var uiBehavioursPathRegex = new Regex(@"\\Behaviours\\[^\\]+\.js$");
-            var files = Directory.GetFiles(Path, "*.js", SearchOption.AllDirectories)
-                .Where(path => uiBehavioursPathRegex.IsMatch(path))
+            var files = Directory.GetFiles(path, "*.js", SearchOption.AllDirectories)
+                .Where(p => uiBehavioursPathRegex.IsMatch(p))
                 .ToList();
 
             return files.Select(ProcessUIBehavioursFile);
         }
 
-        private IEnumerable<Task<(string name, Entity entity)>> ProcessDataBehaviours()
+        private IEnumerable<Task<(string name, Entity entity)>> ProcessDataBehaviours(string path)
         {
-            var files = Directory.GetFiles(Path, "*Dao.cs", SearchOption.AllDirectories);
+            var files = Directory.GetFiles(path, "*Dao.cs", SearchOption.AllDirectories);
 
             return files.Select(ProcessDaoFile);
         }
 
-        private async Task<Dictionary<string, IDictionary<string, CodeDependency>>> ProcessCodeDependencies()
+        private async Task<Dictionary<string, IDictionary<string, CodeDependency>>> ProcessCodeDependencies(string path)
         {
             var dependencies = new Dictionary<string, IDictionary<string, CodeDependency>>();
 
-            foreach (string directory in Directory.GetDirectories(Path, "CodeDependencies", SearchOption.AllDirectories))
+            foreach (string directory in Directory.GetDirectories(path, "CodeDependencies", SearchOption.AllDirectories))
             {
                 var files = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly);
 
@@ -202,11 +191,11 @@ namespace Omnia.CLI.Commands.Model.Apply
             return dependencies;
         }
 
-        private async Task<IDictionary<string, IList<FileDependency>>> ProcessFileDependencies()
+        private async Task<IDictionary<string, IList<FileDependency>>> ProcessFileDependencies(string path)
         {
             var dependencies = new Dictionary<string, IList<FileDependency>>();
 
-            var files = Directory.GetFiles(Path, "*.csproj", SearchOption.AllDirectories);
+            var files = Directory.GetFiles(path, "*.csproj", SearchOption.AllDirectories);
 
             var dependencyData = await Task.WhenAll(files.Select(ProcessFileDependencyFile)).ConfigureAwait(false);
 
@@ -216,21 +205,21 @@ namespace Omnia.CLI.Commands.Model.Apply
             return dependencies;
         }
 
-        private IEnumerable<Task<(string name, WebComponent entity)>> ProcessWebComponents()
+        private IEnumerable<Task<(string name, WebComponent entity)>> ProcessWebComponents(string path)
         {
             var webComponentPathRegex = new Regex(@"\\WebComponents\\[^\\]+\\index\.js$");
-            var files = Directory.GetFiles(Path, "index.js", SearchOption.AllDirectories)
-                .Where(path => webComponentPathRegex.IsMatch(path))
+            var files = Directory.GetFiles(path, "index.js", SearchOption.AllDirectories)
+                .Where(p => webComponentPathRegex.IsMatch(p))
                 .ToList();
 
             return files.Select(ProcessWebComponentFile);
         }
 
-        private IEnumerable<Task<(string name, Theme entity)>> ProcessThemes()
+        private IEnumerable<Task<(string name, Theme entity)>> ProcessThemes(string path)
         {
             var themePathRegex = new Regex(@"\\Themes\\[^\\]+\\variables\.scss$");
-            var files = Directory.GetFiles(Path, "variables.scss", SearchOption.AllDirectories)
-                .Where(path => themePathRegex.IsMatch(path))
+            var files = Directory.GetFiles(path, "variables.scss", SearchOption.AllDirectories)
+                .Where(p => themePathRegex.IsMatch(p))
                 .ToList();
 
             return files.Select(ProcessThemeFile);
@@ -315,7 +304,11 @@ namespace Omnia.CLI.Commands.Model.Apply
                 => GetFileName(GetDirectoryName(filepath));
         }
 
-        private async Task ApplyDependenciesChanges(IDictionary<string, IDictionary<string, CodeDependency>> dataSourceCodeDependencies, IDictionary<string, IList<FileDependency>> fileDependencies)
+        private async Task ApplyDependenciesChanges(
+            string tenant,
+            string environment,
+            IDictionary<string, IDictionary<string, CodeDependency>> dataSourceCodeDependencies,
+            IDictionary<string, IList<FileDependency>> fileDependencies)
         {
             var dataPerDataSource = new Dictionary<string, (IDictionary<string, CodeDependency> codeDependencies, IList<(string, FileDependency)> fileDependencies)>();
 
@@ -340,7 +333,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             foreach (var dataSource in dataPerDataSource)
             {
-                var applySuccessfully = await _definitionService.ReplaceDependencies(Tenant, Environment,
+                var applySuccessfully = await _definitionService.ReplaceDependencies(tenant, environment,
                     dataSource.Key,
                             dataSource.Value.codeDependencies,
                             dataSource.Value.fileDependencies
@@ -351,68 +344,95 @@ namespace Omnia.CLI.Commands.Model.Apply
             }
         }
 
-        private async Task ApplyEntityChanges(string name, Entity entity)
+        private async Task ApplyEntityChanges(
+            string tenant,
+            string environment,
+            string name, Entity entity)
         {
             if (entity.EntityBehaviours?.Count == 0 && entity.DataBehaviours?.Count == 0 && entity.Usings?.Count == 0)
                 return;
 
-            var applySuccessfully = await ReplaceData(name, entity).ConfigureAwait(false);
+            var applySuccessfully = await ReplaceData(tenant, environment, name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply behaviours to entity {name}.");
         }
 
-        private async Task ApplyApplicationBehaviourChanges(string name, ApplicationBehaviour entity)
+        private async Task ApplyApplicationBehaviourChanges(
+            string tenant,
+            string environment,
+            string name, ApplicationBehaviour entity)
         {
-            var applySuccessfully = await ReplaceApplicationBehaviourData(name, entity).ConfigureAwait(false);
+            var applySuccessfully = await ReplaceApplicationBehaviourData(tenant, environment, name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply application behaviour {name}.");
         }
 
-        private async Task ApplyStateMachineChanges(string name, List<State> entity)
+        private async Task ApplyStateMachineChanges(
+            string tenant,
+            string environment,
+            string name, List<State> entity)
         {
-            var applySuccessfully = await ReplaceStateMachineData(name, entity).ConfigureAwait(false);
+            var applySuccessfully = await ReplaceStateMachineData(tenant, environment, name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply states to entity {name}.");
         }
 
-        private async Task ApplyWebComponentChanges(string name, WebComponent entity)
+        private async Task ApplyWebComponentChanges(
+                        string tenant,
+            string environment,
+            string name, WebComponent entity)
         {
-            var applySuccessfully = await _webComponentApplyService.ReplaceData(Tenant, Environment,
+            var applySuccessfully = await _webComponentApplyService.ReplaceData(tenant, environment,
                             name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply WebComponent {name}.");
         }
 
-        private async Task ApplyUIBehavioursChanges(string name, UIEntity entity)
+        private async Task ApplyUIBehavioursChanges(
+            string tenant,
+            string environment,
+            string name, UIEntity entity)
         {
             var entityName = ExtractEntityNameFromFileName(name, string.Empty);
-            var applySuccessfully = await _uiBehavioursApplyService.ReplaceData(Tenant, Environment,
+            var applySuccessfully = await _uiBehavioursApplyService.ReplaceData(tenant, environment,
                             entityName, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply Behaviours to entity {entityName}.");
         }
 
-        private async Task ApplyThemeChanges(string name, Theme entity)
+        private async Task ApplyThemeChanges(
+                        string tenant,
+            string environment,
+            string name, Theme entity)
         {
-            var applySuccessfully = await _themeApplyService.ReplaceData(Tenant, Environment,
+            var applySuccessfully = await _themeApplyService.ReplaceData(tenant, environment,
                             name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
                 Console.WriteLine($"Failed to apply Theme {name}.");
         }
 
-        private async Task<bool> ReplaceApplicationBehaviourData(string filepath, ApplicationBehaviour entity)
-        => await _applicationBehaviourApplyService.ReplaceData(Tenant, Environment,
+        private async Task<bool> ReplaceApplicationBehaviourData(
+            string tenant,
+            string environment,
+            string filepath, ApplicationBehaviour entity)
+            => await _applicationBehaviourApplyService.ReplaceData(tenant, environment,
                             ExtractEntityNameFromFileName(filepath, string.Empty), entity).ConfigureAwait(false);
 
-        private async Task<bool> ReplaceData(string name, Entity entity)
-            => await _definitionService.ReplaceData(Tenant, Environment,
+        private async Task<bool> ReplaceData(
+            string tenant,
+            string environment,
+            string name, Entity entity)
+            => await _definitionService.ReplaceData(tenant, environment,
                             name, entity).ConfigureAwait(false);
 
-        private async Task<bool> ReplaceStateMachineData(string name, List<State> entity)
-            => await _definitionService.ReplaceStateData(Tenant, Environment, name, entity).ConfigureAwait(false);
+        private async Task<bool> ReplaceStateMachineData(
+            string tenant,
+            string environment,
+            string name, List<State> entity)
+            => await _definitionService.ReplaceStateData(tenant, environment, name, entity).ConfigureAwait(false);
 
         private static string ExtractEntityNameFromFileName(string filepath, string suffix)
         {

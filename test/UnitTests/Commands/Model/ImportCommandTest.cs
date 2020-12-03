@@ -28,26 +28,31 @@ namespace UnitTests.Commands.Model
         {
             var apiClientMock = MockApiClient();
             var command = ImportCommand(apiClientMock);
+            var settings = ImportCommandSettings();
 
-            var result = await command.OnExecute(new CommandLineApplication<App>());
+            var result = await command.ExecuteAsync(null, settings).ConfigureAwait(false);
 
             result.ShouldBe((int)StatusCodes.Success);
 
             apiClientMock.Verify(client =>
-                client.Post($"/api/v1/{command.Tenant}/PRD/model/import", It.IsAny<MultipartFormDataContent>()),
+                client.Post($"/api/v1/{settings.Tenant}/PRD/model/import", It.IsAny<MultipartFormDataContent>()),
                 Times.Once);
         }
 
         private ImportCommand ImportCommand(IMock<IApiClient> apiClientMock)
         {
-            var command = new ImportCommand(_settings, apiClientMock.Object)
+            return new ImportCommand(_settings, apiClientMock.Object);
+        }
+
+        private ImportCommandSettings ImportCommandSettings()
+        {
+            return new ImportCommandSettings
             {
                 Path = Path.Combine(Directory.GetCurrentDirectory(),
-                    "Commands", "Model", "TestData", "FakeModel.zip"),
+                     "Commands", "Model", "TestData", "FakeModel.zip"),
                 Tenant = "CliTesting",
                 Subscription = "Testing"
             };
-            return command;
         }
 
         private static Mock<IApiClient> MockApiClient()

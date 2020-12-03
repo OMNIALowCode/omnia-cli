@@ -1,19 +1,18 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
 using Omnia.CLI.Infrastructure;
+using Spectre.Cli;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.ComponentModel;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Omnia.CLI.Commands.Model
 {
-    [Command(Name = "export", Description = "Export Tenant model and last build to the current folder.")]
-    [HelpOption("-h|--help")]
-    public class ExportCommand
+    [Description("Export Tenant model and last build to the current folder.")]
+    public sealed class ExportCommand : AsyncCommand<ExportCommandSettings>
     {
         private readonly AppSettings _settings;
         private readonly IApiClient _apiClient;
@@ -25,88 +24,82 @@ namespace Omnia.CLI.Commands.Model
             _apiClient = apiClient;
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
-        public string Subscription { get; set; }
-
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant to export.")]
-        public string Tenant { get; set; }
-
-        [Option("--environment", CommandOptionType.SingleValue, Description = "Environment to export.")]
-        public string Environment { get; set; } = Constants.DefaultEnvironment;
-
-        [Option("--path", CommandOptionType.SingleValue, Description = "Complete path where exported folders will be created.")]
-        public string Path { get; set; } = Directory.GetCurrentDirectory();
-
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, ExportCommandSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(Subscription))
+            if (string.IsNullOrWhiteSpace(settings.Subscription))
             {
-                Console.WriteLine($"{nameof(Subscription)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Subscription)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Tenant))
+            if (string.IsNullOrWhiteSpace(settings.Tenant))
             {
-                Console.WriteLine($"{nameof(Tenant)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Tenant)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Environment))
+            if (string.IsNullOrWhiteSpace(settings.Environment))
             {
-                Console.WriteLine($"{nameof(Environment)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Environment)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Path))
+            if (string.IsNullOrWhiteSpace(settings.Path))
             {
-                Console.WriteLine($"{nameof(Path)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Path)} is required");
             }
 
-            if (!_settings.Exists(Subscription))
+            if (!_settings.Exists(settings.Subscription))
             {
-                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
-                return (int)StatusCodes.InvalidOperation;
+                return ValidationResult.Error($"Subscription \"{settings.Subscription}\" can't be found.");
             }
+            return base.Validate(context, settings);
+        }
 
-            var sourceSettings = _settings.GetSubscription(Subscription);
+        public override async Task<int> ExecuteAsync(CommandContext context, ExportCommandSettings settings)
+        {
+            var sourceSettings = _settings.GetSubscription(settings.Subscription);
 
-            await _apiClient.Authenticate(sourceSettings);
+            await _apiClient.Authenticate(sourceSettings)
+                .ConfigureAwait(false);
 
-            await DownloadModel(_apiClient, Tenant, Environment, System.IO.Path.Combine(Path, "model"));
+            await DownloadModel(_apiClient, settings.Tenant, settings.Environment, System.IO.Path.Combine(settings.Path, "model"))
+                .ConfigureAwait(false);
 
-            var currentBuildVersion = await CurrentBuildNumber(_apiClient, Tenant, Environment);
+            var currentBuildVersion = await CurrentBuildNumber(_apiClient, settings.Tenant, settings.Environment)
+                .ConfigureAwait(false);
 
-            await DownloadBuild(_apiClient, Tenant, Environment, currentBuildVersion, System.IO.Path.Combine(Path, "src"));
+            await DownloadBuild(_apiClient, settings.Tenant, settings.Environment, currentBuildVersion, System.IO.Path.Combine(settings.Path, "src"))
+                .ConfigureAwait(false);
 
-            Console.WriteLine($"Tenant \"{Tenant}\" model and last build exported successfully.");
+            Console.WriteLine($"Tenant \"{settings.Tenant}\" model and last build exported successfully.");
             return (int)StatusCodes.Success;
         }
 
         private static async Task DownloadModel(IApiClient apiClient, string tenantCode, string environmentCode, string path)
         {
-            var response = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/export");
-            if (!response.ApiDetails.Success) return;
+            var (ApiDetails, Content) = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/export")
+                .ConfigureAwait(false);
+            if (!ApiDetails.Success) return;
 
-            await using var responseStream = response.Content;
+            await using var responseStream = Content;
             var archive = new ZipArchive(responseStream);
             archive.ExtractToDirectory(path, true);
         }
 
         private static async Task<string> CurrentBuildNumber(IApiClient apiClient, string tenantCode, string environmentCode)
         {
-            var response = await apiClient.Get($"/api/v1/{tenantCode}/{environmentCode}/model/builds?pageSize=1");
-            if (!response.ApiDetails.Success) return null;
+            var (ApiDetails, Content) = await apiClient.Get($"/api/v1/{tenantCode}/{environmentCode}/model/builds?pageSize=1")
+                .ConfigureAwait(false);
+            if (!ApiDetails.Success) return null;
 
-            var buildData = response.Content.ReadAsJson<List<BuildData>>();
+            var buildData = Content.ReadAsJson<List<BuildData>>();
             return buildData.First().BuildVersion;
         }
 
         private static async Task DownloadBuild(IApiClient apiClient, string tenantCode, string environmentCode, string version, string path)
         {
-            var response = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/builds/{version}/download");
+            var (_, Content) = await apiClient.GetStream($"/api/v1/{tenantCode}/{environmentCode}/model/builds/{version}/download")
+                .ConfigureAwait(false);
 
-            await using var responseStream = response.Content;
+            await using var responseStream = Content;
             var archive = new ZipArchive(responseStream);
             archive.ExtractToDirectory(path, true);
         }

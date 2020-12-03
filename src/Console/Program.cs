@@ -73,6 +73,14 @@ namespace Omnia.CLI
                     });
                 });
 
+                config.AddBranch("model", model =>
+                {
+                    model.SetDescription("Commands related to Tenant Model.");
+                    model.AddCommand<Commands.Model.ExportCommand>("export");
+                    model.AddCommand<Commands.Model.Import.ImportCommand>("import");
+                    model.AddCommand<Commands.Model.Apply.ApplyCommand>("apply");
+                });
+
                 config.AddBranch("application", application =>
                 {
                     application.SetDescription("Commands related to Tenant.");

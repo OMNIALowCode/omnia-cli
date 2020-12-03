@@ -1,15 +1,15 @@
 ﻿using System;
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
 using System.Threading.Tasks;
 using Omnia.CLI.Infrastructure;
+using System.ComponentModel;
+using Spectre.Cli;
 
 namespace Omnia.CLI.Commands.Management.Tenants
 {
-    [Command(Name = "add", Description = "Create a new Tenant.")]
-    [HelpOption("-h|--help")]
-    public class AddCommand
+    [Description("Create a new Tenant.")]
+    public sealed class AddCommand : AsyncCommand<AddCommandSettings>
     {
         private readonly IApiClient _apiClient;
         private readonly AppSettings _settings;
@@ -19,48 +19,42 @@ namespace Omnia.CLI.Commands.Management.Tenants
             _apiClient = apiClient;
             _settings = options.Value;
         }
-    
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
-        public string Subscription { get; set; }
-        [Option("--code", CommandOptionType.SingleValue, Description = "Code of the Tenant to create.")]
-        public string Code { get; set; }
-        [Option("--name", CommandOptionType.SingleValue, Description = "Name of the Tenant to create.")]
-        public string Name { get; set; }
-        
 
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, AddCommandSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(Subscription))
+            if (string.IsNullOrWhiteSpace(settings.Subscription))
             {
-                Console.WriteLine($"{nameof(Subscription)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Subscription)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Code))
+            if (string.IsNullOrWhiteSpace(settings.Code))
             {
-                Console.WriteLine($"{nameof(Code)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Code)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Name))
-                Name = Code;
-
-            if (!_settings.Exists(Subscription))
+            if (!_settings.Exists(settings.Subscription))
             {
-                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
-                return (int)StatusCodes.InvalidOperation;
+                return ValidationResult.Error($"Subscription \"{settings.Subscription}\" can't be found.");
             }
+            return base.Validate(context, settings);
+        }
 
-            var sourceSettings = _settings.GetSubscription(Subscription);
+        public override async Task<int> ExecuteAsync(CommandContext context, AddCommandSettings settings)
+        {
+            if (string.IsNullOrWhiteSpace(settings.Name))
+                settings.Name = settings.Code;
 
-            await _apiClient.Authenticate(sourceSettings);
+            var sourceSettings = _settings.GetSubscription(settings.Subscription);
 
-            return await CreateTenant(_apiClient, Code, Name);
+            await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
+
+            return await CreateTenant(_apiClient, settings.Code, settings.Name).ConfigureAwait(false);
         }
 
         private static async Task<int> CreateTenant(IApiClient apiClient, string tenantCode, string tenantName)
         {
-            var response = await apiClient.Post($"/api/v1/management/tenants", new { Code = tenantCode, Name = tenantName }.ToHttpStringContent());
+            var response = await apiClient.Post("/api/v1/management/tenants", new { Code = tenantCode, Name = tenantName }.ToHttpStringContent())
+                .ConfigureAwait(false);
             if (response.Success)
             {
                 Console.WriteLine($"Tenant \"{tenantName}\" ({tenantCode}) created successfully.");

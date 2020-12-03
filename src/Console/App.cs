@@ -9,7 +9,7 @@ namespace Omnia.CLI
     //[Subcommand(typeof(Commands.Subscriptions.BaseCommand))]
     [Subcommand(typeof(Commands.Model.BaseCommand))]
     //[Subcommand(typeof(Commands.Security.BaseCommand))]
-    [Subcommand(typeof(Commands.Management.BaseCommand))]
+    //[Subcommand(typeof(Commands.Management.BaseCommand))]
     [Subcommand(typeof(Commands.Application.BaseCommand))]
     [VersionOptionFromMember(MemberName = nameof(GetVersion))]
 

@@ -63,6 +63,16 @@ namespace Omnia.CLI
                     });
                 });
 
+                config.AddBranch("management", management =>
+                {
+                    management.SetDescription("Commands related to Management.");
+                    management.AddBranch("tenants", tenants =>
+                    {
+                        tenants.SetDescription("Commands related to Tenants Management.");
+                        tenants.AddCommand<Commands.Management.Tenants.AddCommand>("add");
+                    });
+                });
+
             });
 
 

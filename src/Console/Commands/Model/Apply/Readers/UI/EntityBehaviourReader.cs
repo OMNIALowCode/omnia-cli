@@ -116,7 +116,10 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
 
         private static string GetElement(UIBehaviourType type, string name, string className)
         {
-            className = !className.Contains("Form") ? $"{className}." : "";
+            if (className.Contains("Form") || className.Contains("Dashboard"))
+                className = "";
+            else
+                className = $"{className}.";
 
             return type switch
             {

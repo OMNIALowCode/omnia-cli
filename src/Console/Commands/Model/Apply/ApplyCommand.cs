@@ -162,8 +162,6 @@ namespace Omnia.CLI.Commands.Model.Apply
                 .Where(path => uiBehavioursPathRegex.IsMatch(path))
                 .ToList();
 
-            Console.WriteLine($"Going to process {files.Count} files. Found on {path}");
-
             return files.Select(ProcessUIBehavioursFile);
         }
 

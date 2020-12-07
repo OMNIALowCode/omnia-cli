@@ -27,15 +27,15 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             var patch = new JsonPatchDocument();
 
-            var attributeBehaviours = data.EntityBehaviours.Where(a => !string.IsNullOrEmpty(a.Element)).ToList();
-            if (attributeBehaviours.Count() > 0)
+            var entityBehaviours = data.EntityBehaviours.Where(a => !string.IsNullOrEmpty(a.Element)).ToList();
+            if (entityBehaviours.Count() > 0)
             {
                 var metadata = await GetMetadataForForm(tenant, environment, entity).ConfigureAwait(false);
 
-                patch = PatchAttributesToReplace(patch, metadata, attributeBehaviours);
+                patch = PatchAttributesToReplace(patch, metadata, entityBehaviours);
             }
 
-            patch.Replace("/behaviours", data.EntityBehaviours.Except(attributeBehaviours).ToArray());
+            patch.Replace("/behaviours", data.EntityBehaviours.Except(entityBehaviours).ToArray());
 
             var dataAsString = JsonConvert.SerializeObject(patch);
 
@@ -54,12 +54,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             if (!details.Success) return null;
 
-            var data = ((JObject)JsonConvert.DeserializeObject(content));
-
-            if (data.TryGetValue("name", out var definition) && definition.Value<string>().Equals(entity))
-                return data;
-            return null;
-
+            return (JObject)JsonConvert.DeserializeObject(content);
         }
 
         private async Task<string> GetDefinitionForEntity(string tenant, string environment, string entity)

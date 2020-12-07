@@ -1,16 +1,16 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 using Omnia.CLI.Infrastructure;
+using System.ComponentModel;
+using Spectre.Cli;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {
-    [Command(Name = "remove", Description = "Remove a given subscription configuration.")]
-    [HelpOption("-h|--help")]
-    public class RemoveCommand
+    [Description("Remove a given subscription configuration.")]
+    public sealed class RemoveCommand : AsyncCommand<RemoveCommandSettings>
     {
         private readonly AppSettings _settings;
         public RemoveCommand(IOptions<AppSettings> options)
@@ -18,24 +18,22 @@ namespace Omnia.CLI.Commands.Subscriptions
             _settings = options.Value;
         }
 
-        [Option("--name", CommandOptionType.SingleValue, Description = "Name of the subscription to remove.")]
-        public string Name { get; set; }
-
-        public Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, RemoveCommandSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(Name))
+            if (string.IsNullOrWhiteSpace(settings.Name))
             {
-                Console.WriteLine($"{nameof(Name)} is required");
-                return Task.FromResult((int)StatusCodes.InvalidArgument);
+                return ValidationResult.Error($"{nameof(settings.Name)} is required");
             }
 
-            if (!_settings.Exists(Name))
+            if (!_settings.Exists(settings.Name))
             {
-                Console.WriteLine($"Subscription \"{Name}\" can't be found.");
-                return Task.FromResult((int)StatusCodes.InvalidOperation);
+                return ValidationResult.Error($"Subscription \"{settings.Name}\" can't be found.");
             }
-
-            var subscription = _settings.GetSubscription(Name);
+            return base.Validate(context, settings);
+        }
+        public override Task<int> ExecuteAsync(CommandContext context, RemoveCommandSettings settings)
+        {
+            var subscription = _settings.GetSubscription(settings.Name);
             _settings.Subscriptions.Remove(subscription);
 
             var directory = SettingsPathFactory.Path();
@@ -46,9 +44,8 @@ namespace Omnia.CLI.Commands.Subscriptions
                 serializer.Serialize(file, _settings);
             }
 
-            Console.WriteLine($"Subscription \"{Name}\" configuration removed successfully.");
+            Console.WriteLine($"Subscription \"{settings.Name}\" configuration removed successfully.");
             return Task.FromResult((int)StatusCodes.Success);
         }
-
     }
 }

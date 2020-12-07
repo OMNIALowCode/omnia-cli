@@ -1,5 +1,4 @@
 ﻿using System;
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -7,12 +6,13 @@ using Newtonsoft.Json;
 using System.Text;
 using Microsoft.AspNetCore.JsonPatch;
 using Omnia.CLI.Infrastructure;
+using Spectre.Cli;
+using System.ComponentModel;
 
 namespace Omnia.CLI.Commands.Security.Users
 {
-    [Command(Name = "add", Description = "Associate user to Tenant's role.")]
-    [HelpOption("-h|--help")]
-    public class AddCommand
+    [Description("Associate user to Tenant's role.")]
+    public class AddCommand : AsyncCommand<AddCommandSettings>
     {
         private readonly IApiClient _apiClient;
         private readonly AppSettings _settings;
@@ -22,61 +22,46 @@ namespace Omnia.CLI.Commands.Security.Users
             _settings = options.Value;
         }
 
-        [Option("--subscription", CommandOptionType.SingleValue, Description = "Name of the configured subscription.")]
-        public string Subscription { get; set; }
-        [Option("--tenant", CommandOptionType.SingleValue, Description = "Tenant code where the user will be associated.")]
-        public string Tenant { get; set; }
-        [Option("--username", CommandOptionType.SingleValue, Description = "Username.")]
-        public string Username { get; set; }
-        [Option("--role", CommandOptionType.SingleValue, Description = "Tenant's role to which the user will be associated with.")]
-        public string Role { get; set; }
-        [Option("--environment", CommandOptionType.SingleValue, Description = "Tenant's environment.")]
-        public string Environment { get; set; } = Constants.DefaultEnvironment;
-
-
-        public async Task<int> OnExecute(CommandLineApplication cmd)
+        public override ValidationResult Validate(CommandContext context, AddCommandSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(Subscription))
+            if (string.IsNullOrWhiteSpace(settings.Subscription))
             {
-                Console.WriteLine($"{nameof(Subscription)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Subscription)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Tenant))
+            if (string.IsNullOrWhiteSpace(settings.Tenant))
             {
-                Console.WriteLine($"{nameof(Tenant)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Tenant)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Username))
+            if (string.IsNullOrWhiteSpace(settings.Username))
             {
-                Console.WriteLine($"{nameof(Username)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Username)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Role))
+            if (string.IsNullOrWhiteSpace(settings.Role))
             {
-                Console.WriteLine($"{nameof(Role)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Role)} is required");
             }
 
-            if (string.IsNullOrWhiteSpace(Environment))
+            if (string.IsNullOrWhiteSpace(settings.Environment))
             {
-                Console.WriteLine($"{nameof(Environment)} is required");
-                return (int)StatusCodes.InvalidArgument;
+                return ValidationResult.Error($"{nameof(settings.Environment)} is required");
             }
 
-            if (!_settings.Exists(Subscription))
+            if (!_settings.Exists(settings.Subscription))
             {
-                Console.WriteLine($"Subscription \"{Subscription}\" can't be found.");
-                return (int)StatusCodes.InvalidOperation;
+                return ValidationResult.Error($"Subscription \"{settings.Subscription}\" can't be found.");
             }
+            return base.Validate(context, settings);
+        }
+        public override async Task<int> ExecuteAsync(CommandContext context, AddCommandSettings settings)
+        {
+            var sourceSettings = _settings.GetSubscription(settings.Subscription);
 
-            var sourceSettings = _settings.GetSubscription(Subscription);
+            await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
 
-            await _apiClient.Authenticate(sourceSettings);
-
-            return await AddUserToRole(_apiClient, Tenant, Username, Role, Environment);
+            return await AddUserToRole(_apiClient, settings.Tenant, settings.Username, settings.Role, settings.Environment).ConfigureAwait(false);
         }
 
         private static async Task<int> AddUserToRole(IApiClient apiClient, string tenantCode, string _username, string role, string environment)
@@ -85,7 +70,7 @@ namespace Omnia.CLI.Commands.Security.Users
             var dataAsString = JsonConvert.SerializeObject(patch);
 
             var response = await apiClient.Patch($"/api/v1/{tenantCode}/{environment}/security/AuthorizationRole/{role}",
-                new StringContent(dataAsString, Encoding.UTF8, "application/json"));
+                new StringContent(dataAsString, Encoding.UTF8, "application/json")).ConfigureAwait(false);
 
             if (response.Success)
             {

@@ -1,5 +1,4 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
@@ -8,6 +7,9 @@ using System.IO;
 using Omnia.CLI.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Spectre.Cli;
+using Omnia.CLI.Commands.Subscriptions;
+
 
 namespace Omnia.CLI
 {
@@ -18,7 +20,6 @@ namespace Omnia.CLI
             var configuration = CreateConfigurationRoot();
 
             var services = new ServiceCollection()
-                .AddSingleton(PhysicalConsole.Singleton)
                 .AddScoped<IAuthenticationProvider, AuthenticationProvider>()
                 .Configure<AppSettings>(configuration);
 
@@ -34,30 +35,66 @@ namespace Omnia.CLI
                 }
             };
 
-
             var serviceProvider = services.BuildServiceProvider();
 
-            var app = new CommandLineApplication<App>();
-            app.Conventions
-                .UseDefaultConventions()
-                .UseConstructorInjection(serviceProvider);
+            var registrar = new TypeRegistrar(services);
+
+            var app = new CommandApp(registrar);
+            app.SetDefaultCommand<Commands.AppCommand>();
+            app.Configure(config =>
+            {
+                config.AddBranch("subscriptions", subscription =>
+                {
+                    subscription.SetDescription("Commands to configure subscriptions.");
+                    subscription.AddCommand<AddCommand>("add");
+                    subscription.AddCommand<ListCommand>("list");
+                    subscription.AddCommand<RemoveCommand>("remove");
+                });
+
+                config.AddBranch("security", security =>
+                {
+                    security.SetDescription("Commands related to Tenant Security.");
+                    security.AddBranch("users", users =>
+                    {
+                        users.SetDescription("Commands related to Tenant Users security.");
+                        users.AddCommand<Commands.Security.Users.AddCommand>("add");
+                        users.AddCommand<Commands.Security.Users.ImportCommand>("import");
+                    });
+                });
+
+                config.AddBranch("management", management =>
+                {
+                    management.SetDescription("Commands related to Management.");
+                    management.AddBranch("tenants", tenants =>
+                    {
+                        tenants.SetDescription("Commands related to Tenants Management.");
+                        tenants.AddCommand<Commands.Management.Tenants.AddCommand>("add");
+                    });
+                });
+
+                config.AddBranch("model", model =>
+                {
+                    model.SetDescription("Commands related to Tenant Model.");
+                    model.AddCommand<Commands.Model.ExportCommand>("export");
+                    model.AddCommand<Commands.Model.Import.ImportCommand>("import");
+                    model.AddCommand<Commands.Model.Apply.ApplyCommand>("apply");
+                });
+
+                config.AddBranch("application", application =>
+                {
+                    application.SetDescription("Commands related to Tenant.");
+                    application.AddCommand<Commands.Application.ImportCommand>("import");
+                });
+
+            });
+
 
             var subscriptions = GetConfiguredSubscriptions(serviceProvider);
 
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();
 
-            try
-            {
-                return app.Execute(args);
-            }
-            catch (UnrecognizedCommandParsingException exception)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"{exception.Message}. Use --help to list the available options.");
-                Console.ResetColor();
-                return (int)StatusCodes.InvalidOperation;
-            }
+            return app.Run(args);
         }
 
         private static IConfigurationRoot CreateConfigurationRoot()

@@ -138,9 +138,10 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private IEnumerable<Task<(string name, ApplicationBehaviour entity)>> ProcessApplicationBehaviours(string path)
         {
-            Regex reg = new Regex(@"\\Application\\[^\\]+\.cs$");
-            var files = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories)
-                .Where(p => reg.IsMatch(p))
+            var slashCharacter = SettingsPathFactory.OperationSystemPathSlash();
+            Regex reg = new Regex(@$"\{slashCharacter}Application\{slashCharacter}[^\{slashCharacter}]+\.cs$");
+            var files = Directory.GetFiles(Path, "*.cs", SearchOption.AllDirectories)
+                .Where(path => reg.IsMatch(path))
                 .ToList();
 
             return files.Select(ProcessApplicationBehavioursFile);
@@ -155,10 +156,13 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private IEnumerable<Task<(string name, UIEntity entity)>> ProcessUIBehaviours(string path)
         {
-            var uiBehavioursPathRegex = new Regex(@"\\Behaviours\\[^\\]+\.js$");
-            var files = Directory.GetFiles(path, "*.js", SearchOption.AllDirectories)
-                .Where(p => uiBehavioursPathRegex.IsMatch(p))
+            var slashCharacter = SettingsPathFactory.OperationSystemPathSlash();
+            Regex uiBehavioursPathRegex = new Regex(@$"\{slashCharacter}Behaviours\{slashCharacter}[^\{slashCharacter}]+\.js$");
+            var files = Directory.GetFiles(Path, "*.js", SearchOption.AllDirectories)
+                .Where(path => uiBehavioursPathRegex.IsMatch(path))
                 .ToList();
+
+            Console.WriteLine($"Going to process {files.Count} files. Found on {Path}");
 
             return files.Select(ProcessUIBehavioursFile);
         }
@@ -207,9 +211,10 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private IEnumerable<Task<(string name, WebComponent entity)>> ProcessWebComponents(string path)
         {
-            var webComponentPathRegex = new Regex(@"\\WebComponents\\[^\\]+\\index\.js$");
-            var files = Directory.GetFiles(path, "index.js", SearchOption.AllDirectories)
-                .Where(p => webComponentPathRegex.IsMatch(p))
+            var slashCharacter = SettingsPathFactory.OperationSystemPathSlash();
+            var webComponentPathRegex = new Regex(@$"\{slashCharacter}WebComponents\{slashCharacter}[^\{slashCharacter}]+\{slashCharacter}index\.js$");
+            var files = Directory.GetFiles(Path, "index.js", SearchOption.AllDirectories)
+                .Where(path => webComponentPathRegex.IsMatch(path))
                 .ToList();
 
             return files.Select(ProcessWebComponentFile);
@@ -217,9 +222,10 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private IEnumerable<Task<(string name, Theme entity)>> ProcessThemes(string path)
         {
-            var themePathRegex = new Regex(@"\\Themes\\[^\\]+\\variables\.scss$");
-            var files = Directory.GetFiles(path, "variables.scss", SearchOption.AllDirectories)
-                .Where(p => themePathRegex.IsMatch(p))
+            var slashCharacter = SettingsPathFactory.OperationSystemPathSlash();
+            var themePathRegex = new Regex(@$"\{slashCharacter}Themes\{slashCharacter}[^\{slashCharacter}]+\{slashCharacter}variables\.scss$");
+            var files = Directory.GetFiles(Path, "variables.scss", SearchOption.AllDirectories)
+                .Where(path => themePathRegex.IsMatch(path))
                 .ToList();
 
             return files.Select(ProcessThemeFile);

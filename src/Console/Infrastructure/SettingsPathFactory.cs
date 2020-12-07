@@ -8,6 +8,9 @@ namespace Omnia.CLI.Infrastructure
             => System.IO.Path.Combine(OperationSystemFolder(),
                 "omnia", "cli");
 
+        public static string OperationSystemPathSlash()
+            => Environment.OSVersion.Platform == PlatformID.Win32NT ? "\\" : "/";
+
         private static string OperationSystemFolder()
             => Environment.OSVersion.Platform == PlatformID.Unix ? Environment.GetEnvironmentVariable("HOME") : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     }

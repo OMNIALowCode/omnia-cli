@@ -18,11 +18,9 @@ namespace Omnia.CLI.Commands.Model.Apply.Extensions
 					  .Substring(blockText.IndexOf('{') + 1);
 		}
 
-		public static (string name, string description) GetJavascriptCommentInfo(List<Comment> comments, int beginLine, string script, string functionName)
+		public static (string name, string description) GetJavaScriptCommentInfo(List<Comment> comments, int beginLine, string script, string functionName)
 		{
-			var scriptArray = script.Split(Environment.NewLine);
-
-			var comment = FindComment(comments, beginLine, scriptArray, functionName, scriptArray[beginLine].Contains(functionName));
+			var comment = comments.FirstOrDefault(a => a.Loc.End.HasValue && a.Loc.End.Value.Line.Equals(beginLine));
 
 			if (comment != null)
 			{
@@ -61,21 +59,5 @@ namespace Omnia.CLI.Commands.Model.Apply.Extensions
 				=> text.Equals("/**") || text.Equals("/");
 
 		}
-
-		private static Comment FindComment(List<Comment> comments, int beginLine, string[] script, string functionName, bool lineBeforeFunctionName)
-		{
-			var comment = comments.FirstOrDefault(a => a.Loc.End.HasValue && a.Loc.End.Value.Line.Equals(beginLine));
-
-			if (comment != null)
-				return comment;
-
-			var commentSnippet = script[beginLine];
-
-			if (!lineBeforeFunctionName && (commentSnippet.Contains(functionName) || string.IsNullOrEmpty(commentSnippet) || commentSnippet.EndsWith("{")))
-				return FindComment(comments, beginLine - 1, script, functionName, commentSnippet.Contains(functionName));
-
-			return null;
-		}
-
 	}
 }

@@ -110,13 +110,15 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
                 var beforeChange when beforeChange.Equals("onBeforeChange") => UIBehaviourType.BeforeChange,
                 var beforeSave when beforeSave.Equals("onBeforeSave") => UIBehaviourType.BeforeSave,
 
+                var select when select.StartsWith("onSelect_") => UIBehaviourType.Select,
+
                 _ => null
             };
         }
 
         private static string GetElement(UIBehaviourType type, string name, string className)
         {
-            if (className.Contains("Form") || className.Contains("Dashboard"))
+            if (className.Contains("Form") || className.Contains("Dashboard") || className.Contains("Menu"))
                 className = "";
             else
                 className = $"{className}.";
@@ -124,6 +126,7 @@ namespace Omnia.CLI.Commands.Model.Apply.Readers.UI
             return type switch
             {
                 UIBehaviourType.Change => $"{className}{name.Substring("onChange_".Length, name.Length - 9)}",
+                UIBehaviourType.Select => $"{className}{name.Substring("onSelect_".Length, name.Length - 9)}",
                 _ => null
             };
         }

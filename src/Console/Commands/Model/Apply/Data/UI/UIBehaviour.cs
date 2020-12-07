@@ -6,7 +6,8 @@ namespace Omnia.CLI.Commands.Model.Apply.Data.UI
         AfterChange,
         BeforeChange,
         BeforeSave,
-        Initialize
+        Initialize,
+        Select
     }
 
     public class UIBehaviour

@@ -30,12 +30,14 @@ namespace Omnia.CLI.Commands.Model.Apply
             var entityBehaviours = data.EntityBehaviours.Where(a => !string.IsNullOrEmpty(a.Element)).ToList();
             if (entityBehaviours.Count() > 0)
             {
-                var metadata = await GetMetadataForForm(tenant, environment, entity).ConfigureAwait(false);
+                var metadata = await GetMetadataForDefinition(tenant, environment, entity, definition).ConfigureAwait(false);
 
                 patch = PatchAttributesToReplace(patch, metadata, entityBehaviours);
             }
 
-            patch.Replace("/behaviours", data.EntityBehaviours.Except(entityBehaviours).ToArray());
+            entityBehaviours = data.EntityBehaviours.Except(entityBehaviours).ToList();
+            if (entityBehaviours.Count > 0)
+                patch.Replace("/behaviours", entityBehaviours.ToArray());
 
             var dataAsString = JsonConvert.SerializeObject(patch);
 
@@ -47,9 +49,9 @@ namespace Omnia.CLI.Commands.Model.Apply
         }
 
 
-        private async Task<JObject> GetMetadataForForm(string tenant, string environment, string entity)
+        private async Task<JObject> GetMetadataForDefinition(string tenant, string environment, string entity, string definition)
         {
-            var (details, content) = await _apiClient.Get($"/api/v1/{tenant}/{environment}/model/Form/{entity}")
+            var (details, content) = await _apiClient.Get($"/api/v1/{tenant}/{environment}/model/{definition}/{entity}")
         .ConfigureAwait(false);
 
             if (!details.Success) return null;
@@ -79,7 +81,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             for (var sn = 0; sn < metadataElements.Count(); sn++)
             {
-                var element = behaviours.FirstOrDefault(s => s.Element.Equals(metadataElements[sn]["name"].Value<string>()));
+                var element = behaviours.FirstOrDefault(s => s.Element.Equals(metadataElements[sn]["name"].Value<string>(), System.StringComparison.InvariantCultureIgnoreCase));
                 if (element == null) continue;
 
                 patch.Replace($"/elements/{sn}/behaviours", new UIBehaviour[] { element });

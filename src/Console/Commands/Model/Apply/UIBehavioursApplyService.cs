@@ -77,16 +77,18 @@ namespace Omnia.CLI.Commands.Model.Apply
 
         private static JsonPatchDocument PatchAttributesToReplace(JsonPatchDocument patch, JObject metadata, IList<UIBehaviour> behaviours)
         {
-            if (!metadata.TryGetValue("elements", out var metadataElements)) return null;
+            var finder = new FormElementPathFinder(metadata);
 
-            for (var sn = 0; sn < metadataElements.Count(); sn++)
+            foreach (var behaviour in behaviours.Where(IsAnElementBehaviour).ToList())
             {
-                var element = behaviours.FirstOrDefault(s => s.Element.Equals(metadataElements[sn]["name"].Value<string>(), System.StringComparison.InvariantCultureIgnoreCase));
-                if (element == null) continue;
-
-                patch.Replace($"/elements/{sn}/behaviours", new UIBehaviour[] { element });
+                patch.Replace($"{finder.Find(behaviour.Definition, behaviour.Element)}/behaviours", new UIBehaviour[] { behaviour });
             }
             return patch;
+        }
+
+        private static bool IsAnElementBehaviour(UIBehaviour b)
+        {
+            return !string.IsNullOrEmpty(b.Element);
         }
     }
 }

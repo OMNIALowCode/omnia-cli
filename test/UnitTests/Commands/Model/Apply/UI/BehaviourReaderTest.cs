@@ -7,7 +7,6 @@ namespace UnitTests.Commands.Model.Apply.UI
 {
     public class BehaviourReaderTest
     {
-
         private const string FileText =
 @"
 /***************************************************************
@@ -355,7 +354,8 @@ WarehouseForm;
                 .EntityBehaviours
                 .First(m => m.Name.Equals("warehouseBuildings_onChange__code"));
 
-            initialize.Element.ShouldBe("warehouseBuildings._code");
+            initialize.Definition.ShouldBe("warehouseBuildings");
+            initialize.Element.ShouldBe("_code");
         }
     }
 }

@@ -17,5 +17,6 @@ namespace Omnia.CLI.Commands.Model.Apply.Data.UI
         public string Element { get; set; }
         public UIBehaviourType Type { get; set; }
         public string Expression { get; set; }
+        public string Definition { get; set; }
     }
 }

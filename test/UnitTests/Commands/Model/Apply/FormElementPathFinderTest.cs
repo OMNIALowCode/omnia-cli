@@ -33,7 +33,17 @@ namespace UnitTests.Commands.Model.Apply
         }
 
         [Fact]
-        public void Find_ChildLevelElements_Successful2()
+        public void Find_ChildLevelElementsUsingDifferentCasing_Successful()
+        {
+            var finder = new FormElementPathFinder((JObject)JsonConvert.DeserializeObject(FormMetadata));
+
+            var path = finder.Find("NOTELIST", "_CODE");
+
+            path.ShouldBe("/elements/7/elements/0");
+        }
+
+        [Fact]
+        public void Find_InnerChildLevelElements_Successful()
         {
             var finder = new FormElementPathFinder((JObject)JsonConvert.DeserializeObject(FormMetadata));
 

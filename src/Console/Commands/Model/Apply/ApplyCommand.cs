@@ -6,6 +6,7 @@ using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Infrastructure;
 using Spectre.Cli;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -46,16 +47,16 @@ namespace Omnia.CLI.Commands.Model.Apply
             _applicationBehaviourApplyService = new ApplicationBehaviourApplyService(_apiClient);
         }
 
-        public override ValidationResult Validate(CommandContext context, ApplyCommandSettings settings)
+        public override Spectre.Cli.ValidationResult Validate(CommandContext context, ApplyCommandSettings settings)
         {
             if (string.IsNullOrEmpty(settings.Path))
             {
-                return ValidationResult.Error($"{nameof(settings.Path)} is required");
+                return Spectre.Cli.ValidationResult.Error($"{nameof(settings.Path)} is required");
             }
 
             if (!Directory.Exists(settings.Path))
             {
-                return ValidationResult.Error($"The value of --path parameters \"{settings.Path}\" is not a valid directory.");
+                return Spectre.Cli.ValidationResult.Error($"The value of --path parameters \"{settings.Path}\" is not a valid directory.");
             }
             return base.Validate(context, settings);
         }
@@ -125,7 +126,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             if (settings.Build)
                 await _apiClient.BuildModel(settings.Tenant, settings.Environment).ConfigureAwait(false);
 
-            Console.WriteLine($"Successfully applied to tenant \"{settings.Tenant}\" model.");
+            AnsiConsole.MarkupLine($"[green]Successfully applied to tenant \"{settings.Tenant}\" model.[/]");
             return (int)StatusCodes.Success;
         }
 
@@ -344,7 +345,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                             ).ConfigureAwait(false);
 
                 if (!applySuccessfully)
-                    Console.WriteLine($"Failed to apply dependencies to Data Source {dataSource.Key}.");
+                    AnsiConsole.MarkupLine($"[red]Failed to apply dependencies to Data Source {dataSource.Key}.[/]");
             }
         }
 
@@ -358,7 +359,7 @@ namespace Omnia.CLI.Commands.Model.Apply
 
             var applySuccessfully = await ReplaceData(tenant, environment, name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply behaviours to entity {name}.");
+                AnsiConsole.MarkupLine($"[red]Failed to apply behaviours to entity {name}.[/]");
         }
 
         private async Task ApplyApplicationBehaviourChanges(
@@ -368,7 +369,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         {
             var applySuccessfully = await ReplaceApplicationBehaviourData(tenant, environment, name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply application behaviour {name}.");
+                AnsiConsole.MarkupLine($"[red]Failed to apply application behaviour {name}.[/]");
         }
 
         private async Task ApplyStateMachineChanges(
@@ -378,7 +379,7 @@ namespace Omnia.CLI.Commands.Model.Apply
         {
             var applySuccessfully = await ReplaceStateMachineData(tenant, environment, name, entity).ConfigureAwait(false);
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply states to entity {name}.");
+                AnsiConsole.MarkupLine($"[red]Failed to apply states to entity {name}.[/]");
         }
 
         private async Task ApplyWebComponentChanges(
@@ -390,7 +391,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                             name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply WebComponent {name}.");
+                AnsiConsole.MarkupLine($"[red]Failed to apply WebComponent {name}.[/]");
         }
 
         private async Task ApplyUIBehavioursChanges(
@@ -403,7 +404,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                             entityName, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply Behaviours to entity {entityName}.");
+                AnsiConsole.MarkupLine($"[red]Failed to apply Behaviours to entity {entityName}.[/]");
         }
 
         private async Task ApplyThemeChanges(
@@ -415,7 +416,7 @@ namespace Omnia.CLI.Commands.Model.Apply
                             name, entity).ConfigureAwait(false);
 
             if (!applySuccessfully)
-                Console.WriteLine($"Failed to apply Theme {name}.");
+                AnsiConsole.MarkupLine($"[red]Failed to apply Theme {name}.[/]");
         }
 
         private async Task<bool> ReplaceApplicationBehaviourData(

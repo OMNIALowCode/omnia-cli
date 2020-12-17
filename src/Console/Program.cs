@@ -93,7 +93,7 @@ namespace Omnia.CLI
 
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();
-
+            
             return app.Run(args);
         }
 

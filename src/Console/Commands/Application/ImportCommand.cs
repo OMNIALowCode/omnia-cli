@@ -9,7 +9,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Omnia.CLI.Extensions;
 using System.ComponentModel;
-using Spectre.Cli;
+using Spectre.Console.Cli;
+using Spectre.Console;
 
 namespace Omnia.CLI.Commands.Application
 {

@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Spectre.Cli;
+using Spectre.Console.Cli;
 
 namespace Omnia.CLI.Infrastructure
 {

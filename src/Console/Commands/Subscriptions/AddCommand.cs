@@ -1,4 +1,4 @@
-﻿using Spectre.Cli;
+﻿using Spectre.Console.Cli;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Omnia.CLI.Infrastructure;
 using System.ComponentModel;
+using Spectre.Console;
 
 namespace Omnia.CLI.Commands.Subscriptions
 {

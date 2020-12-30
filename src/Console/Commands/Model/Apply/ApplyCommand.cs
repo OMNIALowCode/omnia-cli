@@ -5,7 +5,7 @@ using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
 using Omnia.CLI.Infrastructure;
-using Spectre.Cli;
+using Spectre.Console.Cli;
 using Spectre.Console;
 using System;
 using System.Collections.Generic;
@@ -47,16 +47,16 @@ namespace Omnia.CLI.Commands.Model.Apply
             _applicationBehaviourApplyService = new ApplicationBehaviourApplyService(_apiClient);
         }
 
-        public override Spectre.Cli.ValidationResult Validate(CommandContext context, ApplyCommandSettings settings)
+        public override ValidationResult Validate(CommandContext context, ApplyCommandSettings settings)
         {
             if (string.IsNullOrEmpty(settings.Path))
             {
-                return Spectre.Cli.ValidationResult.Error($"{nameof(settings.Path)} is required");
+                return ValidationResult.Error($"{nameof(settings.Path)} is required");
             }
 
             if (!Directory.Exists(settings.Path))
             {
-                return Spectre.Cli.ValidationResult.Error($"The value of --path parameters \"{settings.Path}\" is not a valid directory.");
+                return ValidationResult.Error($"The value of --path parameters \"{settings.Path}\" is not a valid directory.");
             }
             return base.Validate(context, settings);
         }

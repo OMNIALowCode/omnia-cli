@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Omnia.CLI.Infrastructure;
-using Spectre.Cli;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;

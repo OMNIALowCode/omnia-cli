@@ -4,7 +4,8 @@ using Omnia.CLI.Extensions;
 using System.Threading.Tasks;
 using Omnia.CLI.Infrastructure;
 using System.ComponentModel;
-using Spectre.Cli;
+using Spectre.Console.Cli;
+using Spectre.Console;
 
 namespace Omnia.CLI.Commands.Management.Tenants
 {

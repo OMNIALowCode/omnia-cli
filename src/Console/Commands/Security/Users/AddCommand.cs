@@ -6,8 +6,9 @@ using Newtonsoft.Json;
 using System.Text;
 using Microsoft.AspNetCore.JsonPatch;
 using Omnia.CLI.Infrastructure;
-using Spectre.Cli;
+using Spectre.Console.Cli;
 using System.ComponentModel;
+using Spectre.Console;
 
 namespace Omnia.CLI.Commands.Security.Users
 {

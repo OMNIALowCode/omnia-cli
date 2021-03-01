@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
+using Omnia.CLI.Commands.Model.Apply.Data.Database;
 using Omnia.CLI.Commands.Model.Apply.Data.Server;
 using Omnia.CLI.Commands.Model.Apply.Data.UI;
+using Omnia.CLI.Commands.Model.Apply.Readers.Database;
 using Omnia.CLI.Commands.Model.Apply.Readers.Server;
 using Omnia.CLI.Commands.Model.Apply.Readers.UI;
 using Omnia.CLI.Commands.Model.Extensions;
@@ -36,6 +38,10 @@ namespace Omnia.CLI.Commands.Model.Apply
         private readonly StateReader _stateReader = new StateReader();
         private readonly WebComponentReader _webComponentReader = new WebComponentReader();
         private readonly ThemeReader _themeReader = new ThemeReader();
+        private readonly QueryApplyService _queryApplyService;
+        private readonly QueryReader _queryReader = new QueryReader();
+
+
         public ApplyCommand(IOptions<AppSettings> options, IApiClient apiClient)
         {
             _settings = options.Value;
@@ -45,6 +51,7 @@ namespace Omnia.CLI.Commands.Model.Apply
             _uiBehavioursApplyService = new UIBehavioursApplyService(_apiClient);
             _themeApplyService = new ThemeApplyService(_apiClient);
             _applicationBehaviourApplyService = new ApplicationBehaviourApplyService(_apiClient);
+            _queryApplyService = new QueryApplyService(_apiClient);
         }
 
         public override ValidationResult Validate(CommandContext context, ApplyCommandSettings settings)
@@ -83,6 +90,8 @@ namespace Omnia.CLI.Commands.Model.Apply
             var uiBehaviours = await Task.WhenAll(ProcessUIBehaviours(settings.Path)).ConfigureAwait(false);
             var themes = await Task.WhenAll(ProcessThemes(settings.Path)).ConfigureAwait(false);
 
+            var queries = await Task.WhenAll(ProcessQueries(settings.Path)).ConfigureAwait(false);
+
             var tasks = entities.GroupBy(g => g.name)
                 .Select(g =>
                     ApplyEntityChanges(settings.Tenant, settings.Environment, g.Key,
@@ -115,6 +124,11 @@ namespace Omnia.CLI.Commands.Model.Apply
             tasks.AddRange(themes
               .Select(g =>
                   ApplyThemeChanges(settings.Tenant, settings.Environment, g.name, g.entity)
+              ));
+
+            tasks.AddRange(queries
+              .Select(g =>
+                  ApplyQueryChanges(settings.Tenant, settings.Environment, g.name, g.entity)
               ));
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -230,6 +244,16 @@ namespace Omnia.CLI.Commands.Model.Apply
             return files.Select(ProcessThemeFile);
         }
 
+        private IEnumerable<Task<(string name, Query entity)>> ProcessQueries(string path)
+        {
+            var slashCharacter = SettingsPathFactory.OperationSystemPathSlash();
+            var files = Directory.GetFiles(path, "*.sql", SearchOption.AllDirectories)
+                .ToList();
+
+            return files.Select(ProcessQueryFile);
+        }
+
+
         private async Task<(string name, Entity entity)> ProcessEntityBehavioursFile(string filepath)
         {
             Console.WriteLine($"Processing file {filepath}...");
@@ -308,6 +332,18 @@ namespace Omnia.CLI.Commands.Model.Apply
             string Name()
                 => GetFileName(GetDirectoryName(filepath));
         }
+
+        private async Task<(string name, Query entity)> ProcessQueryFile(string filepath)
+        {
+            Console.WriteLine($"Processing file {filepath}...");
+            var content = await ReadFile(filepath).ConfigureAwait(false);
+
+            return (Name(), _queryReader.ExtractData(content));
+
+            string Name()
+                => GetFileName(GetFileNameWithoutExtension(filepath));
+        }
+
 
         private async Task ApplyDependenciesChanges(
             string tenant,
@@ -418,6 +454,19 @@ namespace Omnia.CLI.Commands.Model.Apply
             if (!applySuccessfully)
                 AnsiConsole.MarkupLine($"[red]Failed to apply Theme {name}.[/]");
         }
+
+        private async Task ApplyQueryChanges(
+                        string tenant,
+            string environment,
+            string name, Query entity)
+        {
+            var applySuccessfully = await _queryApplyService.ReplaceData(tenant, environment,
+                            name, entity).ConfigureAwait(false);
+
+            if (!applySuccessfully)
+                AnsiConsole.MarkupLine($"[red]Failed to apply query {name}.[/]");
+        }
+
 
         private async Task<bool> ReplaceApplicationBehaviourData(
             string tenant,

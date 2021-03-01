@@ -7,7 +7,7 @@ using System.IO;
 using Omnia.CLI.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Spectre.Cli;
+using Spectre.Console.Cli;
 using Omnia.CLI.Commands.Subscriptions;
 
 
@@ -85,15 +85,13 @@ namespace Omnia.CLI
                     application.SetDescription("Commands related to Tenant.");
                     application.AddCommand<Commands.Application.ImportCommand>("import");
                 });
-
             });
-
 
             var subscriptions = GetConfiguredSubscriptions(serviceProvider);
 
             if (subscriptions?.Count == 0)
                 ShowWelcomeScreen();
-            
+
             return app.Run(args);
         }
 

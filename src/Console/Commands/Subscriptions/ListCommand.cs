@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
-using Spectre.Cli;
+using Spectre.Console.Cli;
 using System;
 using System.ComponentModel;
 

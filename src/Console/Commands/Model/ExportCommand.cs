@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using Omnia.CLI.Extensions;
 using Omnia.CLI.Infrastructure;
-using Spectre.Cli;
+using Spectre.Console;
+using Spectre.Console.Cli;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

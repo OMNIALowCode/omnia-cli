@@ -68,13 +68,8 @@ namespace Omnia.CLI.Commands.Security.Users
 
             await _apiClient.Authenticate(sourceSettings).ConfigureAwait(false);
 
-            var tasks = entries
-                .GroupBy(r => r.Role, StringComparer.InvariantCultureIgnoreCase)
-                .Select(role =>
-                    UpdateRole(_apiClient, role.Key, role.Select(c => c.Username).ToList(), settings.Tenant, settings.Environment)
-                    );
-
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            foreach (var role in entries.GroupBy(r => r.Role, StringComparer.InvariantCultureIgnoreCase).ToList())
+                await UpdateRole(_apiClient, role.Key, role.Select(c => c.Username).ToList(), settings.Tenant, settings.Environment);
 
             Console.WriteLine($"Users imported to tenant \"{settings.Tenant}\" successfully.");
             return (int)StatusCodes.Success;

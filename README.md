@@ -76,6 +76,14 @@ Example:
 To relate the collection data to the parent, you will also need to identify the parent entries using an `#ID` column.
 Then, you can correlate the data by using a column with the name `#ParentID` in the child datasheet.
 
+## Uninstall
+
+To uninstall OMNIA Low-code Platform CLI, run the following command:
+
+```bash
+dotnet tool uninstall --global omnia.cli
+```
+
 ## Contributing
 
 See contribution Guidelines [here](CONTRIBUTING.md).

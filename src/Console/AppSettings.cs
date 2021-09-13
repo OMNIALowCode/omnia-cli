@@ -13,7 +13,7 @@ namespace Omnia.CLI
             if (SubscriptionNotProvidedAndOnlyOneConfigured())
                 return Subscriptions.Single();
 
-            if(!IsSubscriptionNameProvided())
+            if (!IsSubscriptionNameProvided())
                 throw new InvalidOperationException("A registered subscription name must be provided.");
 
             var sourceSettings = Subscriptions.SingleOrDefault(s => s.Name.Equals(name));
@@ -32,10 +32,13 @@ namespace Omnia.CLI
 
         public class Subscription
         {
+            private Uri apiUrl;
+
             public string Name { get; set; }
-            public Uri Endpoint { get; set; }
+            public Uri Endpoint { get; set; }            
             public Uri ApiUrl => new Uri(Endpoint, "/api/v1/");
-            public Uri IdentityServerUrl => new Uri(Endpoint, "/identity/");
+            public Uri IdentityServerEndpoint => IdentityServerUrl is null ? new Uri(Endpoint, "/identity/") : IdentityServerUrl;
+            public Uri IdentityServerUrl { get; set; }
             public Client Client { get; set; } = new Client();
         }
 

@@ -32,7 +32,7 @@ namespace Omnia.CLI.Infrastructure
 
             var request = new DiscoveryDocumentRequest()
             {
-                Address = subscription.IdentityServerUrl.ToString(),
+                Address = subscription.IdentityServerEndpoint.ToString(),
             };
             request.Policy.RequireHttps = false;
             request.Policy.ValidateIssuerName = false;
